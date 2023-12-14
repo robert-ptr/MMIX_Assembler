@@ -26,6 +26,18 @@ char* readFile(const char* path)
 	return buffer;
 }
 
+char** importInstructions(const char* path)
+{
+	FILE* fd = fopen(path, "rb");
+	size_t buf_size = 256;
+	char* buffer = (char*)malloc(buf_size * sizeof(char));
+
+	while(getline(&buffer, &buf_size, fd) > 0)
+	{
+
+	}
+}
+
 ErrorType runFile(const char* source)
 {
 	parse();
