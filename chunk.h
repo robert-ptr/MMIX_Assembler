@@ -1,3 +1,6 @@
+#ifndef mmix_proj_chunk
+#define mmix_proj_chunk
+
 typedef enum
 {
 /* 0x */	OP_TRAP, 	OP_FCMP, 		OP_FUN, 	OP_FEQL, 		OP_FADD, 		OP_FIX, 		OP_FSUB, 		OP_FIXU,
@@ -34,3 +37,5 @@ typedef enum
 /* Fx */  OP_POP, 	OP_RESUME, 	OP_SAVE, 	OP_UNSAVE, 	OP_SYNC, 		OP_SWYM, 		OP_GET, 		OP_TRIP,
 /* Other operations */ OP_IS, OP_GREG, OP_LOC, OP_BYTE, OP_WYDE, OP_TETRA, OP_OCTA,
 } OpType;
+
+#endif
