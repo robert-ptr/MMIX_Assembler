@@ -1,3 +1,6 @@
+#ifndef mmix_proj_scanner
+#define mmix_proj_scanner
+
 typedef struct
 {
 	char* start;
@@ -7,7 +10,7 @@ typedef struct
 
 typedef enum
 {
-	TOKEN_INSTRUCTION, TOKEN_GENERAL_REGISTER, TOKEN_SPECIAL_REGISTER, TOKEN_IMMEDIATE, TOKEN_LABEL, TOKEN_COMMA, TOKEN_LOCATION
+	TOKEN_INSTRUCTION, TOKEN_GENERAL_REGISTER, TOKEN_SPECIAL_REGISTER, TOKEN_IMMEDIATE, TOKEN_LABEL, TOKEN_COMMA, TOKEN_LOCATION, TOKEN_STRING,TOKEN_ERR, TOKEN_EOF,
 } TokenType;
 
 typedef struct
@@ -19,3 +22,6 @@ typedef struct
 } Token;
 
 void initScanner(char* source);
+Token scanToken();
+
+#endif
