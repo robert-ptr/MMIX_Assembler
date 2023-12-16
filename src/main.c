@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "scanner.h"
 #include "parser.h"
 #include "vm.h"
@@ -41,6 +42,15 @@ char* getString(char* buffer, int length, int buf_index)
 	}
 
 	return new_string;
+}
+
+void toLowercase(char** string)
+{
+	for(int i = 0; i < (*string)[i] != '\0'; i++)
+	{
+		if((*string)[i] >= 'A' && (*string)[i] <= 'Z')
+			(*string)[i] += 32;
+	}
 }
 
 char** importInstructions(const char* path, int* size)
@@ -94,9 +104,18 @@ int main(int argc, const char* argv[])
 		//runFile(source);
 		int size;
 		char** words = importInstructions(argv[1], &size);
-		TrieNode* root;
-//		createTrie(&root ,words, size);
-		
+		for(int i = 0; i < size; i++)
+		{
+			toLowercase(&words[i]);
+			printf("%s ", words[i]);
+		}
+		TrieNode* root = getNode();
+		createTrie(root ,words, size);
+
+		if(findWord(root, "2addu"))
+				printf("\ntrue\n");
+		else
+			printf("\nfalse\n");
 	}
 	else
 	{
