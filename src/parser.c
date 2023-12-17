@@ -1,11 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
+#include "scanner.h"
 
-void parse()
+static void errorAt(Token token, const char* message)
 {
-	initScanner(source);
-	int line = -1;
+}
 
-	Token token = scanToken();
+static void errorAtCurrent(const char* message)
+{
+	
+}
+
+static void error(const char* message)
+{
+}
+
+static void advance(Parser* parser)
+{
+	parser->previous = parser->current;
+
+	for (;;)
+	{
+		parser->current = scanToken();
+		if(parser->current.type != TOKEN_ERR)
+			break;
+
+		errorAtCurrent();
+	}
+}
+
+void parse(Scanner* scanner)
+{
+	if(token.type == TOKEN_LABEL)
+	{
+
+	}
 }
