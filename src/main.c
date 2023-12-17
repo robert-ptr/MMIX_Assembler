@@ -25,8 +25,8 @@ int main(int argc, const char* argv[])
 	if (argc == 2)
 	{
 		const char* source = readFile(argv[1]);
-		//runFile(source);
 		Scanner* scanner = initScanner(source);
+		/*
 		Token token = scanToken(scanner);
 		while(token.type != TOKEN_EOF)
 		{
@@ -68,7 +68,7 @@ int main(int argc, const char* argv[])
 			if(token.line != prev_token.line)
 				printf("\n");
 		}
-
+		*/
 		freeScanner(scanner);
 	}
 	else

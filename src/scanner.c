@@ -4,11 +4,7 @@
 #include <string.h>
 #include "scanner.h"
 #include "common.h"
-
-#ifndef __TRIE_INCLUDED
-#define __TRIE_INCLUDED
 #include "trie.h"
-#endif
 
 char* getString(char* buffer, int length, int buf_index)
 {
@@ -60,12 +56,6 @@ char** importInstructions(const char* path, int* size)
 		length++;
 	}
 	*size = index;
-	index--;
-	while(index >= 0)
-	{
-		printf("%s ", strings[index]);
-		index--;
-	}
 
 	return strings;
 }
@@ -132,6 +122,14 @@ static void skipWhitespace(Scanner* scanner)
 				scanner->line++;
 				advance(scanner);
 				break;
+			case ';': 
+			{
+				while(!isAtEnd(scanner) && peek(scanner) != '\n')
+				{
+					advance(scanner);
+				}
+			break;
+			}
 			default:
 				return;
 		}
@@ -141,19 +139,13 @@ static void skipWhitespace(Scanner* scanner)
 static bool isNumeric(Scanner* scanner)
 {
 	char c = peek(scanner);
-	if(c >= '0' && c <= '9')
-			return true;
-
-	return false;
+	return (c >= '0' && c <= '9');
 }
 
 static bool isAlphanumeric(Scanner* scanner)
 {
 		char c = peek(scanner);
-		if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_')
-			return true;
-
-		return false;
+		return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
 }
 
 static TokenType identifierType(Scanner* scanner)
@@ -164,34 +156,16 @@ static TokenType identifierType(Scanner* scanner)
 	{
 		word[i] = *(scanner->start + i);
 	}
+	toLowercase(&word);
 	if(findWord(scanner->trie, word))
 		return TOKEN_INSTRUCTION;
 
 	return TOKEN_LABEL;
 }
 
-static TokenType findTokenType(Scanner* scanner)
-{
-	bool immediate = true;
-	for(;;)
-	{
-		if(isAlphanumeric(scanner) && !isNumeric(scanner))
-		{
-			immediate = false;
-		}
-		while(isAlphanumeric(scanner))
-			advance(scanner);
-	}
-
-	if(immediate)
-		return TOKEN_IMMEDIATE;
-
-	return identifierType(scanner);
-}
-
 Scanner* initScanner(char* source)
 {
-	Scanner* scanner;
+	Scanner* scanner = (Scanner*)malloc(sizeof(Scanner));
 	scanner->start = source;
 	scanner->current = source;
 	scanner->line = 1;
@@ -199,13 +173,77 @@ Scanner* initScanner(char* source)
 	int size;
 	char** words = importInstructions("instructions.txt", &size);
 	scanner->trie = getNode();
+	for(int i = 0; i < size; i++)
+	{
+		toLowercase(&words[i]);
+	}
 	createTrie(scanner->trie, words, size);
+
+	return scanner;
+}
+
+static Token identifier(Scanner* scanner)
+{
+	bool immediate = true;
+	
+	
+	while(!isAtEnd(scanner) && isAlphanumeric(scanner))
+	{
+		if(isAlphanumeric(scanner) && !isNumeric(scanner))
+		{
+			immediate = false;
+		}
+		advance(scanner);
+	}
+
+	if(immediate)
+		return makeToken(scanner, TOKEN_IMMEDIATE);
+
+	return makeToken(scanner, identifierType(scanner));
+}
+
+static Token generalRegister(Scanner* scanner)
+{
+	advance(scanner);
+	while(isAlphanumeric(scanner))
+	{
+		advance(scanner);
+	}
+
+	return makeToken(scanner, TOKEN_GENERAL_REGISTER);
+}
+
+static Token specialRegister(Scanner* scanner)
+{
+	advance(scanner);
+	while(isAlphanumeric(scanner))
+	{
+		advance(scanner);
+	}
+
+	return makeToken(scanner, TOKEN_SPECIAL_REGISTER);
+}
+
+static Token location(Scanner* scanner)
+{
+	advance(scanner);
+	while(isAlphanumeric(scanner))
+	{
+		advance(scanner);
+	}
+
+	return makeToken(scanner, TOKEN_LOCATION);
 }
 
 Token scanToken(Scanner* scanner)
 {
 	skipWhitespace(scanner);
 	scanner->start = scanner->current;
+
+	if(isAlphanumeric(scanner))
+	{
+		return identifier(scanner);
+		}
 
 	if (isAtEnd(scanner))
 		return makeToken(scanner, TOKEN_EOF);
@@ -215,26 +253,21 @@ Token scanToken(Scanner* scanner)
 	switch(c)
 	{
 		case ',': return makeToken(scanner, TOKEN_COMMA);
-		case '$': return makeToken(scanner, TOKEN_GENERAL_REGISTER);
-		case 'r': return makeToken(scanner, TOKEN_SPECIAL_REGISTER);
-		case '#': return makeToken(scanner, TOKEN_LOCATION);
-		case '%': 
-		{
-			while(c != '\0' && c != '\n')
-			{
-				advance(scanner);
-			}
-			break;
-		}
+		case '$': return generalRegister(scanner);
+		case 'r': return specialRegister(scanner);
+		case '#': return location(scanner);	
 		case '"':
 		{
 			advance(scanner);
-			while(c != '"')
+			while(peek(scanner) != '"' && !isAtEnd(scanner))
 			{
-				if(c == '\0' || c == '\n')
+				if(isAtEnd(scanner) || peek(scanner) == '\n')
 					return errorToken(scanner, "Unterminated string.");
 				advance(scanner);
 			}
+
+			advance(scanner);
+
 			Token token;
 			token.start = scanner->start + 1;
 			token.length = scanner->current - scanner->start - 2;
@@ -243,19 +276,11 @@ Token scanToken(Scanner* scanner)
 
 			return token;
 		}
-		default:
-		{
-			// then we are either dealing with unknown characters or
-			// either an instruction, a label or an immediate
-			if(isAlphanumeric(scanner))
-			{
-				return makeToken(scanner, findTokenType(scanner));
-			}
-
-			return makeToken(scanner, TOKEN_ERR);
-		}
 	}
-
 	return errorToken(scanner, "Unexpected character.");
 }
 
+void freeScanner(Scanner* scanner)
+{
+
+}

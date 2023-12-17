@@ -28,6 +28,6 @@ typedef struct
 
 Scanner* initScanner(char* source);
 void freeScanner(Scanner* scanner);
-Token scanToken();
+Token scanToken(Scanner* scanner);
 
 #endif
