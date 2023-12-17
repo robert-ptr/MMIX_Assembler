@@ -9,24 +9,25 @@ typedef struct
 	char* current;
 	int line;
 
-	TrieNode* root;
+	TrieNode* trie;
 } Scanner;
 
 typedef enum
 {
 	TOKEN_INSTRUCTION, TOKEN_GENERAL_REGISTER, TOKEN_SPECIAL_REGISTER, TOKEN_IMMEDIATE, TOKEN_LABEL, 
-	TOKEN_STRING, TOKEN_COMMA, TOKEN_LOCATION, TOKEN_STRING,TOKEN_ERR, TOKEN_EOF,
+	TOKEN_STRING, TOKEN_COMMA, TOKEN_LOCATION ,TOKEN_ERR, TOKEN_EOF,
 } TokenType;
 
 typedef struct
 {
 	TokenType type;
-	char* source;
+	char* start;
 	int length;
 	int line;
 } Token;
 
-void initScanner(char* source);
+Scanner* initScanner(char* source);
+void freeScanner(Scanner* scanner);
 Token scanToken();
 
 #endif

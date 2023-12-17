@@ -4,7 +4,7 @@
 #include "scanner.h"
 #include "parser.h"
 #include "vm.h"
-#include "trie.h"
+#include "common.h"
 
 typedef enum
 {
@@ -12,21 +12,6 @@ typedef enum
 	COMPILE_ERROR,
 	RUNTIME_ERROR,
 } ErrorType;
-
-char* readFile(const char* path)
-{
-	FILE* fd = fopen(path, "rb");
-	fseek(fd, 0L, SEEK_END);
-	size_t file_size = ftell(fd);
-	rewind(fd);
-
-	char* buffer = (char*)malloc(file_size + 1);
-	size_t bytes_read = fread(buffer, sizeof(char), file_size, fd);
-	buffer[bytes_read] = '\0';
-
-	fclose(fd);
-	return buffer;
-}
 
 ErrorType runFile(const char* source)
 {
@@ -37,25 +22,54 @@ ErrorType runFile(const char* source)
 int main(int argc, const char* argv[])
 {
 //	initVM();
-//	initScanner();
 	if (argc == 2)
 	{
 		const char* source = readFile(argv[1]);
 		//runFile(source);
-		int size;
-		char** words = importInstructions(argv[1], &size);
-		for(int i = 0; i < size; i++)
+		Scanner* scanner = initScanner(source);
+		Token token = scanToken(scanner);
+		while(token.type != TOKEN_EOF)
 		{
-			toLowercase(&words[i]);
-			printf("%s ", words[i]);
+			Token prev_token = token;
+			switch(token.type)
+			{
+				case TOKEN_EOF:
+					printf("TOKEN_EOF ");
+					break;
+				case TOKEN_INSTRUCTION:
+					printf("TOKEN_INSTRUCTION ");
+					break;
+				case TOKEN_GENERAL_REGISTER:
+					printf("TOKEN_GENERAL_REGISTER ");
+					break;
+				case TOKEN_SPECIAL_REGISTER:
+					printf("TOKEN_SPECIAL_REGISTER ");
+					break;
+				case TOKEN_IMMEDIATE:
+					printf("TOKEN_IMMEDIATE ");
+					break;
+				case TOKEN_STRING:
+					printf("TOKEN_STRING ");
+					break;
+				case TOKEN_LABEL:
+					printf("TOKEN_LABEL ");
+					break;
+				case TOKEN_COMMA:
+					printf("TOKEN_COMMA ");
+					break;
+				case TOKEN_ERR:
+					printf("TOKEN_ERR ");
+					break;
+				case TOKEN_LOCATION:
+					printf("TOKEN_LOCATION ");
+					break;
+			}
+			token = scanToken(scanner);
+			if(token.line != prev_token.line)
+				printf("\n");
 		}
-		TrieNode* root = getNode();
-		createTrie(root ,words, size);
 
-		if(findWord(root, "2addu"))
-				printf("\ntrue\n");
-		else
-			printf("\nfalse\n");
+		freeScanner(scanner);
 	}
 	else
 	{
@@ -64,6 +78,5 @@ int main(int argc, const char* argv[])
 	}
 
 //	freeVM();
-//	freeScanner();
 	return 0;
 }

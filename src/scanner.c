@@ -3,9 +3,14 @@
 #include <stdbool.h>
 #include <string.h>
 #include "scanner.h"
-#include "trie.h"
+#include "common.h"
 
-char* getString(char* buffer, int length, int buf_index);
+#ifndef __TRIE_INCLUDED
+#define __TRIE_INCLUDED
+#include "trie.h"
+#endif
+
+char* getString(char* buffer, int length, int buf_index)
 {
 	if(length <= 1)
 		return NULL;
@@ -65,71 +70,67 @@ char** importInstructions(const char* path, int* size)
 	return strings;
 }
 
-Scanner scanner;
-
-static bool isAtEnd()
+static bool isAtEnd(Scanner* scanner)
 {
-	return *scanner.current == '\0';
+	return *scanner->current == '\0';
 }
 
-static Token makeToken(TokenType type)
+static Token makeToken(Scanner* scanner, TokenType type)
 {
 	Token token;
-	token.start = scanner.start;
-	token.line = scanner.line;
-	token.length = (int)(scanner.current - scanner.start);
+	token.start = scanner->start;
+	token.line = scanner->line;
+	token.length = (int)(scanner->current - scanner->start);
 	token.type = type;
 
 	return token;
 }
 
-static Token errorToken(char* message)
+static Token errorToken(Scanner* scanner, char* message)
 {
 	Token token;
 	token.start = message;
-	token.line = scanner.line;
+	token.line = scanner->line;
 	token.length = strlen(message);
 	token.type = TOKEN_ERR;
 
 	return token;
 }
 
-static char advance()
+static char advance(Scanner* scanner)
 {
-	scanner.current++;
-	return scanner.current[-1];
+	scanner->current++;
+	return scanner->current[-1];
 }
 
-static char peek()
+static char peek(Scanner* scanner)
 {
-	return *scanner.current;
+	return *scanner->current;
 }
 
-static char peekNext()
+static char peekNext(Scanner* scanner)
 {
-	if(*scanner.current == '\0') return '\0';
+	if(*scanner->current == '\0') return '\0';
 
-	return scanner.current[1];
+	return scanner->current[1];
 }
 
-static void skipWhitespace()
+static void skipWhitespace(Scanner* scanner)
 {
 	for(;;)
 	{
-		char c = peek();
+		char c = peek(scanner);
 
 		switch(c)
 		{
 			case ' ':
 			case '\t':
 			case '\r':
-				advance();
-				valid = true;
+				advance(scanner);
 				break;
 			case '\n':
-				scanner.line++;
-				valid = true;
-				advance();
+				scanner->line++;
+				advance(scanner);
 				break;
 			default:
 				return;
@@ -137,108 +138,124 @@ static void skipWhitespace()
 	}
 }
 
-static void match(int start, int length, char* pattern)
+static bool isNumeric(Scanner* scanner)
 {
-
-}
-
-static TokenType identifierType()
-{
-	int length = scanner.current - scanner.start;
-	char* word = (char*)malloc(length * sizeof(char));
-	for(int i = 0; i < length; i++)
-	{
-		word[i] = scanner.start + i;
-	}
-	if(findWord(word))
-		return TOKEN_INSTRUCTION;
-
-	return TOKEN_LABEL;
-}
-
-static TokenType findTokenType()
-{
-	bool immediate = true;
-	for(;;)
-	{
-		if(isAlphanumeric() && !isNumeric())
-		{
-			immediate = false;
-		}
-		while(isAlphanumeric())
-			advance();
-	}
-
-	if(immediate)
-		return TOKEN_IMMEDIATE;
-
-	return identifierType();
-}
-
-static bool isNumeric()
-{
-	char c = peek();
-	if((c >= '0' && c <= '9')
+	char c = peek(scanner);
+	if(c >= '0' && c <= '9')
 			return true;
 
 	return false;
 }
 
-static bool isAlphanumeric()
+static bool isAlphanumeric(Scanner* scanner)
 {
-		char c = peek();
+		char c = peek(scanner);
 		if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_')
 			return true;
 
 		return false;
 }
 
-void initScanner(const char* source)
+static TokenType identifierType(Scanner* scanner)
 {
-	scanner.start = source;
-	scanner.current = source;
-	line = 1;
+	int length = scanner->current - scanner->start;
+	char* word = (char*)malloc(length * sizeof(char));
+	for(int i = 0; i < length; i++)
+	{
+		word[i] = *(scanner->start + i);
+	}
+	if(findWord(scanner->trie, word))
+		return TOKEN_INSTRUCTION;
+
+	return TOKEN_LABEL;
+}
+
+static TokenType findTokenType(Scanner* scanner)
+{
+	bool immediate = true;
+	for(;;)
+	{
+		if(isAlphanumeric(scanner) && !isNumeric(scanner))
+		{
+			immediate = false;
+		}
+		while(isAlphanumeric(scanner))
+			advance(scanner);
+	}
+
+	if(immediate)
+		return TOKEN_IMMEDIATE;
+
+	return identifierType(scanner);
+}
+
+Scanner* initScanner(char* source)
+{
+	Scanner* scanner;
+	scanner->start = source;
+	scanner->current = source;
+	scanner->line = 1;
 
 	int size;
 	char** words = importInstructions("instructions.txt", &size);
-	scanner.root = getNode();
-	createTrie(scanner.root, words, size);
+	scanner->trie = getNode();
+	createTrie(scanner->trie, words, size);
 }
 
-static TokenType makeString()
+Token scanToken(Scanner* scanner)
 {
-}
+	skipWhitespace(scanner);
+	scanner->start = scanner->current;
 
-Token scanToken()
-{
-	skipWhitespace();
-	scanner.start = scanner.current;
+	if (isAtEnd(scanner))
+		return makeToken(scanner, TOKEN_EOF);
 
-	if (isAtEnd())
-		return makeToken(TOKEN_EOF);
-
-	char c = advance();
+	char c = advance(scanner);
 
 	switch(c)
 	{
-		case ',': return makeToken(TOKEN_COMMA);
-		case '$': return makeToken(TOKEN_GENERAL_REGISTER);
-		case 'r': return makeToken(TOKEN_SPECIAL_REGISTER);
-		case '#': return makeToken(TOKEN_LOCATION);
-		case '%': skipLine(); break;
-		case '"': return makeString();
+		case ',': return makeToken(scanner, TOKEN_COMMA);
+		case '$': return makeToken(scanner, TOKEN_GENERAL_REGISTER);
+		case 'r': return makeToken(scanner, TOKEN_SPECIAL_REGISTER);
+		case '#': return makeToken(scanner, TOKEN_LOCATION);
+		case '%': 
+		{
+			while(c != '\0' && c != '\n')
+			{
+				advance(scanner);
+			}
+			break;
+		}
+		case '"':
+		{
+			advance(scanner);
+			while(c != '"')
+			{
+				if(c == '\0' || c == '\n')
+					return errorToken(scanner, "Unterminated string.");
+				advance(scanner);
+			}
+			Token token;
+			token.start = scanner->start + 1;
+			token.length = scanner->current - scanner->start - 2;
+			token.type = TOKEN_STRING;
+			token.line = scanner->line;
+
+			return token;
+		}
 		default:
 		{
 			// then we are either dealing with unknown characters or
 			// either an instruction, a label or an immediate
-			if(isAlphanumeric())
+			if(isAlphanumeric(scanner))
 			{
-				return makeToken(findTokenType());
+				return makeToken(scanner, findTokenType(scanner));
 			}
 
-			return makeToken(TOKEN_ERR);
+			return makeToken(scanner, TOKEN_ERR);
 		}
 	}
 
-	return errorToken("Unexpected character.");
+	return errorToken(scanner, "Unexpected character.");
 }
+
