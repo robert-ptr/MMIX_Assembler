@@ -4,8 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "table.h"
-
-#define GROW_TABLE(x) ( (x) == 0 ? 8 : (2 * x))
+#include "common.h"
 
 Table t;
 
@@ -82,7 +81,7 @@ bool addToTable(Table* table, char* s, int n)
 {
 	if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
 	{
-		int capacity = GROW_TABLE(table->size);
+		int capacity = GROW_LIST(table->size);
 		adjustSize(table, capacity);
 	}
 	

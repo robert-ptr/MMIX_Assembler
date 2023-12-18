@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "table.h"
 
 #define STACK_MAX 512
 
@@ -40,7 +41,7 @@ typedef enum
 /* Ex */  OP_ORH,   OP_ORMH,    OP_ORML,  OP_ORL,     OP_ANDH,    OP_ANDNMH,  OP_ANDML,   OP_ANDNL,
 /* Fx */  OP_JMP,   OP_JMPB,    OP_PUSHJ, OP_PUSHJB,  OP_GETA,    OP_GETAB,   OP_PUT,     OP_PUTI,
 /* Fx */  OP_POP,   OP_RESUME,  OP_SAVE,  OP_UNSAVE,  OP_SYNC,    OP_SWYM,    OP_GET,     OP_TRIP,
-/* Other operations */ OP_IS, OP_GREG, OP_LOC, OP_BYTE, OP_WYDE, OP_TETRA, OP_OCTA,
+/* Other operations */ //OP_IS, OP_GREG, OP_LOC, OP_BYTE, OP_WYDE, OP_TETRA, OP_OCTA,
 } OpType;
 
 typedef uint8_t Byte;
@@ -54,10 +55,11 @@ typedef struct
 
 typedef struct
 {
-	ByteSet* byte_set;
+	ByteSet byte_set;
 	Byte* ip;
 	int64_t stack[STACK_MAX];
 	int64_t* stack_top;
+	Table table;
 } VM;
 
 void initByteSet(ByteSet* byte_set);
