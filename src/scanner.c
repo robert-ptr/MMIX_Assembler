@@ -232,7 +232,7 @@ static Token location(Scanner* scanner)
 		advance(scanner);
 	}
 
-	return makeToken(scanner, TOKEN_LOCATION);
+	return makeToken(scanner, TOKEN_CONSTANT);
 }
 
 Token scanToken(Scanner* scanner)
@@ -255,7 +255,12 @@ Token scanToken(Scanner* scanner)
 		case ',': return makeToken(scanner, TOKEN_COMMA);
 		case '$': return generalRegister(scanner);
 		case 'r': return specialRegister(scanner);
-		case '#': return location(scanner);	
+		case '#': return constant(scanner);
+		case '+': return makeToken(scanner, TOKEN_ADD);
+		case '-': return makeToken(scanner, TOKEN_SUB);
+		case '*': return makeToken(scanner, TOKEN_MUL);
+		case '/': return makeToken(scanner, TOKEN_DIV);
+		case '@': return makeToken(scanner, TOKEN_AROUND);
 		case '"':
 		{
 			advance(scanner);
