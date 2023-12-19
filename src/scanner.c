@@ -190,7 +190,7 @@ Scanner* initScanner(char* source)
 
 static Token immediate(Scanner* scanner)
 {
-	while(!isAtEnd(scanner) && isNumeric(scanner))
+	while(isNumeric(scanner))
 	{
 		advance(scanner);
 	}
@@ -200,9 +200,9 @@ static Token immediate(Scanner* scanner)
 
 static Token identifier(Scanner* scanner)
 {
-	while(!isAtEnd(scanner) && isAlphanumeric(scanner))
+	while(isAlphanumeric(scanner))
 	{
-		advance();
+		advance(scanner);
 	}
 
 	return makeToken(scanner, identifierType(scanner));
