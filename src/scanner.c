@@ -142,6 +142,12 @@ static bool isNumeric(Scanner* scanner)
 	return (c >= '0' && c <= '9');
 }
 
+static bool isHexadecimal(Scanner* scanner)
+{
+	char c = toLowecase(peek(scanner));
+	return ((c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e')
+}
+
 static bool isAlphanumeric(Scanner* scanner)
 {
 		char c = peek(scanner);
@@ -182,22 +188,22 @@ Scanner* initScanner(char* source)
 	return scanner;
 }
 
-static Token identifier(Scanner* scanner)
+static Token immediate(Scanner* scanner)
 {
-	bool immediate = true;
-	
-	
-	while(!isAtEnd(scanner) && isAlphanumeric(scanner))
+	while(!isAtEnd(scanner) && isNumeric(scanner))
 	{
-		if(isAlphanumeric(scanner) && !isNumeric(scanner))
-		{
-			immediate = false;
-		}
 		advance(scanner);
 	}
 
-	if(immediate)
-		return makeToken(scanner, TOKEN_IMMEDIATE);
+	return makeToken(scanner, TOKEN_IMMEDIATE);
+}
+
+static Token identifier(Scanner* scanner)
+{
+	while(!isAtEnd(scanner) && isAlphanumeric(scanner))
+	{
+		advance();
+	}
 
 	return makeToken(scanner, identifierType(scanner));
 }
@@ -227,7 +233,7 @@ static Token specialRegister(Scanner* scanner)
 static Token constant(Scanner* scanner)
 {
 	advance(scanner);
-	while(isAlphanumeric(scanner))
+	while(isHexadecimal(scanner))
 	{
 		advance(scanner);
 	}
@@ -240,10 +246,14 @@ Token scanToken(Scanner* scanner)
 	skipWhitespace(scanner);
 	scanner->start = scanner->current;
 
-	if(isAlphanumeric(scanner))
+	if(isNumeric(scanner))
+	{
+		return immediate(scanner);
+	}
+	else if(isAlphanumeric(scanner))
 	{
 		return identifier(scanner);
-		}
+	}
 
 	if (isAtEnd(scanner))
 		return makeToken(scanner, TOKEN_EOF);
@@ -253,7 +263,7 @@ Token scanToken(Scanner* scanner)
 	switch(c)
 	{
 		case ',': return makeToken(scanner, TOKEN_COMMA);
-		case '$': return generalRegister(scanner);
+		case '$': return makeToken(scanner, TOKEN_REGISTER);
 		case 'r': return specialRegister(scanner);
 		case '#': return constant(scanner);
 		case '+': return makeToken(scanner, TOKEN_ADD);
