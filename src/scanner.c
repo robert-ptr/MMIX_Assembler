@@ -122,7 +122,7 @@ static void skipWhitespace(Scanner* scanner)
 				scanner->line++;
 				advance(scanner);
 				break;
-			case ';': 
+			case '%': 
 			{
 				while(!isAtEnd(scanner) && peek(scanner) != '\n')
 				{
