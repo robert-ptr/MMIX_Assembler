@@ -224,7 +224,7 @@ static Token specialRegister(Scanner* scanner)
 	return makeToken(scanner, TOKEN_SPECIAL_REGISTER);
 }
 
-static Token location(Scanner* scanner)
+static Token constant(Scanner* scanner)
 {
 	advance(scanner);
 	while(isAlphanumeric(scanner))
@@ -258,8 +258,61 @@ Token scanToken(Scanner* scanner)
 		case '#': return constant(scanner);
 		case '+': return makeToken(scanner, TOKEN_ADD);
 		case '-': return makeToken(scanner, TOKEN_SUB);
-		case '*': return makeToken(scanner, TOKEN_MUL);
-		case '/': return makeToken(scanner, TOKEN_DIV);
+		case '*': return makeToken(scanner, TOKEN_MUL);	
+		case '%': return makeToken(scanner, TOKEN_MOD);
+		case '&': return makeToken(scanner, TOKEN_AND);
+		case '|': return makeToken(scanner, TOKEN_OR);
+		case '^': return makeToken(scanner, TOKEN_XOR);
+		case '~': return makeToken(scanner, TOKEN_COMPLEMENT);
+		case '/': 
+		{
+			if(peekNext(scanner) == '/') // this could also mark the beginning of a comment, according to Knuth
+			{				
+				advance(scanner);
+				return makeToken(scanner, TOKEN_FDIV);
+			}
+			else if(peekNext(scanner) == '*')
+			{
+				advance(scanner);
+				while(peekNext(scanner) != '\0' && peek(scanner) != '*' && peekNext(scanner) != '/')
+				{
+					advance(scanner);
+				}
+			}
+			else
+				return makeToken(scanner, TOKEN_DIV);
+		}
+		case ';':
+		{
+			if(peekNext(scanner) == ';')
+			{
+				advance(scanner);
+				while(peek() != '\0' && peek() != '\n')
+					advance(scanner);
+			}
+			else
+				return makeToken(scanner, TOKEN_SEMICOLON);
+		}
+		case '<':
+		{
+			if(peekNext(scanner) == '<')
+			{
+				advance(scanner);
+				return makeToken(scanner, TOKEN_LSHIFT);
+			}
+			else
+				return errorToken(scanner, "'<' operator is not defined, did you mean '<<'?");
+		}
+		case '>':
+		{
+			if(peekNext(scanner) == '>')
+			{
+				advance(scanner);
+				return makeToken(scanner, TOKEN_RSHIFT);
+			}
+			else
+				return errorToken(scanner, "'>' operator is not defined, did you mean '>>'?");
+		}
 		case '@': return makeToken(scanner, TOKEN_AROUND);
 		case '"':
 		{
