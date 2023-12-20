@@ -241,6 +241,14 @@ static Token constant(Scanner* scanner)
 	return makeToken(scanner, TOKEN_CONSTANT);
 }
 
+static Token skipToEndOfLine(Scanner* scanner)
+{
+	advance(scanner);
+	while(peek() != '\0' && peek() != '\n')
+		advance(scanner);
+	return scanToken();
+}
+
 Token scanToken(Scanner* scanner)
 {
 	skipWhitespace(scanner);
@@ -266,10 +274,9 @@ Token scanToken(Scanner* scanner)
 		case '$': return makeToken(scanner, TOKEN_REGISTER);
 		case 'r': return specialRegister(scanner);
 		case '#': return constant(scanner);
-		case '+': return makeToken(scanner, TOKEN_ADD);
-		case '-': return makeToken(scanner, TOKEN_SUB);
-		case '*': return makeToken(scanner, TOKEN_MUL);	
-		case '%': return makeToken(scanner, TOKEN_MOD);
+		case '+': return makeToken(scanner, TOKEN_PLUS);
+		case '-': return makeToken(scanner, TOKEN_MINUS);
+		case '*': return makeToken(scanner, TOKEN_STAR);	
 		case '&': return makeToken(scanner, TOKEN_AND);
 		case '|': return makeToken(scanner, TOKEN_OR);
 		case '^': return makeToken(scanner, TOKEN_XOR);
@@ -279,7 +286,7 @@ Token scanToken(Scanner* scanner)
 			if(peekNext(scanner) == '/') // this could also mark the beginning of a comment, according to Knuth
 			{				
 				advance(scanner);
-				return makeToken(scanner, TOKEN_FDIV);
+				return makeToken(scanner, TOKEN_DSLASH);
 			}
 			else if(peekNext(scanner) == '*')
 			{
@@ -288,17 +295,21 @@ Token scanToken(Scanner* scanner)
 				{
 					advance(scanner);
 				}
+				if(peek(scanner) != '\0')
+					advance();
+
+				return scanToken(scanner);
 			}
 			else
-				return makeToken(scanner, TOKEN_DIV);
+				return makeToken(scanner, TOKEN_SLASH);
 		}
+		case '%':
+			return skipToEndOfLine(scanner);
 		case ';':
 		{
 			if(peekNext(scanner) == ';')
 			{
-				advance(scanner);
-				while(peek() != '\0' && peek() != '\n')
-					advance(scanner);
+				return skipToEndOfLine();
 			}
 			else
 				return makeToken(scanner, TOKEN_SEMICOLON);

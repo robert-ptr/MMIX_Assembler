@@ -1,9 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "parser.h"
 #include "scanner.h"
 #include "vm.h"
+
+typedef enum
+{
+	PREC_NONE,
+	PREC_TERM,
+	PREC_FACTOR,
+	PREC_UNARY
+} Precedence;
+
+typedef void (*ParseFn)(bool canAssign); 
+
+typedef struct
+{
+	ParseFn prefix;
+	ParseFn infix;
+	Precedence precedence;
+} ParseRule;
 
 static void errorAt(Token token, const char* message)
 {
@@ -48,6 +66,23 @@ static void advance(Parser* parser, Scanner* scanner)
 	}
 }
 
+
+static void consume(Parser* parser, TokenType type, const char* message)
+{
+	if (parser->current.type == type)
+	{
+		advance();
+		return;
+	}
+
+	errorAtCurrent(message);
+}
+
+static bool check(Parser* parser, TokenType type)
+{
+	return parser->current.type == type;
+}
+
 static void emitByte(VM* vm, Byte byte)
 {
 	addByte(vm->byte_set, byte);
@@ -78,6 +113,58 @@ static bool isMacro(Parser* parser)
 	return false;
 }
 
+static void term(Parser* parser, Scanner* scanner, VM* vm)
+{
+}
+
+static void unary(Parser* parser, Scanner* scanner, VM* vm)
+{
+	TokenType operatorType = parser->previous.type;
+
+	// add here
+
+	switch (operatorType)
+	{
+		case TOKEN_MINUS: emitByte(vm, OP_NEGATE); break;
+		case TOKEN_COMPLEMENT: emitByte(vm, OP_COMPLEMENT); break;
+		case TOKEN_REGISTER:	emitByte(vm, OP_REGISTERIZATION); break;
+		default: return;
+	}
+}
+
+static void binary(Parser* parsser, VM* vm)
+{
+	TokenType operatorType = parser->previous.type;
+
+	// add here
+	
+	switch (operatorType)
+	{
+		case TOKEN_SLASH:	emitByte(OP_DIV); break;
+		case TOKEN_DSLASH:emitByte(OP_FDIV); break;
+		case TOKEN_PLUS:	emitByte(OP_ADD); break;
+		case TOKEN_MINUS:	emitByte(OP_SUB);	break;
+		case TOKEN_STAR:	emitByte(OP_MUL); break;
+		case TOKEN_AND:		emitByte(OP_AND); break;
+		case TOKEN_OR:		emitByte(OP_OR); break;
+		case TOKEN_XOR:		emitByte(OP_XOR); break;
+		case TOKEN_LSHIFT:emitByte(OP_LSHIFT); break;
+		case TOKEN_RSHIFT:emitByte(OP_RSHIFT); break;
+		default: return;
+	}
+}
+
+static void expressionStatement(Parser* parser, Scanner* scanner, VM* vm)
+{
+
+}
+
+static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
+{
+	advance(parser, scanner);
+	expressionStatement();
+}
+
 static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)
 {
 	char* word = (char*)malloc((parser->previous.length + 1) * sizeof(char));
@@ -86,20 +173,40 @@ static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)
 
 	if(isMacro(parser))
 	{
-		advance();
+		advance(parser, scanner);
 		
-		if(parser->current.type != TOKEN_GENERAL_REGISTER && parser->current.type != TOKEN_SPECIAL_REGISTER)
-		{
-			errorAtCurrent("Only registers and locations can be labeled.");
-			// do something here
-		}
-		// convert parser->current.start to int
+		// Somethings needs to be done here
 		addToTable(vm->table, word, parser->current.start); 
 	}
 }
 
-static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
+ParseRule rules[] =
 {
+	[TOKEN_INSTRUCTION]					= {NULL,			NULL,		PREC_NONE},
+//	[TOKEN_GENERAL_REGISTER],
+	[TOKEN_SPECIAL_REGISTER]		= {NULL, 			NULL,		PREC_NONE},
+	[TOKEN_IMMEDIATE] 					= {immediate,	NULL, 	PREC_NONE},
+	[TOKEN_LABEL] 							= {label,  		NULL, 	PREC_NONE},
+	[TOKEN_STRING]							= {string, 		NULL, 	PREC_NONE},
+	[TOKEN_COMMA] 							= {NULL, 			NULL, 	PREC_NONE},
+	[TOKEN_CONSTANT]						= {constant,	NULL,		PREC_NONE},
+	[TOKEN_ERR] 								= {NULL,  		NULL, 	PREC_NONE},
+	[TOKEN_EOF] 								= {NULL,  		NULL, 	PREC_NONE},
+	[TOKEN_PLUS]								= {unary,			binary,	PREC_},
+	[TOKEN_MINUS] 							= {unary,			binary, PREC_},
+	[TOKEN_SLASH] 							= {NULL,			binary, PREC_},
+	[TOKEN_STAR]								= {NULL,			binary, PREC_},
+	[TOKEN_AROUND]							= {NULL,			NULL,		PREC_NONE},
+	[TOKEN_DSLASH]							= {unary,			binary,	PREC_},
+	[TOKEN_MOD] 								= {NULL,			binary, PREC_},
+	[TOKEN_LSHIFT]							= {NULL,			binary,	PREC_},
+	[TOKEN_RSHIFT]							= {NULL,			binary, PREC_},
+	[TOKEN_AND] 							  = {NULL,			binary, PREC_},
+	[TOKEN_OR] 									= {NULL,			binary, PREC_},
+	[TOKEN_XOR] 								= {NULL,			binary, PREC_},
+	[TOKEN_SEMICOLON] 					= {NULL,			NULL,	PREC_NONE},
+	[TOKEN_REGISTER]						= {unary,			NULL, PREC_},
+	[TOKEN_COMPLEMENT]	        = {unary,			NULL,	PREC_},
 }
 
 void parse(Parser* parser, Scanner* scanner, VM* vm)
@@ -108,10 +215,10 @@ void parse(Parser* parser, Scanner* scanner, VM* vm)
 
 	if(parser.previous == TOKEN_LABEL)
 	{
-		labelStatement(parser, scanner);
+		labelStatement(parser, scanner, vm);
 	}
 	else
 	{
-		instructionStatement(parser, scanner);
+		instructionStatement(parser, scanner, vm);
 	}
 }
