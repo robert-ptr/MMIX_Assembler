@@ -22,6 +22,12 @@ char* getString(char* buffer, int length, int buf_index)
 	return new_string;
 }
 
+void toLowercaseC(char* c)
+{
+	if(*c >= 'A' && *c <= 'Z')
+		(*c) += 32;
+}
+
 void toLowercase(char** string)
 {
 	for(int i = 0; i < (*string)[i] != '\0'; i++)
@@ -144,8 +150,9 @@ static bool isNumeric(Scanner* scanner)
 
 static bool isHexadecimal(Scanner* scanner)
 {
-	char c = toLowecase(peek(scanner));
-	return ((c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e')
+	char c = peek(scanner);
+	toLowercaseC(&c);
+	return ((c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e');
 }
 
 static bool isAlphanumeric(Scanner* scanner)
@@ -244,9 +251,9 @@ static Token constant(Scanner* scanner)
 static Token skipToEndOfLine(Scanner* scanner)
 {
 	advance(scanner);
-	while(peek() != '\0' && peek() != '\n')
+	while(peek(scanner) != '\0' && peek(scanner) != '\n')
 		advance(scanner);
-	return scanToken();
+	return scanToken(scanner);
 }
 
 Token scanToken(Scanner* scanner)
@@ -296,7 +303,7 @@ Token scanToken(Scanner* scanner)
 					advance(scanner);
 				}
 				if(peek(scanner) != '\0')
-					advance();
+					advance(scanner);
 
 				return scanToken(scanner);
 			}
@@ -309,7 +316,7 @@ Token scanToken(Scanner* scanner)
 		{
 			if(peekNext(scanner) == ';')
 			{
-				return skipToEndOfLine();
+				return skipToEndOfLine(scanner);
 			}
 			else
 				return makeToken(scanner, TOKEN_SEMICOLON);
