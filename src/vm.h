@@ -19,7 +19,7 @@ typedef enum
 /* 3x */  OP_SL,    OP_SLI,     OP_SLU,   OP_SLUI,    OP_SR,      OP_SRI,     OP_SRU,     OP_SRUI,
 /* 4x */  OP_BN,    OP_BNB,     OP_BZ,    OP_BZB,     OP_BP,      OP_BPB,     OP_BOD,     OP_BODB,
 /* 4x */  OP_BNN,   OP_BNNB,    OP_BNZ,   OP_BNZB,    OP_BNP,     OP_BNPB,    OP_BEV,     OP_BEVB,
-/* 5x */  OP_PBN,   OP_PBNB,    OP_PBZ,   OP_PBZB,    OP_PBP,     OP_PBPB,    OP_BPOD,    OP_PBODB,
+/* 5x */  OP_PBN,   OP_PBNB,    OP_PBZ,   OP_PBZB,    OP_PBP,     OP_PBPB,    OP_PBOD,    OP_PBODB,
 /* 5x */  OP_PBNN,  OP_PBNNB,   OP_PBNZ,  OP_PBNZB,   OP_PBNP,    OP_PBNPB,   OP_PBEV,    OP_PBEVB,
 /* 6x */  OP_CSN,   OP_CSNI,    OP_CSZ,   OP_CSZI,    OP_CSP,     OP_CSPI,    OP_CSOD,    OP_CSODI,
 /* 6x */  OP_CSNN,  OP_CSNNI,   OP_CSNZ,  OP_CSNZI,   OP_CSNP,    OP_CSNPI,   OP_CSEV,    OP_CSEVI,
@@ -66,5 +66,6 @@ void initByteSet(ByteSet* byte_set);
 void freeByteSet(ByteSet* byte_set);
 void initVM(VM* vm);
 void freeVM(VM* vm);
+Byte toByte(int value);
 
 #endif

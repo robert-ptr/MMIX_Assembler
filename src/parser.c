@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "scanner.h"
 #include "vm.h"
+#include "trie.h"
 
 typedef enum
 {
@@ -170,8 +171,28 @@ static void expressionStatement(Parser* parser, Scanner* scanner, VM* vm)
 static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
 {
 	advance(parser, scanner);
+	TrieNode* root = getNode();
+	createInstructionTrie(root);
 	if(parser->current.type == TOKEN_INSTRUCTION)
 	{
+		char* word = (char*)malloc((parser->current.length + 1) * sizeof(char));
+		for(int i = 0; i < parser->current.length; i++)
+		{
+			word[i] = parser->current.start[i];
+		}
+		word[parser->current.length] = '\0';
+		int emitValue;
+		if((emitValue = findWord(root, word)) != -1)
+		{
+			Byte byte = toByte(emitValue);
+			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
+		}
+		else
+		{
+			errorAtCurrent(parser, "Unknown instruction.");
+		}
+
+		free(word);
 	}
 	else
 	{

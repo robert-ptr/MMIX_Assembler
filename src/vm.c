@@ -55,3 +55,8 @@ void freeVM(VM* vm)
 	freeByteSet(vm->byte_set);
 	freeTable(vm->table);
 }
+
+Byte toByte(int value)
+{
+	return (Byte)value;
+}

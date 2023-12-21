@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 char* readFile(const char* path)
@@ -13,4 +14,48 @@ char* readFile(const char* path)
 
 	fclose(fd);
 	return buffer;
+}
+
+void toLowercaseC(char* c)
+{
+	if(*c >= 'A' && *c <= 'Z')
+		(*c) += 32;
+}
+
+void toLowercase(char** s)
+{
+	for(int i = 0; i < (*s)[i] != '\0'; i++)
+	{
+		if((*s)[i] >= 'A' && (*s)[i] <= 'Z')
+			(*s)[i] += 32;
+	}
+}
+
+char** importInstructions(const char* path, int* size)
+{
+	char** strings = (char**)malloc(256 * sizeof(char*));
+
+	char* buffer = readFile(path);
+	int length = 0;
+	int index = 0;
+	int buf_index = 0;
+	while(buffer[buf_index] != '\0')
+	{
+		if(buffer[buf_index] == ' ' || buffer[buf_index] == ';' || buffer[buf_index] == '\t' || buffer[buf_index] == '\n')
+		{
+			if(index == 0)
+				length++;
+			char* new_string = getString(buffer, length, buf_index);
+			if(new_string != NULL)
+			{
+				strings[index++] = new_string;
+			}
+			length = 0;
+		}
+		buf_index++;
+		length++;
+	}
+	*size = index;
+
+	return strings;
 }
