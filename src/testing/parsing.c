@@ -60,17 +60,120 @@ bool isAtEnd()
 		return true;
 }
 
-int primary()
+bool isUnary()
+{
+	char c = peek();
+	return c == '+' || c == '-' || c == '~' || c == '$';
+		
+}
+
+bool isConstant()
+{
+	char c = peek();
+	return c >= '0' && c <= '9';
+}
+
+bool isHexadecimal()
+{
+	char c == toLowercase(peek());
+	return isConstant() || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
+}
+
+int symbol()
 {}
 
 int constant()
+{
+	int n = 0;
+	while(isConstant())
+	{
+		n = n * 10 + (peek() - '0');
+		advance();
+	}
+}
+
+int reg()
+{
+	// retrieve value in register
+	// I believe all registers have value 0 at the beginning of the program
+	// I have to check that
+}
+
+int location()
 {}
+
+int fromHexadecimal()
+{
+	int n = 0;
+	char c = toLowercase(peek());
+	while(isHexadecimal())
+	{
+		if(c >= 'a')
+		{
+			n = n * 16 + (c - 'a' + 10)
+		}
+		else
+		{
+			n = n * 16 + (c - '0'); 
+		}
+		advance();
+		c = toLowercase(peek());
+	}
+}
 
 int term()
 {
 	// possible terms: primaries(a symbol, constant, @, an expression enclosed in parentheses or a unary operator followed by a primary
 	// unary operators: +, -, ~, $
-	
+	int a;
+	if(isUnary())
+	{
+		char op = advance();
+		a = term();
+		switch(op)
+		{
+			case '+':
+				break;
+			case '-':
+				a = -a;
+				break;
+			case '~':
+				a = ~a;
+				break;
+			case '$':
+				a = reg(a);
+				break;
+		}
+	}
+	else if(peek() == '(')
+	{
+		advance();
+		a = statement();
+	}
+	else if(peek() == '@')
+	{
+		a = location();
+	}
+	else if(peek() == '#')
+	{
+		a = fromHexadecimal();
+	}
+	else if(isAlphanumeric())
+	{
+		a = symbol();
+	}
+	else if(isConstant())
+	{
+		a = constant();
+	}
+	else
+	{
+		// Report an error
+		printf("Unknown term.");
+		return -1;
+	}
+
+	return a;
 }
 
 int expression(double &opt)
