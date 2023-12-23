@@ -33,7 +33,7 @@ static void errorAt(Token token, const char* message)
 	} 
 	else if (token->type == TOKEN_ERROR) 
 	{
-
+		
 	} 
 	else 
 	{
@@ -66,7 +66,6 @@ static void advance(Parser* parser, Scanner* scanner)
 		errorAtCurrent(parser, );
 	}
 }
-
 
 static void consume(Parser* parser, TokenType type, const char* message)
 {
@@ -122,8 +121,24 @@ static bool match(char* instruction, int start, char* pattern, int length)
 	return false;
 }
 
-static void term(Parser* parser, Scanner* scanner, VM* vm)
+static int immediate(Parser* parser, Scanner* scanner, VM* vm)
 {
+
+}
+
+static int constant(Parser* parser, Scanner* scanner, VM* vm)
+{
+
+}
+
+static void label(Parser* parser, Scanner* scanner, VM* vm)
+{
+
+}
+
+static void string(Parser* parser, Scanner* scanner, VM* vm)
+{
+
 }
 
 static void unary(Parser* parser, Scanner* scanner, VM* vm)
@@ -141,7 +156,7 @@ static void unary(Parser* parser, Scanner* scanner, VM* vm)
 	}
 }
 
-static void binary(Parser* parsser, VM* vm)
+static void binary(Parser* parser, Scanner* scanner, VM* vm)
 {
 	TokenType operatorType = parser->previous.type;
 
@@ -163,9 +178,21 @@ static void binary(Parser* parsser, VM* vm)
 	}
 }
 
-static void expressionStatement(Parser* parser, Scanner* scanner, VM* vm)
+static int expressionStatement(Parser* parser, Scanner* scanner, VM* vm)
 {
-	// maybe i can resolve expressions at compile time o.o
+
+}
+
+static void commaStatement(Parser* parser, Scanner* scanner, VM* vm)
+{
+	int value = expressionStatement(parser, scanner, vm);
+	emitByte(vm, expressionStatement(parser, scanner, vm));
+	while(check(parser, TOKEN_COMMA))
+	{
+		advance(parser, scanner);
+		value = expressionStatement(parser, scanner, vm);
+		emitByte(vm, value);
+	}
 }
 
 static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
@@ -199,7 +226,7 @@ static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
 		// Report an error
 		errorAtCurrent(parser, "Unknown instruction.");
 	}
-	expressionStatement();
+	commaStatement();
 }
 
 static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)

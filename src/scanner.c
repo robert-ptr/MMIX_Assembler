@@ -217,7 +217,7 @@ Token scanToken(Scanner* scanner)
 	skipWhitespace(scanner);
 	scanner->start = scanner->current;
 
-	if(isNumeric(scanner))
+	if(isNumeric(scanner)) // add support for special constructs dH, dF, dB
 	{
 		return immediate(scanner);
 	}
@@ -238,12 +238,15 @@ Token scanToken(Scanner* scanner)
 		case 'r': return specialRegister(scanner);
 		case '#': return constant(scanner);
 		case '+': return makeToken(scanner, TOKEN_PLUS);
+		case '%': return makeToken(scanner, TOKEN_MOD); // this might also be a comment
 		case '-': return makeToken(scanner, TOKEN_MINUS);
 		case '*': return makeToken(scanner, TOKEN_STAR);	
 		case '&': return makeToken(scanner, TOKEN_AND);
 		case '|': return makeToken(scanner, TOKEN_OR);
 		case '^': return makeToken(scanner, TOKEN_XOR);
 		case '~': return makeToken(scanner, TOKEN_COMPLEMENT);
+		case '(': return makeToken(scanner, TOKEN_LPAREN);
+		case ')': return makeToken(scanner, TOKEN_RPAREN);
 		case '/': 
 		{
 			if(peekNext(scanner) == '/') // this could also mark the beginning of a comment, according to Knuth
@@ -266,8 +269,6 @@ Token scanToken(Scanner* scanner)
 			else
 				return makeToken(scanner, TOKEN_SLASH);
 		}
-		case '%':
-			return skipToEndOfLine(scanner);
 		case ';':
 		{
 			if(peekNext(scanner) == ';')
