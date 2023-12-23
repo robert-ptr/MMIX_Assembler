@@ -1,5 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "common.h"
+
+char* getString(char* buffer, int length, int buf_index)
+{
+	if(length <= 1)
+		return NULL;
+	
+	int i = 0;
+	char* new_string = (char*)malloc(length * sizeof(char));
+	new_string[length - 1] = '\0';
+	for(; (i + 1 - length) != 0; i++)
+	{
+		new_string[i]	= buffer[buf_index - length + 1 + i];	
+	}
+
+	return new_string;
+}
 
 char* readFile(const char* path)
 {

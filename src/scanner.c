@@ -6,22 +6,6 @@
 #include "common.h"
 #include "trie.h"
 
-char* getString(char* buffer, int length, int buf_index)
-{
-	if(length <= 1)
-		return NULL;
-	
-	int i = 0;
-	char* new_string = (char*)malloc(length * sizeof(char));
-	new_string[length - 1] = '\0';
-	for(; (i + 1 - length) != 0; i++)
-	{
-		new_string[i]	= buffer[buf_index - length + 1 + i];	
-	}
-
-	return new_string;
-}
-
 static bool isAtEnd(Scanner* scanner)
 {
 	return *scanner->current == '\0';
@@ -114,7 +98,7 @@ static bool isHexadecimal(Scanner* scanner)
 static bool isAlphanumeric(Scanner* scanner)
 {
 		char c = peek(scanner);
-		return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_');
+		return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':');
 }
 
 static TokenType identifierType(Scanner* scanner)

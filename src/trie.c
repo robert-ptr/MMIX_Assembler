@@ -78,6 +78,7 @@ void createInstructionTrie(TrieNode* node)
 	int n = 0;
 	char** words = (char**)malloc(256 * sizeof(char*));
 	int* values = (int*)malloc(256 * sizeof(int));
+
 	while(buffer[index] != '\0')
 	{
 		int start = index;
@@ -85,24 +86,28 @@ void createInstructionTrie(TrieNode* node)
 		{
 			index++;
 		}
+
 		int length = index - start;
 		char* word = (char*)malloc((length + 1) * sizeof(char));
+
 		for(int i = 0; i < length; i++)
 		{
 			word[i] = buffer[start + i];
 		}
+
 		word[length] = '\0';
 		toLowercase(&word);
 		words[n] = word;
 		index++;
+
 		values[n++] = parseNumber(buffer, &index);
+
 		if(buffer[index] == '\n')
 			index++;
 	}
 
 	for(int i = 0; i < n; i++)
 	{
-		printf("%s\n", words[i]);
 		insertNode(node, words[i], values[i]);
 	}
 }
@@ -122,9 +127,11 @@ int findWord(TrieNode* node, char* word)
 	return node->isWord;
 }
 
+/* for testing
 int main()
 {
 	TrieNode* root = getNode();
 	createInstructionTrie(root);
 	printf("%d", findWord(root, "trap"));
 }
+*/

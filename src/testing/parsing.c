@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "../table.h"
+#include "../common.h"
 
 struct
 {
@@ -8,20 +10,7 @@ struct
 	char* current;
 } scanner;
 
-char* readFile(const char* path)
-{
-	FILE* fd = fopen(path, "rb");
-	fseek(fd, 0L, SEEK_END);
-	size_t file_size = ftell(fd);
-	rewind(fd);
-
-	char* buffer = (char*)malloc(file_size + 1);
-	size_t bytes_read = fread(buffer, sizeof(char), file_size, fd);
-	buffer[bytes_read] = '\0';
-
-	fclose(fd);
-	return buffer;
-}
+Table table;
 
 char advance()
 {
@@ -44,7 +33,7 @@ bool isStrongOperator()
 {
 	char c = peek();
 	char next = peekNext();
-	return (c == '*' || c == '%' || c == '&' || c == '/' || (c == '<' && next == '<') || (c == '>' && next == '>');
+	return (c == '*' || c == '%' || c == '&' || c == '/' || (c == '<' && next == '<') || (c == '>' && next == '>'));
 }
 
 bool isWeakOperator()
@@ -66,8 +55,13 @@ bool isUnary()
 	return c == '+' || c == '-' || c == '~' || c == '$';
 		
 }
+bool isAlphanumeric()
+{
+		char c = peek();
+		return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':');
+}
 
-bool isConstant()
+bool isNumeric()
 {
 	char c = peek();
 	return c >= '0' && c <= '9';
@@ -75,17 +69,45 @@ bool isConstant()
 
 bool isHexadecimal()
 {
-	char c == toLowercase(peek());
-	return isConstant() || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
+	char c = peek();
+	toLowercaseC(&c);
+	return isNumeric() || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
 }
 
 int symbol()
-{}
+{
+	// retrieve the symbol from the hashtable
+	scanner.start = scanner.current;
+	while(isAlphanumeric())
+	{
+		advance();
+	}
+
+	int length = scanner.current - scanner.start;
+	char* symbol = (char*)malloc((length + 1) * sizeof(char));
+	symbol[length] = '\0';
+
+	for(int i = 0; i < length; i++)
+	{
+		symbol[i] = *(scanner.start + i);
+	}
+
+	toLowercase(&symbol);
+
+	int value;
+	if(findInTable(&table, symbol, &value))
+		return value;
+	else
+	{
+		printf("Unknown symbol.");
+		return -1;
+	}
+}
 
 int constant()
 {
 	int n = 0;
-	while(isConstant())
+	while(isNumeric())
 	{
 		n = n * 10 + (peek() - '0');
 		advance();
@@ -94,9 +116,9 @@ int constant()
 
 int reg()
 {
-	// retrieve value in register
-	// I believe all registers have value 0 at the beginning of the program
-	// I have to check that
+	// here's the deal: register arithmetic only works in cases like:
+	// $1 + 2 = $3 and $3 - $1 = 2
+	// +,- are the only arithmetic operators allowed
 }
 
 int location()
@@ -105,21 +127,25 @@ int location()
 int fromHexadecimal()
 {
 	int n = 0;
-	char c = toLowercase(peek());
+	char c = peek();
+	toLowercaseC(&c);
 	while(isHexadecimal())
 	{
 		if(c >= 'a')
 		{
-			n = n * 16 + (c - 'a' + 10)
+			n = n * 16 + (c - 'a' + 10);
 		}
 		else
 		{
 			n = n * 16 + (c - '0'); 
 		}
 		advance();
-		c = toLowercase(peek());
+		c = peek();
+		toLowercaseC(&c);
 	}
 }
+
+int statement();
 
 int term()
 {
@@ -147,8 +173,9 @@ int term()
 	}
 	else if(peek() == '(')
 	{
-		advance();
+		advance(); // skip the '('
 		a = statement();
+		advance(); // skip the ')'
 	}
 	else if(peek() == '@')
 	{
@@ -158,11 +185,11 @@ int term()
 	{
 		a = fromHexadecimal();
 	}
-	else if(isAlphanumeric())
+	else if(isAlphanumeric() && !isNumeric())
 	{
 		a = symbol();
 	}
-	else if(isConstant())
+	else if(isNumeric())
 	{
 		a = constant();
 	}
@@ -176,7 +203,7 @@ int term()
 	return a;
 }
 
-int expression(double &opt)
+int expression(double* opt)
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
 	bool fpo = false;
@@ -195,19 +222,19 @@ int expression(double &opt)
 					if(!fpo)
 						a *= b;
 					else
-						opt *= opt_b;
+						*opt *=opt_b;
 					break;
 				case '&':
 					if(!fpo)
 						a &= b;
 					else
-						opt &= opt_b;
+						printf("Invalid operands.");
 					break;
 				case '%':
 					if(!fpo)
 						a %= b;
 					else
-						opt %= opt_b;
+						printf("Invalid operands.");
 					break;
 				case '/':
 				{
@@ -215,14 +242,14 @@ int expression(double &opt)
 					{
 						advance();
 						fpo = true;
-						opt = (double)a / (double)b;	
+						*opt = (double)a / (double)b;	
 					}
 					else
 					{
 						if(fpo)
 							a /= b;
 						else
-							opt /= opt_b;
+							*opt /= opt_b;
 					}
 					break;
 				}
@@ -232,7 +259,7 @@ int expression(double &opt)
 					if(!fpo)
 						a <<= b;
 					else
-						opt <<= opt_b;
+						printf("Invalid operands.");
 					break;
 				}
 				case '>':
@@ -241,7 +268,7 @@ int expression(double &opt)
 					if(!fpo)
 						a >>= b;
 					else
-						opt <<= opt_b;
+						printf("Invalid operands.");
 					break;
 				}
 			}
@@ -259,14 +286,16 @@ int expression(double &opt)
 int statement()
 {
 	// weak binary operators: +,-,|,^
-	int a = expression();
+	double opt;
+	int a = expression(&opt);
 	int b;
 	while(!isAtEnd())
 	{
 		if(isWeakOperator())
 		{
 			char op = advance();
-			b = expression();
+			double opt_b;
+			b = expression(&opt_b);
 			switch(op)
 			{
 				case '+':
@@ -305,6 +334,11 @@ int main(int argc, char* argv[])
 	{
 		char* buffer = readFile(argv[1]);
 		initScanner(buffer);
+		initTable(&table);
+
+		printf("%d", statement());
+
+		freeTable(&table);
 	}
 	else
 	{

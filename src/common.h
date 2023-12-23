@@ -3,6 +3,7 @@
 
 #define GROW_LIST(x) ( (x) == 0 ? 8 : (2 * (x)))
 
+char* getString(char* buffer, int length, int buf_index);
 char* readFile(const char* path);
 void toLowercaseC(char* c);
 void toLowercase(char** s);

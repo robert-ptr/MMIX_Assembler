@@ -51,6 +51,19 @@ Entry* findEntry(Entry* entries, int size, char* s, int n, uint32_t hash)
 	}
 }
 
+bool findInTable(Table* table, char* s, int* val)
+{
+	int n = strlen(s);
+	uint32_t hash = hashString(s, n);	
+	
+	Entry* entry = findEntry(table->entries, table->size, s, n, hash);
+	if(entry->key == NULL)
+		return false;
+
+	*val = entry->value;
+	return true;
+}
+
 static void adjustSize(Table* table, int capacity)
 {
 	Entry* entries = (Entry*)malloc(capacity * sizeof(Entry));
