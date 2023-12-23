@@ -43,27 +43,8 @@ char peekNext()
 bool isStrongOperator()
 {
 	char c = peek();
-	if(c == '*' || c == '%' || c == '&')
-	{
-		return true;
-	}
-	if(c == '/' && peekNext() == '/')
-	{
-		advance();
-		return true;
-	}
-	else if(c == '<' && peekNext() == '<')
-	{
-		advance();
-		return true;
-	}
-	else if(c == '>' && peekNext() == '>')
-	{
-		advance();
-		return true;
-	}
-
-	return false;
+	char next = peekNext();
+	return (c == '*' || c == '%' || c == '&' || c == '/' || (c == '<' && next == '<') || (c == '>' && next == '>');
 }
 
 bool isWeakOperator()
@@ -75,24 +56,138 @@ bool isWeakOperator()
 
 bool isAtEnd()
 {
-
+	if(peek() == '\0')
+		return true;
 }
+
+int primary()
+{}
+
+int constant()
+{}
 
 int term()
 {
 	// possible terms: primaries(a symbol, constant, @, an expression enclosed in parentheses or a unary operator followed by a primary
 	// unary operators: +, -, ~, $
+	
 }
 
-int expression()
+int expression(double &opt)
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
+	bool fpo = false;
+	int a = term();
+	int b;
+	double opt_b;
+	while(!isAtEnd() && !isWeakOperator())
+	{
+		if(isStrongOperator())
+		{
+			char op = advance();
+			b = term(opt_b); // might be an int, might be a float
+			switch(op)
+			{
+				case '*':
+					if(!fpo)
+						a *= b;
+					else
+						opt *= opt_b;
+					break;
+				case '&':
+					if(!fpo)
+						a &= b;
+					else
+						opt &= opt_b;
+					break;
+				case '%':
+					if(!fpo)
+						a %= b;
+					else
+						opt %= opt_b;
+					break;
+				case '/':
+				{
+					if(peekNext() == '/')
+					{
+						advance();
+						fpo = true;
+						opt = (double)a / (double)b;	
+					}
+					else
+					{
+						if(fpo)
+							a /= b;
+						else
+							opt /= opt_b;
+					}
+					break;
+				}
+				case '<':
+				{
+					advance();
+					if(!fpo)
+						a <<= b;
+					else
+						opt <<= opt_b;
+					break;
+				}
+				case '>':
+				{
+					advance();
+					if(!fpo)
+						a >>= b;
+					else
+						opt <<= opt_b;
+					break;
+				}
+			}
+		}
+		else
+		{
+			printf("Error in expression.");
+			return -1;
+		}
+	}
+
+	return a;
 }
 
 int statement()
 {
 	// weak binary operators: +,-,|,^
 	int a = expression();
+	int b;
+	while(!isAtEnd())
+	{
+		if(isWeakOperator())
+		{
+			char op = advance();
+			b = expression();
+			switch(op)
+			{
+				case '+':
+					a += b;
+					break;
+				case '-':
+					a -= b;
+					break;
+				case '|':
+					a |= b;
+					break;
+				case '^':
+					a ^= b;
+					break;
+			}
+		}
+		else
+		{
+			printf("Error in statement");
+			return -1;
+		}
+	}
+
+	return a;
 }
 
 void initScanner(const char* source)
