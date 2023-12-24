@@ -221,22 +221,25 @@ int expression(double* opt)
 		if(isStrongOperator())
 		{
 			char op = advance();
-			b = term(opt_b); // might be an int, might be a float
+			int b;
 			switch(op)
 			{
 				case '*':
+					b = term();
 					if(!fpo)
 						a *= b;
 					else
 						*opt *=opt_b;
 					break;
 				case '&':
+					b = term();
 					if(!fpo)
 						a &= b;
 					else
 						printf("Invalid operands.\n");
 					break;
 				case '%':
+					b = term();
 					if(!fpo)
 						a %= b;
 					else
@@ -247,11 +250,13 @@ int expression(double* opt)
 					if(peekNext() == '/')
 					{
 						advance();
+						b = term();
 						fpo = true;
 						*opt = (double)a / (double)b;	
 					}
 					else
 					{
+						b = term();
 						if(fpo)
 							a /= b;
 						else
@@ -262,6 +267,7 @@ int expression(double* opt)
 				case '<':
 				{
 					advance();
+					b = term();
 					if(!fpo)
 						a <<= b;
 					else
@@ -271,6 +277,7 @@ int expression(double* opt)
 				case '>':
 				{
 					advance();
+					b = term();
 					if(!fpo)
 						a >>= b;
 					else
