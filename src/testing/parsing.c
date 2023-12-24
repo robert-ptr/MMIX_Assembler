@@ -45,8 +45,10 @@ bool isWeakOperator()
 
 bool isAtEnd()
 {
-	if(peek() == '\0')
+	if(peek() == '\0' || peek() == '\n')
 		return true;
+
+	return false;
 }
 
 bool isUnary()
@@ -99,7 +101,7 @@ int symbol()
 		return value;
 	else
 	{
-		printf("Unknown symbol.");
+		printf("Unknown symbol.\n");
 		return -1;
 	}
 }
@@ -109,9 +111,10 @@ int constant()
 	int n = 0;
 	while(isNumeric())
 	{
-		n = n * 10 + (peek() - '0');
-		advance();
+		n = n * 10 + (advance() - '0');
 	}
+
+	return n;
 }
 
 int reg()
@@ -143,6 +146,8 @@ int fromHexadecimal()
 		c = peek();
 		toLowercaseC(&c);
 	}
+
+	return n;
 }
 
 int statement();
@@ -183,6 +188,7 @@ int term()
 	}
 	else if(peek() == '#')
 	{
+		advance();
 		a = fromHexadecimal();
 	}
 	else if(isAlphanumeric() && !isNumeric())
@@ -196,10 +202,9 @@ int term()
 	else
 	{
 		// Report an error
-		printf("Unknown term.");
+		printf("Unknown term.\n");
 		return -1;
 	}
-
 	return a;
 }
 
@@ -212,6 +217,7 @@ int expression(double* opt)
 	double opt_b;
 	while(!isAtEnd() && !isWeakOperator())
 	{
+		printf("%c ", peek());
 		if(isStrongOperator())
 		{
 			char op = advance();
@@ -228,13 +234,13 @@ int expression(double* opt)
 					if(!fpo)
 						a &= b;
 					else
-						printf("Invalid operands.");
+						printf("Invalid operands.\n");
 					break;
 				case '%':
 					if(!fpo)
 						a %= b;
 					else
-						printf("Invalid operands.");
+						printf("Invalid operands.\n");
 					break;
 				case '/':
 				{
@@ -259,7 +265,7 @@ int expression(double* opt)
 					if(!fpo)
 						a <<= b;
 					else
-						printf("Invalid operands.");
+						printf("Invalid operands.\n");
 					break;
 				}
 				case '>':
@@ -268,14 +274,14 @@ int expression(double* opt)
 					if(!fpo)
 						a >>= b;
 					else
-						printf("Invalid operands.");
+						printf("Invalid operands.\n");
 					break;
 				}
 			}
 		}
 		else
 		{
-			printf("Error in expression.");
+			printf("Error in expression.\n");
 			return -1;
 		}
 	}
@@ -314,7 +320,7 @@ int statement()
 		}
 		else
 		{
-			printf("Error in statement");
+			printf("Error in statement\n");
 			return -1;
 		}
 	}
