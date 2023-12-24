@@ -7,22 +7,313 @@
 #include "vm.h"
 #include "trie.h"
 
-typedef enum
+static bool isStrongOperator(Scanner* scanner)
 {
-	PREC_NONE,
-	PREC_TERM,
-	PREC_FACTOR,
-	PREC_UNARY
-} Precedence;
+	char c = peek(scanner);
+	char next = peekNext(scanner);
+	return (c == '*' || c == '%' || c == '&' || c == '/' || (c == '<' && next == '<') || (c == '>' && next == '>'));
+}
 
-typedef void (*ParseFn)(bool canAssign); 
-
-typedef struct
+static bool isWeakOperator(Scanner* scanner)
 {
-	ParseFn prefix;
-	ParseFn infix;
-	Precedence precedence;
-} ParseRule;
+	char c = peek(scanner);
+
+	return (c == '+' || c == '-' || c == '|' || c == '^');
+}
+
+static bool isAtEnd(Scanner* scanner)
+{
+	if(peek(scanner) == '\0' || peek(scanner) == '\n')
+		return true;
+
+	return false;
+}
+
+static bool isUnary(Scanner* scanner)
+{
+	char c = peek(scanner);
+	return c == '+' || c == '-' || c == '~' || c == '$';
+}
+
+static bool isAlphanumeric(Scanner* scanner)
+{
+		char c = peek(scanner);
+		return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':');
+}
+
+static bool isNumeric(Scanner* scanner)
+{
+	char c = peek(scanner);
+	return c >= '0' && c <= '9';
+}
+
+static bool isRightParen(Scanner* scanner)
+{
+	return peek(scanner) == ')';
+}
+
+static bool isHexadecimal(Scanner* scanner)
+{
+	char c = peek(scanner);
+	toLowercaseC(&c);
+	return isNumeric(scanner) || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
+}
+
+static int symbol(Scanner* scanner)
+{
+	// retrieve the symbol from the hashtable
+	scanner->start = scanner->current;
+	while(isAlphanumeric(scanner))
+	{
+		advance(scanner);
+	}
+
+	int length = scanner->current - scanner->start;
+	char* symbol = (char*)malloc((length + 1) * sizeof(char));
+	symbol[length] = '\0';
+
+	for(int i = 0; i < length; i++)
+	{
+		symbol[i] = *(scanner->start + i);
+	}
+
+	toLowercase(&symbol);
+
+	int value;
+	if(findInTable(&table, symbol, &value))
+		return value;
+	else
+	{
+		printf("Unknown symbol.\n");
+		return -1;
+	}
+}
+
+static int constant(Scanner* scanner)
+{
+	int n = 0;
+	while(isNumeric(scanner))
+	{
+		n = n * 10 + (advance(scanner) - '0');
+	}
+
+	return n;
+}
+
+static int reg()
+{
+	// here's the deal: register arithmetic only works in cases like:
+	// $1 + 2 = $3 and $3 - $1 = 2
+	// +,- are the only arithmetic operators allowed
+}
+
+static int fromHexadecimal(Scanner* scanner)
+{
+	int n = 0;
+	char c = peek(scanner);
+	toLowercaseC(&c);
+	while(isHexadecimal(scanner))
+	{
+		if(c >= 'a')
+		{
+			n = n * 16 + (c - 'a' + 10);
+		}
+		else
+		{
+			n = n * 16 + (c - '0'); 
+		}
+		advance(scanner);
+		c = peek(scanner);
+		toLowercaseC(&c);
+	}
+
+	return n;
+}
+
+static int expression(Scanner* scanner);
+
+static int term(Scanner* scanner)
+{
+	// possible terms: primaries(a symbol, constant, @, an strongOperators enclosed in parentheses or a unary operator followed by a primary
+	// unary operators: +, -, ~, $
+	int a;
+	if(isUnary(scanner))
+	{
+		char op = advance(scanner);
+		a = term(scanner);
+		switch(op)
+		{
+			case '+':
+				break;
+			case '-':
+				a = -a;
+				break;
+			case '~':
+				a = ~a;
+				break;
+			case '$':
+				a = reg(scanner, a);
+				break;
+		}
+	}
+	else if(peek(scanner) == '(')
+	{
+		advance(scanner); // skip the '('
+		a = expression(scanner);
+		advance(scanner); // skip the ')'
+	}
+	else if(peek(scanner) == '@')
+	{
+		a = location(scanner);
+	}
+	else if(peek() == '#')
+	{
+		advance(scanner);
+		a = fromHexadecimal(scanner);
+	}
+	else if(isAlphanumeric(scanner) && !isNumeric(scanner))
+	{
+		a = symbol(scanner);
+	}
+	else if(isNumeric(scanner))
+	{
+		a = constant(scanner);
+	}
+	else
+	{
+		// Report an error
+		printf("Unknown term.\n");
+		return -1;
+	}
+	return a;
+}
+
+static int strongOperators(double* opt)
+{
+	// strong binary operators: *,/,//,%,<<,>>,&
+	bool fpo = false;
+	int a = term(scanner);
+	int b;
+	double opt_b;
+	while(!isAtEnd(scanner) && !isRightParen(scanner) && !isWeakOperator(scanner))
+	{
+		printf("%c ", peek(scanner));
+		if(isStrongOperator(scanner))
+		{
+			char op = advance(scanner);
+			int b;
+			switch(op)
+			{
+				case '*':
+					b = term(scanner);
+					if(!fpo)
+						a *= b;
+					else
+						*opt *=opt_b;
+					break;
+				case '&':
+					b = term(scanner);
+					if(!fpo)
+						a &= b;
+					else
+						printf("Invalid operands.\n");
+					break;
+				case '%':
+					b = term(scanner);
+					if(!fpo)
+						a %= b;
+					else
+						printf("Invalid operands.\n");
+					break;
+				case '/':
+				{
+					if(peekNext(scanner) == '/')
+					{
+						advance(scanner);
+						b = term(scanner);
+						fpo = true;
+						*opt = (double)a / (double)b;	
+					}
+					else
+					{
+						b = term(scanner);
+						if(!fpo)
+							a /= b;
+						else
+							*opt /= opt_b;
+					}
+					break;
+				}
+				case '<':
+				{
+					advance(scanner);
+					b = term(scanner);
+					if(!fpo)
+						a <<= b;
+					else
+						printf("Invalid operands.\n");
+					break;
+				}
+				case '>':
+				{
+					advance(scanner);
+					b = term(scanner);
+					if(!fpo)
+						a >>= b;
+					else
+						printf("Invalid operands.\n");
+					break;
+				}
+			}
+		}
+		else
+		{
+			printf("Error in strongOperators.\n");
+			return -1;
+		}
+	}
+
+	return a;
+}
+
+static int expression(Scanner* scanner)
+{
+	// weak binary operators: +,-,|,^
+	double opt;
+	int a = strongOperators(scanner, &opt);
+	int b;
+	while(!isAtEnd(scanner) && !isRightParen(scanner))
+	{
+		if(isWeakOperator(scanner))
+		{
+			char op = advance(scanner);
+			double opt_b;
+			b = strongOperators(scanner, &opt_b);
+			switch(op)
+			{
+				case '+':
+					a += b;
+					break;
+				case '-':
+					a -= b;
+					break;
+				case '|':
+					a |= b;
+					break;
+				case '^':
+					a ^= b;
+					break;
+			}
+		}
+		else
+		{
+			printf("Error in expression\n");
+			return -1;
+		}
+	}
+
+	return a;
+}
 
 static void errorAt(Token token, const char* message)
 {
@@ -121,68 +412,6 @@ static bool match(char* instruction, int start, char* pattern, int length)
 	return false;
 }
 
-static int immediate(Parser* parser, Scanner* scanner, VM* vm)
-{
-
-}
-
-static int constant(Parser* parser, Scanner* scanner, VM* vm)
-{
-
-}
-
-static void label(Parser* parser, Scanner* scanner, VM* vm)
-{
-
-}
-
-static void string(Parser* parser, Scanner* scanner, VM* vm)
-{
-
-}
-
-static void unary(Parser* parser, Scanner* scanner, VM* vm)
-{
-	TokenType operatorType = parser->previous.type;
-
-	// add here
-
-	switch (operatorType)
-	{
-		case TOKEN_MINUS: break;
-		case TOKEN_COMPLEMENT: break;
-		case TOKEN_REGISTER:	break;
-		default: return;
-	}
-}
-
-static void binary(Parser* parser, Scanner* scanner, VM* vm)
-{
-	TokenType operatorType = parser->previous.type;
-
-	// add here
-	
-	switch (operatorType)
-	{
-		case TOKEN_SLASH:	break;
-		case TOKEN_DSLASH:break;
-		case TOKEN_PLUS:	break;
-		case TOKEN_MINUS:	break;
-		case TOKEN_STAR:	break;
-		case TOKEN_AND:		break;
-		case TOKEN_OR:		break;
-		case TOKEN_XOR:		break;
-		case TOKEN_LSHIFT:break;
-		case TOKEN_RSHIFT:break;
-		default: return;
-	}
-}
-
-static int expressionStatement(Parser* parser, Scanner* scanner, VM* vm)
-{
-
-}
-
 static void commaStatement(Parser* parser, Scanner* scanner, VM* vm)
 {
 	int value = expressionStatement(parser, scanner, vm);
@@ -243,35 +472,6 @@ static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)
 		addToTable(vm->table, word, parser->current.start); 
 	}
 	instructionStatement(parser, scanner, vm);
-}
-
-ParseRule rules[] =
-{
-	[TOKEN_INSTRUCTION]					= {NULL,			NULL,		PREC_NONE},
-//	[TOKEN_GENERAL_REGISTER],
-	[TOKEN_SPECIAL_REGISTER]		= {NULL, 			NULL,		PREC_NONE},
-	[TOKEN_IMMEDIATE] 					= {immediate,	NULL, 	PREC_NONE},
-	[TOKEN_LABEL] 							= {label,  		NULL, 	PREC_NONE},
-	[TOKEN_STRING]							= {string, 		NULL, 	PREC_NONE},
-	[TOKEN_COMMA] 							= {NULL, 			NULL, 	PREC_NONE},
-	[TOKEN_CONSTANT]						= {constant,	NULL,		PREC_NONE},
-	[TOKEN_ERR] 								= {NULL,  		NULL, 	PREC_NONE},
-	[TOKEN_EOF] 								= {NULL,  		NULL, 	PREC_NONE},
-	[TOKEN_PLUS]								= {unary,			binary,	PREC_},
-	[TOKEN_MINUS] 							= {unary,			binary, PREC_},
-	[TOKEN_SLASH] 							= {NULL,			binary, PREC_},
-	[TOKEN_STAR]								= {NULL,			binary, PREC_},
-	[TOKEN_AROUND]							= {NULL,			NULL,		PREC_NONE},
-	[TOKEN_DSLASH]							= {unary,			binary,	PREC_},
-	[TOKEN_MOD] 								= {NULL,			binary, PREC_},
-	[TOKEN_LSHIFT]							= {NULL,			binary,	PREC_},
-	[TOKEN_RSHIFT]							= {NULL,			binary, PREC_},
-	[TOKEN_AND] 							  = {NULL,			binary, PREC_},
-	[TOKEN_OR] 									= {NULL,			binary, PREC_},
-	[TOKEN_XOR] 								= {NULL,			binary, PREC_},
-	[TOKEN_SEMICOLON] 					= {NULL,			NULL,	PREC_NONE},
-	[TOKEN_REGISTER]						= {unary,			NULL, PREC_},
-	[TOKEN_COMPLEMENT]	        = {unary,			NULL,	PREC_},
 }
 
 void parse(Parser* parser, Scanner* scanner, VM* vm)
