@@ -10,7 +10,7 @@
 typedef enum
 {
 /* 0x */  OP_TRAP,  OP_FCMP,    OP_FUN,   OP_FEQL,    OP_FADD,    OP_FIX,     OP_FSUB,    OP_FIXU,
-/* 0x */  OP_FLOT,  OP_FLOTI,   OP_FLOTU, OP_FOLTUI,  OP_SFLOT,   OP_SFLOTI,  OP_SFLOTU,  OP_SFLOTUI,
+/* 0x */  OP_FLOT,  OP_FLOTI,   OP_FLOTU, OP_FLOTUI,  OP_SFLOT,   OP_SFLOTI,  OP_SFLOTU,  OP_SFLOTUI,
 /* 1x */  OP_FMUL,  OP_FCMPE,   OP_FUNE,  OP_FEQLE,   OP_FDIV,    OP_FSQRT,   OP_FREM,    OP_FINT,
 /* 1x */  OP_MUL,   OP_MULI,    OP_MULU,  OP_MULUI,   OP_DIV,     OP_DIVI,    OP_DIVU,    OP_DIVUI,
 /* 2x */  OP_ADD,   OP_ADDI,    OP_ADDU,  OP_ADDUI,   OP_SUB,     OP_SUBI,    OP_SUBU,    OP_SUBUI,
@@ -67,5 +67,6 @@ void freeByteSet(ByteSet* byte_set);
 void initVM(VM* vm);
 void freeVM(VM* vm);
 Byte toByte(int value);
+void execute(VM* vm);
 
 #endif
