@@ -76,11 +76,11 @@ void execute(VM* vm)
 				break;
 			case OP_FEQL:
 				break;
-			case OP_FADD:
+			case OP_FADD: // floating add: f($X)<-f($Y)+f($Z)
 				break;
 			case OP_FIX:
 				break;
-			case OP_FSUB:
+			case OP_FSUB: // floating subtract: f($X)<-f($Y)-f($Z)
 				break;
 			case OP_FIXU:
 				break;
@@ -100,7 +100,7 @@ void execute(VM* vm)
 				break;
 			case OP_SFLOTUI:
 				break;
-			case OP_FMUL:
+			case OP_FMUL: // floating multiply: f($X)<-f($Y)/f($Z)
 				break;
 			case OP_FCMPE:
 				break;
@@ -108,19 +108,19 @@ void execute(VM* vm)
 				break;
 			case OP_FEQLE:
 				break;
-			case OP_FDIV:
+			case OP_FDIV: // floating divide: f($X)<-f($Y)/f($Z)
 				break;
-			case OP_FSQRT:
+			case OP_FSQRT: // floating square root: f($X)<-f($Z)^(1/2)
 				break;
-			case OP_FREM:
+			case OP_FREM: // floating remainder: f($X)<f($Y) rem f($Z)
 				break;
-			case OP_FINT:
+			case OP_FINT: // floating integer: f($X)<-int f($Z)
 				break;
 			case OP_MUL: //multiply s($X)<-s($Y)xs($Z)
 				break;
 			case OP_MULI:
 				break;
-			case OP_MULU:
+			case OP_MULU: // u(rH $X)<-u($Y)xu($Z)
 				break;
 			case OP_MULUI:
 				break;
@@ -128,7 +128,7 @@ void execute(VM* vm)
 				break;
 			case OP_DIVI:
 				break;
-			case OP_DIVU:
+			case OP_DIVU: // u($X)<-floor(u(rD $Y) / u($Z)), u(rR)<-u(rD $Y) mod u($Z), if (u($Z) > u(rD)); otherwise $X<-rD, rR<-$Y
 				break;
 			case OP_DIVUI:
 				break;
@@ -164,11 +164,11 @@ void execute(VM* vm)
 				break;
 			case OP_16ADDUI:
 				break;
-			case OP_CMP:
+			case OP_CMP: // compare s($X)<-[s($Y) > s($Z)] - [s($Y) < s($Z)]
 				break;
 			case OP_CMPI:
 				break;
-			case OP_CMPU:
+			case OP_CMPU: // s($X)<-[u($Y) > u($Z)] - [u($Y) < u($Z)]
 				break;
 			case OP_CMPUI:
 				break;
@@ -184,15 +184,15 @@ void execute(VM* vm)
 				break;
 			case OP_SLI:
 				break;
-			case OP_SLU:
+			case OP_SLU: // s($X)<-s($Y)x2^(u($Z)) mod 2^64
 				break;
 			case OP_SLUI:
 				break;
-			case OP_SR:
+			case OP_SR: // shift right s($X)<-floor(s($Y)/2^u($Z))
 				break;
 			case OP_SRI:
 				break;
-			case OP_SRU:
+			case OP_SRU: // u($X)<-floor(u($Y)/2^u($Z))
 				break;
 			case OP_SRUI:
 				break;
@@ -260,67 +260,67 @@ void execute(VM* vm)
 				break;
 			case OP_PBEVB:
 				break;
-			case OP_CSN:
+			case OP_CSN: // conditional set if negative: if s($Y) < 0, set $X<-$Z
 				break;
 			case OP_CSNI:
 				break;
-			case OP_CSZ:
+			case OP_CSZ: // conditional set if zero: if $Y = 0, set $X<-$Z
 				break;
 			case OP_CSZI:
 				break;
-			case OP_CSP:
+			case OP_CSP: // conditional set if positive: if s($Y) > 0, set $X<-$Z
 				break;
 			case OP_CSPI:
 				break;
-			case OP_CSOD:
+			case OP_CSOD: // conditional set if odd: if s($Y) mod 2 = 1, set $X<-$Z
 				break;
 			case OP_CSODI:
 				break;
-			case OP_CSNN:
+			case OP_CSNN: // conditional set if nonnegative: if s($Y) >= 0, set $X<-$Z
 				break;
 			case OP_CSNNI:
 				break;
-			case OP_CSNZ:
+			case OP_CSNZ: // conditional set if nonzero: if $Y != 0, set $X<-$Z
 				break;
 			case OP_CSNZI:
 				break;
-			case OP_CSNP:
+			case OP_CSNP: // conditional set if nonpositive: if s($Y) <= 0, set $X<-$Z
 				break;
 			case OP_CSNPI:
 				break;
-			case OP_CSEV:
+			case OP_CSEV: // conditional set if even:	if s($Y) mod 2 = 0, set $X<-$Z
 				break;
 			case OP_CSEVI:
 				break;
-			case OP_ZSN:
+			case OP_ZSN: // zero or set if negative: $X<-$Z[s($Y) < 0]
 				break;
 			case OP_ZSNI:
-				break;
-			case OP_ZSZ:
+				break; 
+			case OP_ZSZ: // zero or set if zero: $X<-$Z[$Y = 0]
 				break;
 			case OP_ZSZI:
 				break;
-			case OP_ZSP:
+			case OP_ZSP: // zero or set if positive: $X<-$Z[s($Y) > 0]
 				break;
 			case OP_ZSPI:
 				break;
-			case OP_ZSOD:
+			case OP_ZSOD: // zero or set if odd: $X<-$Z[s($Y) mod 2 = 1]
 				break;
 			case OP_ZSODI:
 				break;
-			case OP_ZSNN:
+			case OP_ZSNN: // zero or set if nonnegative: $X<-$Z[s($Y) >= 0]
 				break;
-			case OP_ZSNII:
+			case OP_ZSNNI:
 				break;
-			case OP_ZSNZ:
+			case OP_ZSNZ: // zero or set if nonzero: $X<-$Z[$Y!=0]
 				break;
 			case OP_ZSNZI:
 				break;
-			case OP_ZSNP:
+			case OP_ZSNP: // zero or set if nonpositive: $X<-$Z[s($Y) <= 0]
 				break;
 			case OP_ZSNPI:
 				break;
-			case OP_ZSEV:
+			case OP_ZSEV: // zero or set if even: $X<-$Z[s($Y) mod 2 = 0]
 				break;
 			case OP_ZSEVI:
 				break;
@@ -452,67 +452,68 @@ void execute(VM* vm)
 				break;
 			case OP_PUSHGOI:
 				break;
-			case OP_OR:
+			case OP_OR: // bitwise or: v($X)<-v($Y) | v($Z)
 				break;
 			case OP_ORI:
 				break;
-			case OP_ORN:
+			case OP_ORN: // bitwise or-not: v($X)<-v($Y) | !v($Z)
 				break;
 			case OP_ORNI:
 				break;
-			case OP_NOR:
+			case OP_NOR: // bitwise not-or: !v($X)<-v($Y) | v($Z)
 				break;
 			case OP_NORI:
 				break;
-			case OP_XOR:
+			case OP_XOR: // bitwise exclusive-or: v($X)<-v($Y) ^ v($Z)
 				break;
 			case OP_XORI:
 				break;
-			case OP_AND:
+			case OP_AND: // bitwise and: v($X)<-v($Y) & v($Z)
 				break;
 			case OP_ANDI:
 				break;
-			case OP_ANDN:
+			case OP_ANDN: // bitwise and-not: v($X)<-v($Y) & !v($Z)
 				break;
 			case OP_ANDNI:
 				break;
-			case OP_NAND:
+			case OP_NAND: // bitwise not-and: !v($X)<-v($Y) & v($Z)
 				break;
 			case OP_NANDI:
 				break;
-			case OP_NXOR:
+			case OP_NXOR: // bitwise not-exclusive-or: !v($X)<-v($Y) ^ v($Z)
 				break;
 			case OP_NXORI:
 				break;
-			case OP_BDIF:
+			// y .-. z = max(0, y - z) (saturating subtraction)
+			case OP_BDIF: // byte difference: b($X)<-b($Y) .-. b($Z)
 				break;
 			case OP_BDIFI:
 				break;
-			case OP_WDIF:
+			case OP_WDIF: // wyde difference: w($X)<-w($Y) .-. w($Z)
 				break;
 			case OP_WDIFI:
 				break;
-			case OP_TDIF:
+			case OP_TDIF: // tetra difference: t($X)<-t($Y) .-. t($Z)
 				break;
 			case OP_TDIFI:
 				break;
-			case OP_ODIF:
+			case OP_ODIF: // octa difference: u($X)<-u($Y) .-. u($Z)
 				break;
 			case OP_ODIFI:
 				break;
-			case OP_MUX:
+			case OP_MUX: // bitwise multiplex (combines two bit vectors by looking at the special multiples mask regiser rM: v($X)<-(v($Y) & v(rM)) | (v($Z) & !v(rM))
 				break;
 			case OP_MUXI:
 				break;
-			case OP_SADD:
+			case OP_SADD: // sideways add(counts the number of bit positions in which register $Y has a 1 while register $Z has a 0: s($X)<-s(sum(v($Y) & !v($Z)))
 				break;
 			case OP_SADDI:
 				break;
-			case OP_MOR:
+			case OP_MOR: // multiple or: m^T($X)<-m^T($Y) |(on matrices) m^T($Z) <=> m($X)<-m($Z) |(on matrices) m($Y)
 				break;
 			case OP_MORI:
 				break;
-			case OP_MXOR:
+			case OP_MXOR: // multipe exclusive-or (same as MOR but with  ^(on matrices)
 				break;
 			case OP_MXORI:
 				break;
