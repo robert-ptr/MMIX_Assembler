@@ -116,7 +116,7 @@ void execute(VM* vm)
 				break;
 			case OP_FINT:
 				break;
-			case OP_MUL:
+			case OP_MUL: //multiply s($X)<-s($Y)xs($Z)
 				break;
 			case OP_MULI:
 				break;
@@ -124,7 +124,7 @@ void execute(VM* vm)
 				break;
 			case OP_MULUI:
 				break;
-			case OP_DIV:
+			case OP_DIV: //divide s($X)<-floor(s($Y)/s($Z))[$Z!=0] and s(rR)<-s($Y)mod s($Z)
 				break;
 			case OP_DIVI:
 				break;
@@ -132,15 +132,15 @@ void execute(VM* vm)
 				break;
 			case OP_DIVUI:
 				break;
-			case OP_ADD:
+			case OP_ADD: //add s($X)<-s($Y)+s($Z)
 				break;
 			case OP_ADDI:
 				break;
-			case OP_ADDU:
+			case OP_ADDU: // u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
 				break;
 			case OP_ADDUI:
 				break;
-			case OP_SUB:
+			case OP_SUB: //subtract s($X)<-S($Y)-S($Z)
 				break;
 			case OP_SUBI:
 				break;
@@ -148,19 +148,19 @@ void execute(VM* vm)
 				break;
 			case OP_SUBUI:
 				break;
-			case OP_2ADDU:
+			case OP_2ADDU: //times 2 and add unsigned u($X)<-(u($Y)x2+u($Z)) mod 2^64
 				break;
 			case OP_2ADDUI:
 				break;
-			case OP_4ADDU:
+			case OP_4ADDU: // times 4 and add unsigned
 				break;
 			case OP_4ADDUI:
 				break;
-			case OP_8ADDU:
+			case OP_8ADDU: // times 8 and add unsigned
 				break;
 			case OP_8ADDUI:
 				break;
-			case OP_16ADDU:
+			case OP_16ADDU: // times 16 and add unsigned
 				break;
 			case OP_16ADDUI:
 				break;
@@ -172,15 +172,15 @@ void execute(VM* vm)
 				break;
 			case OP_CMPUI:
 				break;
-			case OP_NEG:
+			case OP_NEG:	// negate s($X)<-Y-s($Z)
 				break;
 			case OP_NEGI:
 				break;
-			case OP_NEGU:
+			case OP_NEGU: // s($X)<-(Y-u($Z))mod 2^64
 				break;
 			case OP_NEGUI:
 				break;
-			case OP_SL:
+			case OP_SL: // shift left s($X)<-s($Y)x2^(u($Z))
 				break;
 			case OP_SLI:
 				break;
@@ -324,15 +324,15 @@ void execute(VM* vm)
 				break;
 			case OP_ZSEVI:
 				break;
-			case OP_LDB:
+			case OP_LDB: // load byte s($X)<-s(M1[A])
 				break;
-			case OP_LDBI:
+			case OP_LDBI: 
 				break;
-			case OP_LDBU:
+			case OP_LDBU: 
 				break;
 			case OP_LDBUI:
 				break;
-			case OP_LDW:
+			case OP_LDW: // load wyde s($X)<-s(M2[A])
 				break;
 			case OP_LDWI:
 				break;
@@ -340,7 +340,7 @@ void execute(VM* vm)
 				break;
 			case OP_LDWUI:
 				break;
-			case OP_LDT:
+			case OP_LDT: // load tetra s($X)<-s(M4[A])
 				break;
 			case OP_LDTI:
 				break;
@@ -348,7 +348,7 @@ void execute(VM* vm)
 				break;
 			case OP_LDTUI:
 				break;
-			case OP_LDO:
+			case OP_LDO: // load octra s($X)<-s(M8[A])
 				break;
 			case OP_LDOI:
 				break;
@@ -356,11 +356,11 @@ void execute(VM* vm)
 				break;
 			case OP_LDOUI:
 				break;
-			case OP_LDSF:
+			case OP_LDSF: // load short float
 				break;
 			case OP_LSDFI:
 				break;
-			case OP_LDHT:
+			case OP_LDHT: // load high tetra
 				break;
 			case OP_LDHTI:
 				break;
@@ -388,35 +388,35 @@ void execute(VM* vm)
 				break;
 			case OP_GOI:
 				break;
-			case OP_STB:
+			case OP_STB: // store byte s(M1[A])<-s($X)
 				break;
 			case OP_STBI:
 				break;
-			case OP_STBU:
+			case OP_STBU: // u(M1[A])<-u($X) mod 2^8
 				break;
 			case OP_STBUI:
 				break;
-			case OP_STW:
+			case OP_STW: // store wyde s(M2[A])<-s($X)
 				break;
 			case OP_STWI:
 				break;
-			case OP_STWU:
+			case OP_STWU: // u(M2[A])<-u($X) mod 2^16
 				break;
 			case OP_STWUI:
 				break;
-			case OP_STT:
+			case OP_STT: // store tetra s(M4[A])<-s($X)
 				break;
 			case OP_STTI:
 				break;
-			case OP_STTU:
+			case OP_STTU: // u(M4[A])<-u($X) mod 2^32
 				break;
 			case OP_STTUI:
 				break;
-			case OP_STO:
+			case OP_STO: // store octo s(M8[A])<-s($X)
 				break;
 			case OP_STOI:
 				break;
-			case OP_STOU:
+			case OP_STOU: // u(M8[A])<-u($X) mod 2^64
 				break;
 			case OP_STOUI:
 				break;
@@ -428,7 +428,7 @@ void execute(VM* vm)
 				break;
 			case OP_STHTI:
 				break;
-			case OP_STCO:
+			case OP_STCO: // store constant octabyte u(M8[A])<-X
 				break;
 			case OP_STCOI:
 				break;

@@ -69,6 +69,11 @@ bool isNumeric()
 	return c >= '0' && c <= '9';
 }
 
+bool isRightParen()
+{
+	return peek() == ')';
+}
+
 bool isHexadecimal()
 {
 	char c = peek();
@@ -124,9 +129,6 @@ int reg()
 	// +,- are the only arithmetic operators allowed
 }
 
-int location()
-{}
-
 int fromHexadecimal()
 {
 	int n = 0;
@@ -150,11 +152,11 @@ int fromHexadecimal()
 	return n;
 }
 
-int statement();
+int expression();
 
 int term()
 {
-	// possible terms: primaries(a symbol, constant, @, an expression enclosed in parentheses or a unary operator followed by a primary
+	// possible terms: primaries(a symbol, constant, @, an strongOperators enclosed in parentheses or a unary operator followed by a primary
 	// unary operators: +, -, ~, $
 	int a;
 	if(isUnary())
@@ -179,7 +181,7 @@ int term()
 	else if(peek() == '(')
 	{
 		advance(); // skip the '('
-		a = statement();
+		a = expression();
 		advance(); // skip the ')'
 	}
 	else if(peek() == '@')
@@ -208,14 +210,14 @@ int term()
 	return a;
 }
 
-int expression(double* opt)
+int strongOperators(double* opt)
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
 	bool fpo = false;
 	int a = term();
 	int b;
 	double opt_b;
-	while(!isAtEnd() && !isWeakOperator())
+	while(!isAtEnd() && !isRightParen() && !isWeakOperator())
 	{
 		printf("%c ", peek());
 		if(isStrongOperator())
@@ -257,7 +259,7 @@ int expression(double* opt)
 					else
 					{
 						b = term();
-						if(fpo)
+						if(!fpo)
 							a /= b;
 						else
 							*opt /= opt_b;
@@ -288,7 +290,7 @@ int expression(double* opt)
 		}
 		else
 		{
-			printf("Error in expression.\n");
+			printf("Error in strongOperators.\n");
 			return -1;
 		}
 	}
@@ -296,19 +298,19 @@ int expression(double* opt)
 	return a;
 }
 
-int statement()
+int expression()
 {
 	// weak binary operators: +,-,|,^
 	double opt;
-	int a = expression(&opt);
+	int a = strongOperators(&opt);
 	int b;
-	while(!isAtEnd())
+	while(!isAtEnd() && !isRightParen())
 	{
 		if(isWeakOperator())
 		{
 			char op = advance();
 			double opt_b;
-			b = expression(&opt_b);
+			b = strongOperators(&opt_b);
 			switch(op)
 			{
 				case '+':
@@ -327,7 +329,7 @@ int statement()
 		}
 		else
 		{
-			printf("Error in statement\n");
+			printf("Error in expression\n");
 			return -1;
 		}
 	}
@@ -349,7 +351,7 @@ int main(int argc, char* argv[])
 		initScanner(buffer);
 		initTable(&table);
 
-		printf("%d", statement());
+		printf("%d", expression());
 
 		freeTable(&table);
 	}
