@@ -22,10 +22,10 @@ static void multiply64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* r
 	uint32_t p3 = b >> 32;
 	uint32_t p4 = b & 0xFFFFFFFF;
 
-	uint64_t _result1 = p2 * p4; // smallest, represents a part of the last 32 bits
-	uint64_t _result2 = p2 * p3; // 48 both
-	uint64_t _result3 = p2 * p4; // 48 both
-	uint64_t _result4 = p1 * p3; // biggest, represents a part of the first
+	uint64_t _result1 = p2 * p4; // smallest, represents a part of the last 64 bits
+	uint64_t _result2 = p2 * p3; // 32-96 both
+	uint64_t _result3 = p2 * p4; // 32-96 both
+	uint64_t _result4 = p1 * p3; // biggest, represents a part of the first 64 bits
 					 
 	if(_result4 >> 32 == 0)
 	{
@@ -34,18 +34,9 @@ static void multiply64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* r
 	else
 	{
 		// work in progress
-		uint64_t rest = _result1 >> 32 + _result2 & 0XFFFFFFFF + _result3 & 0xFFFFFFFF);
-		if(rest >> 32 > 0)
-		{		
-			*result1 = _result1 + _result2 & 0xFFFFFFFF << 32 + _result3 & 0xFFFFFFFF << 32;
-			*result2 = _result4 + _result2 >> 32 + _result2 >> 32 + rest >> 32;
-		}
-		else
-		{
-			*result1 = _result1 + _result2 & 0xFFFFFFFF << 32 + _result3 & 0xFFFFFFFF << 32;
-			*result2 = _result4 + _result2 >> 32 + _result2 >> 32;
-
-		}
+		uint64_t rest = _result1 >> 32 + _result2 & 0xFFFFFFFF + _result3 & 0xFFFFFFFF;
+		*result1 = _result1 + rest & 0xFFFFFFFF;
+		*result2 = _result4 + _result2 >> 32 + _result2 >> 32 + rest >> 32;
 	}
 }
 
