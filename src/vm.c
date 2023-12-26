@@ -15,6 +15,19 @@ static void resetStack(VM* vm)
 	vm->stack_top = vm->stack;
 }
 
+static void addition64bit(uint64_t a, uint64_t b, uint64_t* result)
+{
+	uint32_t p1 = a >> 32;
+	uint32_t p2 = a & 0xFFFFFFFF;
+	uint32_t p3 = b >> 32;
+	uint32_t p4 = b & 0xFFFFFFFF;
+
+	uint64_t _result1 = p1 + p3; // max 33 bits
+	uint64_t _result2 = (p2 + p4 + _result1 >> 32) & 0xFFFFFFFF; // max 33 bits
+	_result1 &= 0xFFFFFFFF;
+	*result = _result1 | (result_2 << 32);
+}
+
 static void multiply64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* result2)
 {
 	uint32_t p1 = a >> 32;
@@ -33,7 +46,6 @@ static void multiply64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* r
 	}
 	else
 	{
-		// work in progress
 		uint64_t rest = _result1 >> 32 + _result2 & 0xFFFFFFFF + _result3 & 0xFFFFFFFF;
 		*result1 = _result1 + rest & 0xFFFFFFFF;
 		*result2 = _result4 + _result2 >> 32 + _result2 >> 32 + rest >> 32;
@@ -96,12 +108,17 @@ Byte toByte(int value)
 
 Byte currentByte(VM* vm)
 {
-	return *vm->ip; 
+	if(vm->ip != NULL)
+		return *vm->ip; 
+	return NULL;
 }
 
 bool isAtEnd(VM* vm)
 {
-	if(vm->byte_set
+	if(vm->ip == NULL)
+		return true;
+
+	return false;
 }
 
 void execute(VM* vm)
@@ -113,7 +130,12 @@ void execute(VM* vm)
 			return;
 
 		Byte X,Y,Z;
-		switch(byte_set.bytes[i])
+		Byte byte = getByte();
+		X = getByte(vm);
+		Y = getByte(vm);
+		Z = getByte(vm);
+
+		switch(byte)
 		{
 					case OP_TRAP: // thiscommand is analogous to TRIP, but it forces a trap to the operating system.
 						break;
@@ -167,29 +189,34 @@ void execute(VM* vm)
 					case OP_MULI:
 					case OP_MULU: // u(rH $X)<-u($Y)xu($Z)
 					case OP_MULUI:
-						Byte byte = currentByte() - OP_MUL;
-						X = getByte(vm);
-						Y = getByte(vm);
-						Z = getByte(vm);
+						byte -= OP_MUL;
 
 						if(byte % 2 == 0 && byte / 2 == 0)
 							setReg(vm, X) = s(getReg(vm, Y)) * s(getReg(vm, Z));
 						else if(byte % 2 == 1 && byte / 2 == 0)
 							setReg(vm, X) = s(getReg(vm, Y)) * s(Z);
 						else if(byte % 2 == 0 && byte / 2 == 1)
-							setReg(vm, X) = u(getReg(vm, Y)) * u(getReg(vm, Z));
+						{
+							uint64_t* result1;
+							uint64_t* result2;
+							multiply64bit(u(getReg(vm, Y)), u(getReg(vm, Z)), result1, result2);
+							setReg(vm, X) = result1;
+							setSpecialReg(vm, rH) = result2;
+						}
 						else
-							setReg(vm, X) = u(getReg(vm, Y)) * u(Z);
+						{
+							uint64_t* result1;
+							uint64_t* result2;
+							multiply64bit(u(getReg(vm, Y)), u(Z), result1, result2);
+							setReg(vm, X) = result1;
+							setSpecialReg(vm, rH) = result2;
+						}
 						break;
 					case OP_DIV: //divide s($X)<-floor(s($Y)/s($Z))[$Z!=0] and s(rR)<-s($Y)mod s($Z)
 					case OP_DIVI:
 					case OP_DIVU: // u($X)<-floor(u(rD $Y) / u($Z)), u(rR)<-u(rD $Y) mod u($Z), if (u($Z) > u(rD)); otherwise $X<-rD, rR<-$Y
 					case OP_DIVUI:
-						Byte byte = currentByte() - OP_MUL;
-						X = getByte(vm);
-						Y = getByte(vm);
-						Z = getByte(vm);
-
+						
 						if(byte % 2 == 0 && byte / 2 == 0)
 						{
 							setReg(vm, X) = s(getReg(vm, Y)) / s(getReg(vm, Z));
@@ -215,27 +242,30 @@ void execute(VM* vm)
 					case OP_ADDI:
 /* LOC*/	case OP_ADDU: // u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
 					case OP_ADDUI:
-						X = getByte(vm);
-						Y = getByte(vm);
-						Z = getByte(vm);
+						byte -= OP_ADD;
 
 						if(byte % 2 == 0 && byte / 2 == 0)
 							setReg(vm, X) = s(getReg(vm, Y)) + s(getReg(vm, Z));
 						else if(byte % 2 == 1 && byte / 2 == 0)
 							setReg(vm, X) = s(getReg(vm, Y)) + s(Z);
 						else if(byte % 2 == 0 && byte / 2 == 1)
-							setReg(vm, X) = u(getReg(vm, Y)) + u(getReg(vm, Z));
+						{
+							uint64_t result;
+							addition64bit(u(getReg(vm, Y)), u(getReg(vm, Z)), result);
+							setReg(vm, X) = result;
+						}
 						else
-							setReg(vm, X) = u(getReg(vm, Y)) + u(Z);
-
+						{
+							uint64_t result;
+							addition64bit(u(getReg(vm, Y)), u(Z), result);
+							setReg(vm, X) = result;
+						}
 						break;
 					case OP_SUB: //subtract s($X)<-S($Y)-S($Z)
 					case OP_SUBI:
 					case OP_SUBU:
 					case OP_SUBUI:
-						X = getByte(vm);
-						Y = getByte(vm);
-						Z = getByte(vm);
+						byte -= OP_SUB;
 
 						if(byte % 2 == 0 && byte / 2 == 0)
 							setReg(vm, X) = s(getReg(vm, Y)) - s(getReg(vm, Z));
@@ -248,27 +278,41 @@ void execute(VM* vm)
 
 						break;
 					case OP_2ADDU: //times 2 and add unsigned u($X)<-(u($Y)x2+u($Z)) mod 2^64
-						X = getByte(vm);
-						Y = getByte(vm);
-						Z = getByte(vm);
-
-						__uint128_t index = (u(getReg(Y)) * 2 + u(getReg(Z)));
-						setReg(X) = u(getReg(Y)) * 2 + u(getReg(Z));	
-						break;
 					case OP_2ADDUI:
-						break;
 					case OP_4ADDU: // times 4 and add unsigned
-						break;
 					case OP_4ADDUI:
-						break;
 					case OP_8ADDU: // times 8 and add unsigned
-						break;
 					case OP_8ADDUI:
-						break;
 					case OP_16ADDU: // times 16 and add unsigned
-						break;
 					case OP_16ADDUI:
+					{
+						byte -= OP_2ADDU;
+						uint64_t* result1;
+						uint64_t* result2;
+						uint64_t* result;
+						uint64_t operand1;
+						uint64_t operand2;
+						uint64_t operand3;
+					
+						if(byte % 2 == 1)
+							operand3 = u(Z);
+						else
+							operand3 = u(getReg(Z));
+
+						if(byte / 2 == 0)
+							operand2 = 2;
+						else if(byte / 2 == 1)
+							operand2 = 4;
+						else if(byte / 2 == 2)
+							operand2 = 8;
+						else
+							operand2 = 16;
+
+						multiply64bit(operand1, operand2, result1, result2);
+						addition64bit(result1, operand3, setReg(X));
+
 						break;
+					}
 					case OP_CMP: // compare s($X)<-[s($Y) > s($Z)] - [s($Y) < s($Z)]
 						break;
 					case OP_CMPI:
@@ -445,17 +489,13 @@ void execute(VM* vm)
 					case OP_LDOI:
 					case OP_LDOU:
 					case OP_LDOUI:
-						Byte byte = currentByte() - OP_LDB;
-						X = getByte(vm);
-						Y = getByte(vm);
-						Z = getByte(vm);
-						__uint128_t index; 
+					{
+						byte -= OP_LDB;
 						if(byte % 2 == 1)
-							index =  (u(getReg(vm, Y)) + u(getReg(vm, Z)));// I'll need to check if these are implemented
+							addition64bit(u(getReg(X)), u(getReg(Y)), A);
 						else
-							index = X << 8 | Y;
+							A = X << 8 | Y;
 
-						uint64_t A = (uint64_t)index;
 						if(byte % 4 == 2 || byte % 4 == 3)
 						{
 							if(byte / 4 = 0)
@@ -477,10 +517,10 @@ void execute(VM* vm)
 								setReg(vm, X) = s(getTetraFromMem(A));
 							else
 								setReg(vm, X) = s(getOctaFromMem(A));
-
 						}
 
 						break;
+					}
 					case OP_LDSF: // load short float: f($X)<-f(M4[A]_
 						break;
 					case OP_LSDFI:
