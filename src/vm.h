@@ -62,8 +62,6 @@ typedef struct
 	Table table;
 } VM;
 
-void initByteSet(ByteSet* byte_set);
-void freeByteSet(ByteSet* byte_set);
 void initVM(VM* vm);
 void freeVM(VM* vm);
 Byte toByte(int value);
