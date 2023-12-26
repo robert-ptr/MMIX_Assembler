@@ -40,11 +40,6 @@ static void multiply64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* r
 	}
 }
 
-static uint64_t uint64_from_uint128(__uint128_t number)
-{
-	
-}
-
 static void initByteSet(ByteSet* byte_set)
 {
 	byte_set->count = 0;
