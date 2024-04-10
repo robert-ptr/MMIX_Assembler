@@ -21,10 +21,10 @@ void freeTable(Table* table)
 	initTable(table);
 }
 
-uint32_t hashString(char* s, int n)
+uint32_t hashString(char* s, int32_t n)
 {
 	uint32_t hash = 2166136261u;
-	for (int i = 0; i < n; i++)
+	for (int32_t i = 0; i < n; i++)
 	{
 		hash ^= (uint8_t)s[i];
 		hash *= 16777619;
@@ -33,7 +33,7 @@ uint32_t hashString(char* s, int n)
 	return hash;
 }
 
-Entry* findEntry(Entry* entries, int size, char* s, int n, uint32_t hash)
+Entry* findEntry(Entry* entries, int32_t size, char* s, int32_t n, uint32_t hash)
 {
 	uint32_t index = hash % size;
 	for (;;)
@@ -51,9 +51,9 @@ Entry* findEntry(Entry* entries, int size, char* s, int n, uint32_t hash)
 	}
 }
 
-bool findInTable(Table* table, char* s, int* val)
+bool findInTable(Table* table, char* s, int32_t* val)
 {
-	int n = strlen(s);
+	int32_t n = strlen(s);
 	uint32_t hash = hashString(s, n);	
 	
 	Entry* entry = findEntry(table->entries, table->size, s, n, hash);
@@ -64,16 +64,16 @@ bool findInTable(Table* table, char* s, int* val)
 	return true;
 }
 
-static void adjustSize(Table* table, int capacity)
+static void adjustSize(Table* table, int32_t capacity)
 {
 	Entry* entries = (Entry*)malloc(capacity * sizeof(Entry));
-	for(int i = 0; i < capacity; i++)
+	for(int32_t i = 0; i < capacity; i++)
 	{
 		entries[i].key = NULL;
 		entries[i].value = 0;
 	}
 
-	for(int i = 0; i < table->size; i++)
+	for(int32_t i = 0; i < table->size; i++)
 	{
 		Entry* entry = &table->entries[i];
 		if (entry->key == NULL) continue;
@@ -90,11 +90,11 @@ static void adjustSize(Table* table, int capacity)
 	table->entries = entries;
 }
 
-bool addToTable(Table* table, char* s, int n)
+bool addToTable(Table* table, char* s, int32_t n)
 {
 	if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
 	{
-		int capacity = GROW_LIST(table->size);
+		int32_t capacity = GROW_LIST(table->size);
 		adjustSize(table, capacity);
 	}
 	
@@ -111,7 +111,7 @@ bool addToTable(Table* table, char* s, int n)
 }
 
 /* for testing
-int main()
+int32_t main()
 {
 	initTable(&t);
 	printf("%d", addToTable(&t, "add", 3, -211));

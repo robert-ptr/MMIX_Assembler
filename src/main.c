@@ -20,7 +20,7 @@ ErrorType runFile(const char* source)
 	//execute();
 }
 
-int main(int argc, const char* argv[])
+int32_t main(int32_t argc, const char* argv[])
 {
 //	initVM();
 	const char* flags;

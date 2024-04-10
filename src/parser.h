@@ -12,4 +12,6 @@ typedef struct
 	bool panicMode;
 } Parser;
 
+void initParser();
+
 #endif

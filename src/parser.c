@@ -59,7 +59,7 @@ static bool isHexadecimal(Scanner* scanner)
 	return isNumeric(scanner) || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
 }
 
-static int symbol(Scanner* scanner)
+static int32_t symbol(Scanner* scanner)
 {
 	// retrieve the symbol from the hashtable
 	scanner->start = scanner->current;
@@ -68,18 +68,18 @@ static int symbol(Scanner* scanner)
 		advance(scanner);
 	}
 
-	int length = scanner->current - scanner->start;
+	int32_t length = scanner->current - scanner->start;
 	char* symbol = (char*)malloc((length + 1) * sizeof(char));
 	symbol[length] = '\0';
 
-	for(int i = 0; i < length; i++)
+	for(int32_t i = 0; i < length; i++)
 	{
 		symbol[i] = *(scanner->start + i);
 	}
 
 	toLowercase(&symbol);
 
-	int value;
+	int32_t value;
 	if(findInTable(&table, symbol, &value))
 		return value;
 	else
@@ -89,9 +89,9 @@ static int symbol(Scanner* scanner)
 	}
 }
 
-static int constant(Scanner* scanner)
+static int32_t constant(Scanner* scanner)
 {
-	int n = 0;
+	int32_t n = 0;
 	while(isNumeric(scanner))
 	{
 		n = n * 10 + (advance(scanner) - '0');
@@ -100,16 +100,16 @@ static int constant(Scanner* scanner)
 	return n;
 }
 
-static int reg()
+static int32_t reg()
 {
 	// here's the deal: register arithmetic only works in cases like:
 	// $1 + 2 = $3 and $3 - $1 = 2
 	// +,- are the only arithmetic operators allowed
 }
 
-static int fromHexadecimal(Scanner* scanner)
+static int32_t fromHexadecimal(Scanner* scanner)
 {
-	int n = 0;
+	int32_t n = 0;
 	char c = peek(scanner);
 	toLowercaseC(&c);
 	while(isHexadecimal(scanner))
@@ -130,13 +130,13 @@ static int fromHexadecimal(Scanner* scanner)
 	return n;
 }
 
-static int expression(Scanner* scanner);
+static int32_t expression(Scanner* scanner);
 
-static int term(Scanner* scanner)
+static int32_t term(Scanner* scanner)
 {
 	// possible terms: primaries(a symbol, constant, @, an strongOperators enclosed in parentheses or a unary operator followed by a primary
 	// unary operators: +, -, ~, $
-	int a;
+	int32_t a;
 	if(isUnary(scanner))
 	{
 		char op = advance(scanner);
@@ -188,12 +188,12 @@ static int term(Scanner* scanner)
 	return a;
 }
 
-static int strongOperators(double* opt)
+static int32_t strongOperators(double* opt)
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
 	bool fpo = false;
-	int a = term(scanner);
-	int b;
+	int32_t a = term(scanner);
+	int32_t b;
 	double opt_b;
 	while(!isAtEnd(scanner) && !isRightParen(scanner) && !isWeakOperator(scanner))
 	{
@@ -201,7 +201,7 @@ static int strongOperators(double* opt)
 		if(isStrongOperator(scanner))
 		{
 			char op = advance(scanner);
-			int b;
+			int32_t b;
 			switch(op)
 			{
 				case '*':
@@ -276,12 +276,12 @@ static int strongOperators(double* opt)
 	return a;
 }
 
-static int expression(Scanner* scanner)
+static int32_t expression(Scanner* scanner)
 {
 	// weak binary operators: +,-,|,^
 	double opt;
-	int a = strongOperators(scanner, &opt);
-	int b;
+	int32_t a = strongOperators(scanner, &opt);
+	int32_t b;
 	while(!isAtEnd(scanner) && !isRightParen(scanner))
 	{
 		if(isWeakOperator(scanner))
@@ -404,7 +404,7 @@ static bool isMacro(Parser* parser)
 	return false;
 }
 
-static bool match(char* instruction, int start, char* pattern, int length)
+static bool match(char* instruction, int32_t start, char* pattern, int32_t length)
 {
 	if(memcmp(instruction + start, pattern, length) == 0)
 		return true;
@@ -414,8 +414,8 @@ static bool match(char* instruction, int start, char* pattern, int length)
 
 static void commaStatement(Parser* parser, Scanner* scanner, VM* vm)
 {
-	int value = expressionStatement(parser, scanner, vm);
-	emitByte(vm, expressionStatement(parser, scanner, vm));
+	int32_t value = expressionStatement(parser, scanner, vm);
+	emitByte(vm, ); // complete later 
 	while(check(parser, TOKEN_COMMA))
 	{
 		advance(parser, scanner);
@@ -432,12 +432,12 @@ static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
 	if(parser->current.type == TOKEN_INSTRUCTION)
 	{
 		char* word = (char*)malloc((parser->current.length + 1) * sizeof(char));
-		for(int i = 0; i < parser->current.length; i++)
+		for(int32_t i = 0; i < parser->current.length; i++)
 		{
 			word[i] = parser->current.start[i];
 		}
 		word[parser->current.length] = '\0';
-		int emitValue;
+		int32_t emitValue;
 		if((emitValue = findWord(root, word)) != -1)
 		{
 			Byte byte = toByte(emitValue);

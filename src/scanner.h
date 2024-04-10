@@ -7,7 +7,7 @@ typedef struct
 {
 	char* start;
 	char* current;
-	int line;
+	int32_t line;
 
 	TrieNode* trie;
 } Scanner;
@@ -25,8 +25,8 @@ typedef struct
 {
 	TokenType type;
 	char* start;
-	int length;
-	int line;
+	int32_t length;
+	int32_t line;
 } Token;
 
 Scanner* initScanner(char* source);

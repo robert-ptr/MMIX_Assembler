@@ -61,10 +61,10 @@ static void initByteSet(ByteSet* byte_set)
 
 static void growByteSet(ByteSet* byte_set)
 {
-	int capacity = GROW_LIST(byte_set->capacity);
+	int32_t capacity = GROW_LIST(byte_set->capacity);
 	Byte* new_list = (Byte*)malloc(capacity * sizeof(Byte)); 
 
-	for(int i = 0; i < byte_set->count; i++)
+	for(int32_t i = 0; i < byte_set->count; i++)
 	{
 		new_list[i] = byte_set->bytes[i];
 	}
@@ -101,7 +101,7 @@ void freeVM(VM* vm)
 	freeTable(vm->table);
 }
 
-Byte toByte(int value)
+Byte toByte(int32_t value)
 {
 	return (Byte)value;
 }
@@ -147,11 +147,11 @@ void execute(VM* vm)
 						break;
 					case OP_FADD: // floating add: f($X)<-f($Y)+f($Z)
 						break;
-					case OP_FIX: // convert floating to fixed: s($X)<-int f($Z)
+					case OP_FIX: // convert floating to fixed: s($X)<-int32_t f($Z)
 						break;
 					case OP_FSUB: // floating subtract: f($X)<-f($Y)-f($Z)
 						break;
-					case OP_FIXU: // convert floating to fixed unsigned: u($X)<-[int f($Z)) mod 2^64
+					case OP_FIXU: // convert floating to fixed unsigned: u($X)<-[int32_t f($Z)) mod 2^64
 						break;
 					case OP_FLOT: // convert fixed to floating: f($X)<-s($Z)
 						break;
@@ -183,7 +183,7 @@ void execute(VM* vm)
 						break;
 					case OP_FREM: // floating remainder: f($X)<f($Y) rem f($Z)
 						break;
-					case OP_FINT: // floating integer: f($X)<-int f($Z)
+					case OP_FINT: // floating integer: f($X)<-int32_t f($Z)
 						break;
 					case OP_MUL: //multiply s($X)<-s($Y)xs($Z)
 					case OP_MULI:

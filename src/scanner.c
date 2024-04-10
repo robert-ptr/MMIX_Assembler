@@ -16,7 +16,7 @@ static Token makeToken(Scanner* scanner, TokenType type)
 	Token token;
 	token.start = scanner->start;
 	token.line = scanner->line;
-	token.length = (int)(scanner->current - scanner->start);
+	token.length = (int32_t)(scanner->current - scanner->start);
 	token.type = type;
 
 	return token;
@@ -103,9 +103,9 @@ static bool isAlphanumeric(Scanner* scanner)
 
 static TokenType identifierType(Scanner* scanner)
 {
-	int length = scanner->current - scanner->start;
+	int32_t length = scanner->current - scanner->start;
 	char* word = (char*)malloc(length * sizeof(char));
-	for(int i = 0; i < length; i++)
+	for(int32_t i = 0; i < length; i++)
 	{
 		word[i] = *(scanner->start + i);
 	}
@@ -123,10 +123,10 @@ Scanner* initScanner(char* source)
 	scanner->current = source;
 	scanner->line = 1;
 
-	int size;
+	int32_t size;
 	char** words = importInstructions("instructions.txt", &size);
 	scanner->trie = getNode();
-	for(int i = 0; i < size; i++)
+	for(int32_t i = 0; i < size; i++)
 	{
 		toLowercase(&words[i]);
 	}

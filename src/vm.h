@@ -48,8 +48,8 @@ typedef uint8_t Byte;
 
 typedef struct
 {
-	int count;
-	int capacity;
+	int32_t count;
+	int32_t capacity;
 	Byte* bytes;
 } ByteSet;
 
@@ -64,7 +64,7 @@ typedef struct
 
 void initVM(VM* vm);
 void freeVM(VM* vm);
-Byte toByte(int value);
+Byte toByte(int32_t value);
 void execute(VM* vm);
 
 #endif

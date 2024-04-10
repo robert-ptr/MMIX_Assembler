@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include "common.h"
 
-char* getString(char* buffer, int length, int buf_index)
+char* getString(char* buffer, int32_t length, int32_t buf_index)
 {
 	if(length <= 1)
 		return NULL;
 	
-	int i = 0;
+	int32_t i = 0;
 	char* new_string = (char*)malloc(length * sizeof(char));
 	new_string[length - 1] = '\0';
 	for(; (i + 1 - length) != 0; i++)
@@ -71,21 +71,21 @@ void toLowercaseC(char* c)
 
 void toLowercase(char** s)
 {
-	for(int i = 0; i < (*s)[i] != '\0'; i++)
+	for(int32_t i = 0; i < (*s)[i] != '\0'; i++)
 	{
 		if((*s)[i] >= 'A' && (*s)[i] <= 'Z')
 			(*s)[i] += 32;
 	}
 }
 
-char** importInstructions(const char* path, int* size)
+char** importInstructions(const char* path, int32_t* size)
 {
 	char** strings = (char**)malloc(256 * sizeof(char*));
 
 	char* buffer = readFile(path);
-	int length = 0;
-	int index = 0;
-	int buf_index = 0;
+	int32_t length = 0;
+	int32_t index = 0;
+	int32_t buf_index = 0;
 	while(buffer[buf_index] != '\0')
 	{
 		if(buffer[buf_index] == ' ' || buffer[buf_index] == ';' || buffer[buf_index] == '\t' || buffer[buf_index] == '\n')
