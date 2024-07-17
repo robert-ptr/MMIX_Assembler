@@ -4,12 +4,6 @@
 #include "vm.h"
 #include "common.h"
 
-typedef enum
-{
-	rA, rB,	rC,	rD,	rE,	rF,	rG,	rH,	rI,	rJ,	rK, rL, rM,	rN,	rO,	rP,	rQ,
-	rR, rS, rT, rU, rV, rX, rY, rZ, rBB, rTT, rWW, rXX, rYY, rZZ,
-} SpecialRegisters
-
 static void resetStack(VM* vm)
 {
 	vm->stack_top = vm->stack;
@@ -101,24 +95,33 @@ void freeVM(VM* vm)
 	freeTable(vm->table);
 }
 
-Byte toByte(int value)
+static bool isAtEnd(VM* vm)
 {
-	return (Byte)value;
+	return vm->ip == NULL;
 }
 
-Byte currentByte(VM* vm)
+static Byte currentByte(VM* vm)
 {
-	if(vm->ip != NULL)
+	if(!isAtEnd(vm))
 		return *vm->ip; 
 	return NULL;
 }
 
-bool isAtEnd(VM* vm)
+static Byte getByte(VM* vm)
 {
-	if(vm->ip == NULL)
-		return true;
+	if(!isAtEnd(vm))
+		return *(vm-ip++);
 
-	return false;
+	return NULL;
+}
+
+static uint64_t* getReg(VM* vm, uint8_t index)
+{
+}
+
+static uint64_t* getSpecialReg(VM* vm, uint8_t index)
+{
+	// check if index is valid
 }
 
 void execute(VM* vm)
@@ -130,7 +133,7 @@ void execute(VM* vm)
 			return;
 
 		Byte X,Y,Z;
-		Byte byte = getByte();
+		Byte byte = getByte(vm);
 		X = getByte(vm);
 		Y = getByte(vm);
 		Z = getByte(vm);
@@ -452,7 +455,7 @@ void execute(VM* vm)
 					case OP_ZSP: // zero or set if positive: $X<-$Z[s($Y) > 0]
 						break;
 					case OP_ZSPI:
-						break;
+						break;Trigger
 					case OP_ZSOD: // zero or set if odd: $X<-$Z[s($Y) mod 2 = 1]
 						break;
 					case OP_ZSODI:

@@ -9,6 +9,12 @@
 
 typedef enum
 {
+	rA, rB,	rC,	rD,	rE,	rF,	rG,	rH,	rI,	rJ,	rK, rL, rM,	rN,	rO,	rP,	rQ,
+	rR, rS, rT, rU, rV, rX, rY, rZ, rBB, rTT, rWW, rXX, rYY, rZZ,
+} SpecialRegisters
+
+typedef enum
+{
 /* 0x */  OP_TRAP,  OP_FCMP,    OP_FUN,   OP_FEQL,    OP_FADD,    OP_FIX,     OP_FSUB,    OP_FIXU,
 /* 0x */  OP_FLOT,  OP_FLOTI,   OP_FLOTU, OP_FLOTUI,  OP_SFLOT,   OP_SFLOTI,  OP_SFLOTU,  OP_SFLOTUI,
 /* 1x */  OP_FMUL,  OP_FCMPE,   OP_FUNE,  OP_FEQLE,   OP_FDIV,    OP_FSQRT,   OP_FREM,    OP_FINT,
@@ -45,6 +51,10 @@ typedef enum
 } OpType;
 
 typedef uint8_t Byte;
+typedef uint16_t Wyde;
+typedef uint32_t Tetra;
+typedef uint64_t Octa;
+typedef uint64_t Register;
 
 typedef struct
 {
@@ -57,14 +67,16 @@ typedef struct
 {
 	ByteSet byte_set;
 	Byte* ip;
-	int64_t stack[STACK_MAX];
-	int64_t* stack_top;
+	Octa stack[STACK_MAX];
+	Octa* stack_top;
+	Register general_registers[256];
+	Register special_registers[32];
 	Table table;
 } VM;
 
 void initVM(VM* vm);
 void freeVM(VM* vm);
-Byte toByte(int value);
 void execute(VM* vm);
+void addByte(ByteSet* byte_set, Byte byte);
 
 #endif

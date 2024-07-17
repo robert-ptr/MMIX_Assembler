@@ -63,18 +63,17 @@ FILE* createFile(const char* path)
 	return fd;
 }
 
-void toLowercaseC(char* c)
+void charToLowercase(char* c)
 {
 	if(*c >= 'A' && *c <= 'Z')
 		(*c) += 32;
 }
 
-void toLowercase(char** s)
+void wordToLowercase(char** s)
 {
 	for(int i = 0; i < (*s)[i] != '\0'; i++)
 	{
-		if((*s)[i] >= 'A' && (*s)[i] <= 'Z')
-			(*s)[i] += 32;
+		charToLowercase(&(*s)[i]);
 	}
 }
 

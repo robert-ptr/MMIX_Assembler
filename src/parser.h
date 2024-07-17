@@ -12,4 +12,6 @@ typedef struct
 	bool panicMode;
 } Parser;
 
+void parse(Parser* parser, Scanner* scanner, VM* vm);
+
 #endif

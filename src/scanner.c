@@ -91,7 +91,7 @@ static bool isNumeric(Scanner* scanner)
 static bool isHexadecimal(Scanner* scanner)
 {
 	char c = peek(scanner);
-	toLowercaseC(&c);
+	charToLowercase(&c);
 	return ((c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e');
 }
 
@@ -109,7 +109,7 @@ static TokenType identifierType(Scanner* scanner)
 	{
 		word[i] = *(scanner->start + i);
 	}
-	toLowercase(&word);
+	wordToLowercase(&word);
 	if(findWord(scanner->trie, word))
 		return TOKEN_INSTRUCTION;
 
@@ -128,7 +128,7 @@ Scanner* initScanner(char* source)
 	scanner->trie = getNode();
 	for(int i = 0; i < size; i++)
 	{
-		toLowercase(&words[i]);
+		wordToLowercase(&words[i]);
 	}
 	createTrie(scanner->trie, words, size);
 

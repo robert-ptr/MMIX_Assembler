@@ -7,17 +7,14 @@
 #include "vm.h"
 #include "trie.h"
 
-static bool isStrongOperator(Scanner* scanner)
+static bool isStrongOperator(char c)
 {
-	char c = peek(scanner);
 	char next = peekNext(scanner);
 	return (c == '*' || c == '%' || c == '&' || c == '/' || (c == '<' && next == '<') || (c == '>' && next == '>'));
 }
 
-static bool isWeakOperator(Scanner* scanner)
+static bool isWeakOperator(char c)
 {
-	char c = peek(scanner);
-
 	return (c == '+' || c == '-' || c == '|' || c == '^');
 }
 
@@ -29,41 +26,37 @@ static bool isAtEnd(Scanner* scanner)
 	return false;
 }
 
-static bool isUnary(Scanner* scanner)
+static bool isUnary(char c)
 {
-	char c = peek(scanner);
 	return c == '+' || c == '-' || c == '~' || c == '$';
 }
 
-static bool isAlphanumeric(Scanner* scanner)
+static bool isAlphanumeric(char c)
 {
-		char c = peek(scanner);
 		return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':');
 }
 
-static bool isNumeric(Scanner* scanner)
+static bool isNumeric(char c)
 {
-	char c = peek(scanner);
 	return c >= '0' && c <= '9';
 }
 
-static bool isRightParen(Scanner* scanner)
+static bool isRightParen(char c)
 {
-	return peek(scanner) == ')';
+	return c == ')';
 }
 
-static bool isHexadecimal(Scanner* scanner)
+static bool isHexadecimal(char c)
 {
-	char c = peek(scanner);
-	toLowercaseC(&c);
-	return isNumeric(scanner) || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
+	charToLowercase(&c);
+	return isNumeric(c) || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
 }
 
 static int symbol(Scanner* scanner)
 {
 	// retrieve the symbol from the hashtable
 	scanner->start = scanner->current;
-	while(isAlphanumeric(scanner))
+	while(isAlphanumeric(peek(scanner)))
 	{
 		advance(scanner);
 	}
@@ -77,7 +70,7 @@ static int symbol(Scanner* scanner)
 		symbol[i] = *(scanner->start + i);
 	}
 
-	toLowercase(&symbol);
+	wordToLowercase(&symbol);
 
 	int value;
 	if(findInTable(&table, symbol, &value))
@@ -92,7 +85,7 @@ static int symbol(Scanner* scanner)
 static int constant(Scanner* scanner)
 {
 	int n = 0;
-	while(isNumeric(scanner))
+	while(isNumeric(peek(scanner)))
 	{
 		n = n * 10 + (advance(scanner) - '0');
 	}
@@ -111,8 +104,8 @@ static int fromHexadecimal(Scanner* scanner)
 {
 	int n = 0;
 	char c = peek(scanner);
-	toLowercaseC(&c);
-	while(isHexadecimal(scanner))
+	charToLowercase(&c);
+	while(isHexadecimal(peek(scanner)))
 	{
 		if(c >= 'a')
 		{
@@ -124,7 +117,7 @@ static int fromHexadecimal(Scanner* scanner)
 		}
 		advance(scanner);
 		c = peek(scanner);
-		toLowercaseC(&c);
+		charToLowercase(&c);
 	}
 
 	return n;
@@ -134,10 +127,10 @@ static int expression(Scanner* scanner);
 
 static int term(Scanner* scanner)
 {
-	// possible terms: primaries(a symbol, constant, @, an strongOperators enclosed in parentheses or a unary operator followed by a primary
+	// possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
 	// unary operators: +, -, ~, $
 	int a;
-	if(isUnary(scanner))
+	if(isUnary(peek(scanner)))
 	{
 		char op = advance(scanner);
 		a = term(scanner);
@@ -171,11 +164,11 @@ static int term(Scanner* scanner)
 		advance(scanner);
 		a = fromHexadecimal(scanner);
 	}
-	else if(isAlphanumeric(scanner) && !isNumeric(scanner))
+	else if(isAlphanumeric(peek(scanner)) && !isNumeric(peek(scanner)))
 	{
 		a = symbol(scanner);
 	}
-	else if(isNumeric(scanner))
+	else if(isNumeric(peek(scanner)))
 	{
 		a = constant(scanner);
 	}
@@ -195,10 +188,10 @@ static int strongOperators(double* opt)
 	int a = term(scanner);
 	int b;
 	double opt_b;
-	while(!isAtEnd(scanner) && !isRightParen(scanner) && !isWeakOperator(scanner))
+	while(!isAtEnd(scanner) && !isRightParen(peek(scanner)) && !isWeakOperator(peek(scanner)))
 	{
 		printf("%c ", peek(scanner));
-		if(isStrongOperator(scanner))
+		if(isStrongOperator(peek(scanner)))
 		{
 			char op = advance(scanner);
 			int b;
@@ -282,9 +275,9 @@ static int expression(Scanner* scanner)
 	double opt;
 	int a = strongOperators(scanner, &opt);
 	int b;
-	while(!isAtEnd(scanner) && !isRightParen(scanner))
+	while(!isAtEnd(scanner) && !isRightParen(peek(scanner)))
 	{
-		if(isWeakOperator(scanner))
+		if(isWeakOperator(peek(scanner)))
 		{
 			char op = advance(scanner);
 			double opt_b;
@@ -440,7 +433,7 @@ static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
 		int emitValue;
 		if((emitValue = findWord(root, word)) != -1)
 		{
-			Byte byte = toByte(emitValue);
+			Byte byte = (uint8_t)emitValue;
 			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
 		}
 		else
