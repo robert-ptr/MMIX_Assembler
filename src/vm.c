@@ -4,11 +4,6 @@
 #include "vm.h"
 #include "common.h"
 
-static void resetStack(VM* vm)
-{
-	vm->stack_top = vm->stack;
-}
-
 static void addition64bit(uint64_t a, uint64_t b, uint64_t* result)
 {
 	uint32_t p1 = a >> 32;
@@ -82,17 +77,26 @@ static void freeByteSet(ByteSet* byte_set)
 	initByteSet(byte_set);
 }
 
+static void initMemory(Table* memory)
+{
+	initTable(memory);
+}
+
+static void freeMemory(Table* memory)
+{
+	freeTable(memory);
+}
+
 void initVM(VM* vm)
 {
-	resetStack(vm);
 	initByteSet(vm->byte_set);
-	initTable(vm->table);
+	initMemory(vm->memory);
 }
 
 void freeVM(VM* vm)
 {
 	freeByteSet(vm->byte_set);
-	freeTable(vm->table);
+	freeMemory(vm->memory);
 }
 
 static bool isAtEnd(VM* vm)
@@ -117,11 +121,36 @@ static Byte getByte(VM* vm)
 
 static uint64_t* getReg(VM* vm, uint8_t index)
 {
+	return vm->general_registers[index];
 }
 
 static uint64_t* getSpecialReg(VM* vm, uint8_t index)
 {
-	// check if index is valid
+	return vm->special_registers[index];
+}
+
+static int64_t s(uint64_t unsig)
+{
+	int64_t sig;
+	// convert from unsigned to signed
+	return sig;
+}
+
+static Byte getByteFromMem(VM* vm)
+{
+	return ;
+}
+
+static Wyde getWydeFromMem(VM* vm)
+{
+}
+
+static Tetra getTetraFromMem(VM* vm)
+{
+}
+
+static Octa getOctaFromMem(VM* vm)
+{
 }
 
 void execute(VM* vm)
@@ -137,6 +166,10 @@ void execute(VM* vm)
 		X = getByte(vm);
 		Y = getByte(vm);
 		Z = getByte(vm);
+		
+		Register* reg_X = getReg(vm, X);
+		Register* reg_Y = getReg(vm, Y);
+		Register* reg_Z = getReg(vm, Z);
 
 		switch(byte)
 		{
@@ -193,52 +226,52 @@ void execute(VM* vm)
 					case OP_MULU: // u(rH $X)<-u($Y)xu($Z)
 					case OP_MULUI:
 						byte -= OP_MUL;
-
+						
 						if(byte % 2 == 0 && byte / 2 == 0)
-							setReg(vm, X) = s(getReg(vm, Y)) * s(getReg(vm, Z));
+							*reg_X = s(*reg_Y) * s(*reg_Z);
 						else if(byte % 2 == 1 && byte / 2 == 0)
-							setReg(vm, X) = s(getReg(vm, Y)) * s(Z);
+							*reg_X = s(*reg_Y) * s(Z);
 						else if(byte % 2 == 0 && byte / 2 == 1)
 						{
 							uint64_t* result1;
 							uint64_t* result2;
-							multiply64bit(u(getReg(vm, Y)), u(getReg(vm, Z)), result1, result2);
-							setReg(vm, X) = result1;
-							setSpecialReg(vm, rH) = result2;
+							multiply64bit(*reg_Y, *reg_Z, result1, result2);
+							*reg_X = result1;
+							*getSpecialReg(vm, rH) = result2;
 						}
 						else
 						{
 							uint64_t* result1;
 							uint64_t* result2;
-							multiply64bit(u(getReg(vm, Y)), u(Z), result1, result2);
-							setReg(vm, X) = result1;
-							setSpecialReg(vm, rH) = result2;
+							multiply64bit(*reg_Y, Z, result1, result2);
+							*reg_X = result1;
+							*getSpecialReg(vm, rH) = result2;
 						}
 						break;
 					case OP_DIV: //divide s($X)<-floor(s($Y)/s($Z))[$Z!=0] and s(rR)<-s($Y)mod s($Z)
 					case OP_DIVI:
 					case OP_DIVU: // u($X)<-floor(u(rD $Y) / u($Z)), u(rR)<-u(rD $Y) mod u($Z), if (u($Z) > u(rD)); otherwise $X<-rD, rR<-$Y
 					case OP_DIVUI:
-						
+							
 						if(byte % 2 == 0 && byte / 2 == 0)
 						{
-							setReg(vm, X) = s(getReg(vm, Y)) / s(getReg(vm, Z));
-							setSpecialRegister(vm, rR) = s(getReg(vm, Y)) % s(getReg(vm, Z))
+							*reg_X = s(*reg_Y) / s(*reg_Z);
+							*getSpecialReg(vm, rR) = s(*reg_Y) % s(*reg_Z);
 						}
 						else if(byte % 2 == 1 && byte / 2 == 0)
 						{
-							setReg(vm, X) = s(getReg(vm, Y)) / s(Z);
-							setSpecialRegister(vm, rR) = s(getReg(vm, Y)) % s(Z);
+							*reg_X = s(*reg_Y) / s(Z);
+							*getSpecialReg(vm, rR) = s(*reg_Y) % s(Z);
 						}
 						else if(byte % 2 == 0 && byte / 2 == 1)
 						{
-							setReg(vm, X) = u(getReg(vm, Y)) / u(getReg(vm, Z));
-							setSpecialRegister(vm, rR) = u(getReg(vm, Y)) % u(getReg(vm, Z));
+							*reg_X = *reg_Y / *reg_Z;
+							*getSpecialReg(vm, rR) = *reg_Y % *reg_Z;
 						}
 						else
 						{
-							setReg(vm, X) = u(getReg(Y)) / u(Z);
-							setSpecialRegister(vm, rR) = u(getReg(Y)) % u(Z);
+							setReg(vm, X) = *reg_Y / Z;
+							setSpecialRegister(vm, rR) = *reg_Y % Z;
 						}
 						break;
 					case OP_ADD: //add s($X)<-s($Y)+s($Z)
@@ -248,20 +281,20 @@ void execute(VM* vm)
 						byte -= OP_ADD;
 
 						if(byte % 2 == 0 && byte / 2 == 0)
-							setReg(vm, X) = s(getReg(vm, Y)) + s(getReg(vm, Z));
+							*reg_X = s(*reg_Y) + s(*reg_Z);
 						else if(byte % 2 == 1 && byte / 2 == 0)
-							setReg(vm, X) = s(getReg(vm, Y)) + s(Z);
+							*reg_X = s(*reg_Y) + s(Z);
 						else if(byte % 2 == 0 && byte / 2 == 1)
 						{
 							uint64_t result;
-							addition64bit(u(getReg(vm, Y)), u(getReg(vm, Z)), result);
-							setReg(vm, X) = result;
+							addition64bit(*reg_Y, *reg_Z, result);
+							*reg_X = result;
 						}
 						else
 						{
 							uint64_t result;
-							addition64bit(u(getReg(vm, Y)), u(Z), result);
-							setReg(vm, X) = result;
+							addition64bit(*reg_Y, Z, result);
+							*reg_X = result;
 						}
 						break;
 					case OP_SUB: //subtract s($X)<-S($Y)-S($Z)
@@ -271,13 +304,13 @@ void execute(VM* vm)
 						byte -= OP_SUB;
 
 						if(byte % 2 == 0 && byte / 2 == 0)
-							setReg(vm, X) = s(getReg(vm, Y)) - s(getReg(vm, Z));
+							*reg_X = s(*reg_Y) - s(*reg_Z);
 						else if(byte % 2 == 1 && byte / 2 == 0)
-							setReg(vm, X) = s(getReg(vm, Y)) - s(Z);
+							*reg_X = s(*reg_Y) - s(Z);
 						else if(byte % 2 == 0 && byte / 2 == 1)
-							setReg(vm, X) = u(getReg(vm, Y)) - u(getReg(vm, Z));
+							*reg_X = *reg_Y - *reg_Z;
 						else
-							setReg(vm, X) = u(getReg(vm, Y)) - s(Z);
+							*reg_X = *reg_Y - Z;
 
 						break;
 					case OP_2ADDU: //times 2 and add unsigned u($X)<-(u($Y)x2+u($Z)) mod 2^64
@@ -298,9 +331,9 @@ void execute(VM* vm)
 						uint64_t operand3;
 					
 						if(byte % 2 == 1)
-							operand3 = u(Z);
+							operand3 = Z;
 						else
-							operand3 = u(getReg(Z));
+							operand3 = *reg_Z;
 
 						if(byte / 2 == 0)
 							operand2 = 2;
@@ -312,7 +345,7 @@ void execute(VM* vm)
 							operand2 = 16;
 
 						multiply64bit(operand1, operand2, result1, result2);
-						addition64bit(result1, operand3, setReg(X));
+						addition64bit(result1, operand3, *reg_X);
 
 						break;
 					}
@@ -495,31 +528,31 @@ void execute(VM* vm)
 					{
 						byte -= OP_LDB;
 						if(byte % 2 == 1)
-							addition64bit(u(getReg(X)), u(getReg(Y)), A);
+							addition64bit(*reg_Y, *reg_Z, A);
 						else
-							A = X << 8 | Y;
+							addition64bit(*reg_Y, Z, A);
 
 						if(byte % 4 == 2 || byte % 4 == 3)
 						{
 							if(byte / 4 = 0)
-								setReg(vm, X) = u(getByteFromMem(A));
+								*reg_X = getByteFromMem(A);
 							else if(byte / 4 = 1)
-								setReg(vm, X) = u(getWydeFromMem(A));	
+								*reg_X = getWydeFromMem(A);	
 							else if(byte / 4 == 2)
-								setReg(vm, X) = u(getTetraFromMem(A));
+								*reg_X = getTetraFromMem(A);
 							else
-								setReg(vm, X) = u(getOctaFromMem(A));
+								*reg_X = getOctaFromMem(A);
 						}
 						else
 						{
 							if(byte / 4 = 0)
-								setReg(vm, X) = s(getByteFromMem(A));
+								*reg_X = s(getByteFromMem(A));
 							else if(byte / 4 = 1)
-								setReg(vm, X) = s(getWydeFromMem(A));	
+								*reg_X = s(getWydeFromMem(A));	
 							else if(byte / 4 == 2)
-								setReg(vm, X) = s(getTetraFromMem(A));
+								*reg_X = s(getTetraFromMem(A));
 							else
-								setReg(vm, X) = s(getOctaFromMem(A));
+								*reg_X = s(getOctaFromMem(A));
 						}
 
 						break;

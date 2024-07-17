@@ -93,11 +93,14 @@ static int32_t constant(Scanner* scanner)
 	return n;
 }
 
-static int32_t reg()
+static Byte reg(Scanner* scanner)
 {
 	// here's the deal: register arithmetic only works in cases like:
 	// $1 + 2 = $3 and $3 - $1 = 2
 	// +,- are the only arithmetic operators allowed
+	// make a separate parser for this
+	
+	return constant();
 }
 
 static int32_t fromHexadecimal(Scanner* scanner)
@@ -145,7 +148,7 @@ static int32_t term(Scanner* scanner)
 				a = ~a;
 				break;
 			case '$':
-				a = reg(scanner, a);
+				a = reg(scanner);
 				break;
 		}
 	}

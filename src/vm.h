@@ -13,6 +13,41 @@ typedef enum
 	rR, rS, rT, rU, rV, rX, rY, rZ, rBB, rTT, rWW, rXX, rYY, rZZ,
 } SpecialRegisters
 
+/*																						saved? put?
+ 	rA		arithmetic status register				21		*			*
+	rB		bootstrap register (trip)					0			*			*
+	rC		cycle counter											8			
+	rD		dividend register									1			*			*
+	rE		epsilon register									2			*			*
+	rF		failure location register					22					*
+	rG		global threshold register					19		*			*
+	rH		himult register										3			*			*
+	rI		interval counter									12		
+	rJ		return-jump register							4			*			*
+	rK		interrupt mask register						15
+	rL		local threshold register					20		*			*
+	rM		multiples mask register						5			*			*
+	rN		serial number											9
+	rO		register stack offset							10
+	rP		prediction register								23		*			*
+	rQ		interrupt request register				16
+	rR		remainder register								6			*			*
+	rS		register stack pointer						11
+	rT		trap address register							13
+	rU		usage counter											17
+	rV		virtual translation register			18
+	rW		where-interrupted register (trip)	24		*			*
+	rX		execution register (trip)					25		*			*
+	rY		Y operand (trip)									26		*			*
+	rZ		Z operand (trip)									27		*			*
+	rBB		bootstrap register (trap)					7						*
+	rTT		dynamic trap address register			14
+	rWW		where-interrupted register (trap)	28					*
+	rXX 	execution register (trap)					29					*
+	rYY 	Y operand (trap)									30					*
+		rZZ		Z operand (trap)									31				*
+ * /
+
 typedef enum
 {
 /* 0x */  OP_TRAP,  OP_FCMP,    OP_FUN,   OP_FEQL,    OP_FADD,    OP_FIX,     OP_FSUB,    OP_FIXU,
@@ -53,6 +88,7 @@ typedef enum
 typedef uint8_t Byte;
 typedef uint16_t Wyde;
 typedef uint32_t Tetra;
+typedef uint32_t Instruction;
 typedef uint64_t Octa;
 typedef uint64_t Register;
 
@@ -67,11 +103,9 @@ typedef struct
 {
 	ByteSet byte_set;
 	Byte* ip;
-	Octa stack[STACK_MAX];
-	Octa* stack_top;
 	Register general_registers[256];
 	Register special_registers[32];
-	Table table;
+	Table memory;
 } VM;
 
 void initVM(VM* vm);
