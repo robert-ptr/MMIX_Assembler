@@ -58,8 +58,8 @@ typedef uint64_t Register;
 
 typedef struct
 {
-	int count;
-	int capacity;
+	int32_t count;
+	int32_t capacity;
 	Byte* bytes;
 } ByteSet;
 

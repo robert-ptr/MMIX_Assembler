@@ -10,13 +10,13 @@ TrieNode* getNode(void)
 	TrieNode* new_node = (TrieNode*)malloc(sizeof(TrieNode));
 	new_node->isWord = -1;
 
-	for(int i = 0; i < ALPHABET_SIZE; i++)
+	for(int32_t i = 0; i < ALPHABET_SIZE; i++)
 		new_node->nodes[i] = NULL;
 
 	return new_node;
 }
 
-static int alphabetIndex(char c)
+static int32_t alphabetIndex(char c)
 {
 	if(c >= '0' && c <= '9')
 		return 26 + (c - '0');
@@ -26,18 +26,18 @@ static int alphabetIndex(char c)
 		return -1;
 }
 
-void insertNode(TrieNode* node, char* word, int value)
+void insertNode(TrieNode* node, char* word, int32_t value)
 {
 		TrieNode* copy = node;
-		int n = strlen(word);
-		for(int i = 0; i < n; i++)
+		int32_t n = strlen(word);
+		for(int32_t i = 0; i < n; i++)
 		{
 			if(alphabetIndex(word[i]) == -1)
 				return;
 		}
-		for(int i = 0; i < n; i++)
+		for(int32_t i = 0; i < n; i++)
 		{
-			int index = alphabetIndex(word[i]);
+			int32_t index = alphabetIndex(word[i]);
 			if(copy->nodes[index] == NULL)
 			{
 				copy->nodes[index] = getNode();
@@ -50,17 +50,17 @@ void insertNode(TrieNode* node, char* word, int value)
 
 }
 
-void createTrie(TrieNode* node, char** words, int n)
+void createTrie(TrieNode* node, char** words, int32_t n)
 {
-	for(int i = 0; i < n; i++)
+	for(int32_t i = 0; i < n; i++)
 	{
 		insertNode(node, words[i], -2);
 	}
 }
 
-int parseNumber(char* buffer, int* index)
+int32_t parseNumber(char* buffer, int32_t* index)
 {
-	int number = 0;
+	int32_t number = 0;
 	while(buffer[*index] != '\0' && buffer[*index] != '\n')
 	{
 		number = number* 10 + (buffer[*index] - '0');
@@ -74,23 +74,23 @@ void createInstructionTrie(TrieNode* node)
 {
 	char* buffer = readFile("instructions2.txt");
 	
-	int index = 0;
-	int n = 0;
+	int32_t index = 0;
+	int32_t n = 0;
 	char** words = (char**)malloc(256 * sizeof(char*));
-	int* values = (int*)malloc(256 * sizeof(int));
+	int32_t* values = (int32_t*)malloc(256 * sizeof(int32_t));
 
 	while(buffer[index] != '\0')
 	{
-		int start = index;
+		int32_t start = index;
 		while(buffer[index] != ' ')
 		{
 			index++;
 		}
 
-		int length = index - start;
+		int32_t length = index - start;
 		char* word = (char*)malloc((length + 1) * sizeof(char));
 
-		for(int i = 0; i < length; i++)
+		for(int32_t i = 0; i < length; i++)
 		{
 			word[i] = buffer[start + i];
 		}
@@ -106,17 +106,17 @@ void createInstructionTrie(TrieNode* node)
 			index++;
 	}
 
-	for(int i = 0; i < n; i++)
+	for(int32_t i = 0; i < n; i++)
 	{
 		insertNode(node, words[i], values[i]);
 	}
 }
 
-int findWord(TrieNode* node, char* word)
+int32_t findWord(TrieNode* node, char* word)
 {
-	for(int i = 0; word[i] != '\0'; i++)
+	for(int32_t i = 0; word[i] != '\0'; i++)
 	{
-		int index = alphabetIndex(word[i]);
+		int32_t index = alphabetIndex(word[i]);
 		if(index == -1)
 			return -1;
 		if(node->nodes[index] == NULL)
@@ -128,7 +128,7 @@ int findWord(TrieNode* node, char* word)
 }
 
 /* for testing
-int main()
+int32_t main()
 {
 	TrieNode* root = getNode();
 	createInstructionTrie(root);

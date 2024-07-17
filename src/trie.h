@@ -10,12 +10,12 @@ typedef struct TrieNode TrieNode;
 struct TrieNode
 {
 	TrieNode* nodes[ALPHABET_SIZE];
-	int isWord;
+	int32_t isWord;
 };
 
 TrieNode* getNode(void);
-void insertNode(TrieNode* node, char* word, int value);
-void createTrie(TrieNode* node, char** words, int n);
-int findWord(TrieNode* node, char* word);
+void insertNode(TrieNode* node, char* word, int32_t value);
+void createTrie(TrieNode* node, char** words, int32_t n);
+int32_t findWord(TrieNode* node, char* word);
 
 #endif
