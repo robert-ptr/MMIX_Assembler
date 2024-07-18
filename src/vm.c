@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "vm.h"
-#include "common.h"
 
 static void addition64bit(uint64_t a, uint64_t b, uint64_t* result)
 {
@@ -138,45 +137,115 @@ static int64_t s(uint64_t unsig)
 
 static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 {
-	addToMemory();
+	uint8_t offset = address % 8;
+	address -= offset;
+
+	char* key = intToStr(address);
+	
+	uint64_t value;
+	findInTable(vm->table, key, &value);
+	value = value | (0xFF << (8 * offset)) & byte << (8 * offset);
+
+	addToTable(vm->memory, key, value);
 }
 
 static void addWydeFromMem(VM* vm, uint64_t address, Wyde wyde)
 {
-	addToMemory();
+	uint8_t offset = address % 4;
+	address -= offset;
+
+	char* key = intToStr(address);
+	
+	uint64_t value;
+	findInTable(vm->table, key, &value);
+	value = value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
+
+	addToTable(vm->memory, key, value);
 }
 
 static void addTetraFromMem(VM* vm, uint64_t address, Tetra tetra)
 {
-	addToMemory();
+	uint8_t offset = address % 2;
+	address -= offset;
+
+	char* key = intToStr(address);
+	
+	uint64_t value;
+	findInTable(vm->table, key, &value);
+	value = value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
+
+	addToTable(vm->memory, key, value);
 }
 
 static void addOctaFromMem(VM* vm, uint64_t address, Octa octa)
 {
-	addToMemory();
+	char* key = intToStr(address);
+
+	addToTable(vm->memory, key, octa);
 }
 
-static Byte getByteFromMem(VM* vm, uint64_t index)
+static Byte getByteFromMem(VM* vm, uint64_t address)
 {
 	int* val;
-	if(findInTable(vm->memory, , val)
+	uint8_t offset = address % 8;
+	address -= offset;
+
+	char* key = intToStr(address);
+
+	if(findInTable(vm->memory, key, val)
 	{
-		return *val;
+		return *val << (8 * (7 - offset)) >> 56;
 	}
 
 	return 0;
 }
 
-static Wyde getWydeFromMem(VM* vm, uint64_t index)
+static Wyde getWydeFromMem(VM* vm, uint64_t address)
 {
+	int* val;
+	uint8_t offset = address % 4;
+	address -= offset;
+
+	char* key = intToStr(address);
+
+	if(findInTable(vm->memory, key, val)
+	{
+		return *val << (16 * (3 - offset)) >> 48;
+	}
+
+	return 0;
+
 }
 
-static Tetra getTetraFromMem(VM* vm, uint64_t index)
+static Tetra getTetraFromMem(VM* vm, uint64_t address)
 {
+	int* val;
+	uint8_t offset = address % 2;
+	address -= offset;
+
+	char* key = intToStr(address);
+
+	if(findInTable(vm->memory, key, val)
+	{
+		return *val << (32 * (1 - offset)) >> 32;
+	}
+
+	return 0;
+
 }
 
-static Octa getOctaFromMem(VM* vm, uint64_t index)
+static Octa getOctaFromMem(VM* vm, uint64_t address)
 {
+	int* val;
+	char* key = intToStr(address);
+
+	if(findInTable(vm->memory, key, val)
+	{
+		return *val;
+	}
+
+	return 0;
+
 }
 
 void execute(VM* vm)
@@ -278,7 +347,8 @@ void execute(VM* vm)
 					case OP_DIVI:
 					case OP_DIVU: // u($X)<-floor(u(rD $Y) / u($Z)), u(rR)<-u(rD $Y) mod u($Z), if (u($Z) > u(rD)); otherwise $X<-rD, rR<-$Y
 					case OP_DIVUI:
-							
+						byte -= OP_DIV;
+
 						if(byte % 2 == 0 && byte / 2 == 0)
 						{
 							*reg_X = s(*reg_Y) / s(*reg_Z);
@@ -376,35 +446,23 @@ void execute(VM* vm)
 						break;
 					}
 					case OP_CMP: // compare s($X)<-[s($Y) > s($Z)] - [s($Y) < s($Z)]
-						break;
 					case OP_CMPI:
-						break;
 					case OP_CMPU: // s($X)<-[u($Y) > u($Z)] - [u($Y) < u($Z)]
-						break;
 					case OP_CMPUI:
 						break;
 					case OP_NEG:	// negate s($X)<-Y-s($Z)
-						break;
 					case OP_NEGI:
-						break;
 					case OP_NEGU: // s($X)<-(Y-u($Z))mod 2^64
-						break;
 					case OP_NEGUI:
 						break;
 					case OP_SL: // shift left s($X)<-s($Y)x2^(u($Z))
-						break;
 					case OP_SLI:
-						break;
 					case OP_SLU: // s($X)<-s($Y)x2^(u($Z)) mod 2^64
-						break;
 					case OP_SLUI:
 						break;
 					case OP_SR: // shift right s($X)<-floor(s($Y)/2^u($Z))
-						break;
 					case OP_SRI:
-						break;
 					case OP_SRU: // u($X)<-floor(u($Y)/2^u($Z))
-						break;
 					case OP_SRUI:
 						break;
 					case OP_BN: // branch if negative: if s($X) < 0, set @<-RA
@@ -514,7 +572,7 @@ void execute(VM* vm)
 					case OP_ZSP: // zero or set if positive: $X<-$Z[s($Y) > 0]
 						break;
 					case OP_ZSPI:
-						break;Trigger
+						break;
 					case OP_ZSOD: // zero or set if odd: $X<-$Z[s($Y) mod 2 = 1]
 						break;
 					case OP_ZSODI:
@@ -553,6 +611,7 @@ void execute(VM* vm)
 					case OP_LDOUI:
 					{
 						byte -= OP_LDB;
+						
 						if(byte % 2 == 1)
 							addition64bit(*reg_Y, *reg_Z, A);
 						else
@@ -560,9 +619,9 @@ void execute(VM* vm)
 
 						if(byte % 4 == 2 || byte % 4 == 3)
 						{
-							if(byte / 4 = 0)
+							if(byte / 4 == 0)
 								*reg_X = getByteFromMem(A);
-							else if(byte / 4 = 1)
+							else if(byte / 4 == 1)
 								*reg_X = getWydeFromMem(A);	
 							else if(byte / 4 == 2)
 								*reg_X = getTetraFromMem(A);
@@ -571,9 +630,9 @@ void execute(VM* vm)
 						}
 						else
 						{
-							if(byte / 4 = 0)
+							if(byte / 4 == 0)
 								*reg_X = s(getByteFromMem(A));
-							else if(byte / 4 = 1)
+							else if(byte / 4 == 1)
 								*reg_X = s(getWydeFromMem(A));	
 							else if(byte / 4 == 2)
 								*reg_X = s(getTetraFromMem(A));

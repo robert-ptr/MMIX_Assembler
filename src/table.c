@@ -33,11 +33,6 @@ static uint64_t hashString(char* s, uint64_t n)
 	return hash;
 }
 
-static uint64_t hashInteger(uint64_t s)
-{
-	// find a good hash for an integer
-}
-
 Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t hash)
 {
 	uint64_t index = hash % size;
@@ -58,28 +53,19 @@ Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t ha
 
 bool findInTable(Table* table, char* s, uint64_t* val)
 {
-	uint64_t n = strlen(s);
-	uint64_t hash = hashString(s, n);	
-	
-	Entry* entry = findEntry(table->entries, table->size, s, n, hash);
+	uint64_t n;
+	uint64_t hash;
+	Entry* entry;
+
+	n = strlen(s);
+	hash = hashString(s, n);
+	entry = findEntry(table->entries, table->size, s, n, hash);
+
 	if(entry->key == NULL)
 		return false;
 
 	*val = entry->value;
 	return true;
-}
-
-bool findInMemory(Table* table, uint64_t address, uint64_t* val)
-{
-	uint64_t hash = hashInteger(address);	
-	
-	Entry* entry = findEntry(table->entries, table->size, address, n, hash);
-	if(entry->key == NULL)
-		return false;
-
-	*val = entry->value;
-	return true;
-
 }
 
 static void adjustSize(Table* table, uint64_t capacity)
@@ -108,7 +94,7 @@ static void adjustSize(Table* table, uint64_t capacity)
 	table->entries = entries;
 }
 
-bool addToTable(Table* table, char* s, uint64_t n)
+bool addToTable(Table* table, char* s, uint64_t value)
 {
 	if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
 	{
@@ -116,37 +102,21 @@ bool addToTable(Table* table, char* s, uint64_t n)
 		adjustSize(table, capacity);
 	}
 	
-	uint64_t hash = hashString(s, n);
+	uint64_t hash, n;
+	n = strlen(s);
+	hash = hashString(s, n);
+	
 	Entry* entry = findEntry(table->entries, table->size, s, n, hash);
+	
 	bool isNewEntry = (entry->key == NULL); 
 	if (isNewEntry) table->count++;
 
 	entry->key = s;
 	entry->hash = hash;
-	entry->value++;
+	entry->value = value;
 	entry->key_length = n;
-	return isNewEntry;
-}
-
-bool addToMemory(Table* table, uint64_t address, uint64_t n)
-{
-	if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
-	{
-		uint64_t capacity = GROW_LIST(table->size);
-		adjustSize(table, capacity);
-	}
 	
-	uint64_t hash = hashInteger(address);
-	Entry* entry = findEntry(table->entries, table->size, address, n, hash);
-	bool isNewEntry = (entry->key == NULL); 
-	if (isNewEntry) table->count++;
-
-	entry->key = address;
-	entry->hash = hash;
-	entry->value++;
-	entry->key_length = n;
 	return isNewEntry;
-
 }
 
 /* for testing

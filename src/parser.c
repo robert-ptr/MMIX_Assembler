@@ -70,7 +70,7 @@ static int32_t symbol(Scanner* scanner)
 		symbol[i] = *(scanner->start + i);
 	}
 
-	wordToLowercase(&symbol);
+	stringToLowercase(&symbol);
 
 	int32_t value;
 	if(findInTable(&table, symbol, &value))
@@ -465,7 +465,7 @@ static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)
 		advance(parser, scanner);
 		
 		// Somethings needs to be done here
-		addToTable(vm->table, word, parser->current.start); 
+		//addToTable(vm->table, word, parser->current.start, false); 
 	}
 
 	instructionStatement(parser, scanner, vm);

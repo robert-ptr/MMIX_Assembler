@@ -69,7 +69,7 @@ void charToLowercase(char* c)
 		(*c) += 32;
 }
 
-void wordToLowercase(char** s)
+void stringToLowercase(char** s)
 {
 	for(int32_t i = 0; i < (*s)[i] != '\0'; i++)
 	{
@@ -104,4 +104,75 @@ char** importInstructions(const char* path, int32_t* size)
 	*size = index;
 
 	return strings;
+}
+
+char* intToString(uint64_t n)
+{
+	uint64_t c = n;
+	uint64_t size = 0;
+	while(c > 0)
+	{
+		c /= 16;
+		size++;
+	}
+
+	char* str = (char*)malloc(size * sizeof(char));
+	
+	for(int i = 0; i < size; i++, n /= 16)
+	{
+		c = n % 16;
+		switch(c)
+		{
+			case 0:
+				str[i] = '0';
+				break;
+			case 1:
+				str[i] = '1';
+				break;
+			case 2:
+				str[i] = '2';
+				break;
+			case 3:
+				str[i] = '3';
+				break;
+			case 4:
+				str[i] = '4';
+				break;
+			case 5:
+				str[i] = '5';
+				break;
+			case 6:
+				str[i] = '6';
+				break;
+			case 7:
+				str[i] = '7';
+				break;
+			case 8:
+				str[i] = '8';
+				break;
+			case 9:
+				str[i] = '9';
+				break;
+			case 10:
+				str[i] = 'A';
+				break;
+			case 11:
+				str[i] = 'B';
+				break;
+			case 12:
+				str[i] = 'C';
+				break;
+			case 13:
+				str[i] = 'D';
+				break;
+			case 14:
+				str[i] = 'E';
+				break;
+			case 15:
+				str[i] = 'F';
+				break;
+		}
+	}
+
+	return str;
 }

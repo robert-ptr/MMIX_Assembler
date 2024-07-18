@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "table.h"
+#include "common.h"
 
 #define STACK_MAX 512
 

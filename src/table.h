@@ -21,11 +21,8 @@ typedef struct
 } Table;
 
 void initTable(Table* table);
-Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t hash);
-bool findInTable(Table* table, char* s, int32_t* value);
-bool findInMemory(Table* table, uint64_t address, int32_t* value);
 
-bool addToTable(Table* table, char* s, int32_t n);
-bool addToMemory(Table* table, uint64_t address, int32_t n);
+bool findInTable(Table* table, char* s, uint64_t* value);
+bool addToTable(Table* table, char* s, uint64_t value);
 
 void freeTable(Table* table);

@@ -109,7 +109,7 @@ static TokenType identifierType(Scanner* scanner)
 	{
 		word[i] = *(scanner->start + i);
 	}
-	wordToLowercase(&word);
+	stringToLowercase(&word);
 	if(findWord(scanner->trie, word))
 		return TOKEN_INSTRUCTION;
 
@@ -128,7 +128,7 @@ Scanner* initScanner(char* source)
 	scanner->trie = getNode();
 	for(int32_t i = 0; i < size; i++)
 	{
-		wordToLowercase(&words[i]);
+		stringToLowercase(&words[i]);
 	}
 	createTrie(scanner->trie, words, size);
 
