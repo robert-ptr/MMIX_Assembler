@@ -46,7 +46,7 @@ typedef enum
 	rWW		where-interrupted register (trap)	28					*
 	rXX 	execution register (trap)					29					*
 	rYY 	Y operand (trap)									30					*
-		rZZ		Z operand (trap)									31				*
+	rZZ		Z operand (trap)									31					*
  * /
 
 typedef enum

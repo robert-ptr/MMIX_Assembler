@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include "vm.h"
 
-static void addition64bit(uint64_t a, uint64_t b, uint64_t* result)
+static void addition64bit(uint64_t a, uint64_t b, uint64_t* result) // done to avoid overflow
 {
 	uint32_t p1 = a >> 32;
 	uint32_t p2 = a & 0xFFFFFFFF;
@@ -16,7 +16,7 @@ static void addition64bit(uint64_t a, uint64_t b, uint64_t* result)
 	*result = _result1 | (result_2 << 32);
 }
 
-static void multiply64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* result2)
+static void multiplication64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* result2)
 {
 	uint32_t p1 = a >> 32;
 	uint32_t p2 = a & 0xFFFFFFFF;
@@ -132,6 +132,7 @@ static int64_t s(uint64_t unsig)
 {
 	int64_t sig;
 	// convert from unsigned to signed
+	sig = unsig - (unsig >> 63) * (1 >> 64);
 	return sig;
 }
 
@@ -149,7 +150,7 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 	addToTable(vm->memory, key, value);
 }
 
-static void addWydeFromMem(VM* vm, uint64_t address, Wyde wyde)
+static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 {
 	uint8_t offset = address % 4;
 	address -= offset;
@@ -163,7 +164,7 @@ static void addWydeFromMem(VM* vm, uint64_t address, Wyde wyde)
 	addToTable(vm->memory, key, value);
 }
 
-static void addTetraFromMem(VM* vm, uint64_t address, Tetra tetra)
+static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 {
 	uint8_t offset = address % 2;
 	address -= offset;
@@ -177,7 +178,7 @@ static void addTetraFromMem(VM* vm, uint64_t address, Tetra tetra)
 	addToTable(vm->memory, key, value);
 }
 
-static void addOctaFromMem(VM* vm, uint64_t address, Octa octa)
+static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
 {
 	char* key = intToStr(address);
 
@@ -265,6 +266,9 @@ void execute(VM* vm)
 		Register* reg_X = getReg(vm, X);
 		Register* reg_Y = getReg(vm, Y);
 		Register* reg_Z = getReg(vm, Z);
+		Octa* A;
+		Octa* result1;
+		Octa* result2;
 
 		switch(byte)
 		{
@@ -317,81 +321,80 @@ void execute(VM* vm)
 					case OP_FINT: // floating integer: f($X)<-int32_t f($Z)
 						break;
 					case OP_MUL: //multiply s($X)<-s($Y)xs($Z)
+						multiplication64bit(*reg_Y, *reg_Z, reg_X, result2);
+						if(s(*reg_Y) > 0 && s(*reg_Z) < 0 || s(*reg_Z) < 0 && s(*reg_Y) > 0)
+							*reg_X = -*reg_X;
+						break;
 					case OP_MULI:
+						multiplication64bit(*reg_Y, Z, reg_X, result2);
+						if(s(*reg_Y) > 0 && s(*reg_Z) < 0 || s(*reg_Z) < 0 && s(*reg_Y) > 0)
+							*reg_X = -*reg_X;
+						break;
 					case OP_MULU: // u(rH $X)<-u($Y)xu($Z)
+						multiplication64bit(*reg_Y, *reg_Z, reg_X, getSpecialReg(vm, rH));
+						break;
 					case OP_MULUI:
-						byte -= OP_MUL;
-						
-						if(byte % 2 == 0 && byte / 2 == 0)
-							*reg_X = s(*reg_Y) * s(*reg_Z);
-						else if(byte % 2 == 1 && byte / 2 == 0)
-							*reg_X = s(*reg_Y) * s(Z);
-						else if(byte % 2 == 0 && byte / 2 == 1)
-						{
-							uint64_t* result1;
-							uint64_t* result2;
-							multiply64bit(*reg_Y, *reg_Z, result1, result2);
-							*reg_X = result1;
-							*getSpecialReg(vm, rH) = result2;
-						}
-						else
-						{
-							uint64_t* result1;
-							uint64_t* result2;
-							multiply64bit(*reg_Y, Z, result1, result2);
-							*reg_X = result1;
-							*getSpecialReg(vm, rH) = result2;
-						}
+						multiplication64bit(*reg_Y, Z, reg_X, getSpecialReg(vm, rH));
 						break;
 					case OP_DIV: //divide s($X)<-floor(s($Y)/s($Z))[$Z!=0] and s(rR)<-s($Y)mod s($Z)
+						*reg_X = s(*reg_Y) / s(*reg_Z);
+						*getSpecialReg(vm, rR) = s(*reg_Y) % s(*reg_Z);
+						break;
 					case OP_DIVI:
+						*reg_X = s(*reg_Y) / s(Z);
+						*getSpecialReg(vm, rR) = s(*reg_Y) % s(Z);
+						break;
 					case OP_DIVU: // u($X)<-floor(u(rD $Y) / u($Z)), u(rR)<-u(rD $Y) mod u($Z), if (u($Z) > u(rD)); otherwise $X<-rD, rR<-$Y
+						*reg_X = *reg_Y / *reg_Z;
+						*getSpecialReg(vm, rR) = *reg_Y % *reg_Z;
+						break;
 					case OP_DIVUI:
-						byte -= OP_DIV;
-
-						if(byte % 2 == 0 && byte / 2 == 0)
-						{
-							*reg_X = s(*reg_Y) / s(*reg_Z);
-							*getSpecialReg(vm, rR) = s(*reg_Y) % s(*reg_Z);
-						}
-						else if(byte % 2 == 1 && byte / 2 == 0)
-						{
-							*reg_X = s(*reg_Y) / s(Z);
-							*getSpecialReg(vm, rR) = s(*reg_Y) % s(Z);
-						}
-						else if(byte % 2 == 0 && byte / 2 == 1)
-						{
-							*reg_X = *reg_Y / *reg_Z;
-							*getSpecialReg(vm, rR) = *reg_Y % *reg_Z;
-						}
-						else
-						{
-							setReg(vm, X) = *reg_Y / Z;
-							setSpecialRegister(vm, rR) = *reg_Y % Z;
-						}
+						*reg_X = *reg_Y / Z;
+						*getSpecialRegister(vm, rR) = *reg_Y % Z;
 						break;
 					case OP_ADD: //add s($X)<-s($Y)+s($Z)
-					case OP_ADDI:
-/* LOC*/	case OP_ADDU: // u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
-					case OP_ADDUI:
-						byte -= OP_ADD;
-
-						if(byte % 2 == 0 && byte / 2 == 0)
-							*reg_X = s(*reg_Y) + s(*reg_Z);
-						else if(byte % 2 == 1 && byte / 2 == 0)
-							*reg_X = s(*reg_Y) + s(Z);
-						else if(byte % 2 == 0 && byte / 2 == 1)
+						if(s(*reg_Y) < 0 && s(*reg_Z) > 0)
 						{
-							uint64_t result;
-							addition64bit(*reg_Y, *reg_Z, result);
-							*reg_X = result;
+							*reg_X = s(*reg_Z) + s(*reg_Y);
+						}
+						else if(s(*reg_Y) > 0 && s(*reg_Z) < 0)
+						{
+							*reg_X = s(*reg_Z) + s(*reg_Y); //same as above
+						}
+						else if(s(*reg_Y) < 0 && s(*reg_Z) < 0)
+						{
+							addition64bit(*reg_Y, *reg_Z, reg_X);
+							*reg_X = -*reg_X;
 						}
 						else
 						{
-							uint64_t result;
-							addition64bit(*reg_Y, Z, result);
-							*reg_X = result;
+							addition64bit(*reg_Y, *reg_Z, reg_X);
 						}
+						break;
+					case OP_ADDI:
+						if(s(*reg_Y) < 0 && s(Z) > 0)
+						{
+							*reg_X = s(*reg_Z) + s(Z);
+						}
+						else if(s(*reg_Y) > 0 && s(Z) < 0)
+						{
+							*reg_X = s(*reg_Z) + s(Z); //same as above
+						}
+						else if(s(*reg_Y) < 0 && s(Z) < 0)
+						{
+							addition64bit(*reg_Y, Z, reg_X);
+							*reg_X = -*reg_X;
+						}
+						else
+						{
+							addition64bit(*reg_Y, *reg_Z, reg_X);
+						}
+						break;
+/* LOC*/	case OP_ADDU: // u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
+						addition64bit(*reg_Y, *reg_Z, reg_X);
+						break;
+					case OP_ADDUI:
+						addition64bit(*reg_Y, Z, reg_X);
 						break;
 					case OP_SUB: //subtract s($X)<-S($Y)-S($Z)
 					case OP_SUBI:
@@ -440,30 +443,60 @@ void execute(VM* vm)
 						else
 							operand2 = 16;
 
-						multiply64bit(operand1, operand2, result1, result2);
-						addition64bit(result1, operand3, *reg_X);
+						multiplication64bit(operand1, operand2, result1, result2);
+						addition64bit(result1, operand3, reg_X);
 
 						break;
 					}
 					case OP_CMP: // compare s($X)<-[s($Y) > s($Z)] - [s($Y) < s($Z)]
+						*reg_X = (s(*reg_Y) > s(*reg_Z)) - (s(*reg_Y) < s(*reg_Z));
+						break;
 					case OP_CMPI:
+						*reg_X = (s(*reg_Y) > s(Z)) - (s(*reg_Y) < s(Z));
+						break;
 					case OP_CMPU: // s($X)<-[u($Y) > u($Z)] - [u($Y) < u($Z)]
+						*reg_X = (*reg_Y > *reg_Z) - (*reg_Y < *reg_Z);
+						break;
 					case OP_CMPUI:
+						*reg_X = (*reg_Y > Z) - (*reg_Y < Z);
 						break;
 					case OP_NEG:	// negate s($X)<-Y-s($Z)
+						*reg_X = Y - s(*reg_Z);
+						break;
 					case OP_NEGI:
-					case OP_NEGU: // s($X)<-(Y-u($Z))mod 2^64
+						*reg_X = Y - s(Z);
+						break;
+					case OP_NEGU: // u($X)<-(Y-u($Z))mod 2^64
+						*reg_X = Y - *reg_Z;
+						*reg_X %= 1 << 64;
+						break;
 					case OP_NEGUI:
+						*reg_X = Y - Z;
+						*reg_X %= 1 << 64;
 						break;
 					case OP_SL: // shift left s($X)<-s($Y)x2^(u($Z))
+						*reg_X = s(*reg_Y) << *reg_Z;
+						break;
 					case OP_SLI:
-					case OP_SLU: // s($X)<-s($Y)x2^(u($Z)) mod 2^64
+						*reg_X = s(*reg_Y) << Z;
+						break;
+					case OP_SLU: // s($X)<-u($Y)x2^(u($Z)) mod 2^64
+						*reg_X = *reg_Y << *reg_Z;
+						break;
 					case OP_SLUI:
+						*reg_X = *reg_Y << Z;
 						break;
 					case OP_SR: // shift right s($X)<-floor(s($Y)/2^u($Z))
+						*reg_X = s(*reg_Y) >> *reg_Z;
+						break;
 					case OP_SRI:
+						*reg_X = s(*reg_Y) >> Z;
+						break;
 					case OP_SRU: // u($X)<-floor(u($Y)/2^u($Z))
+						*reg_X = *reg_Y >> *reg_Z;
+						break;
 					case OP_SRUI:
+						*reg_X = *reg_Y >> Z;
 						break;
 					case OP_BN: // branch if negative: if s($X) < 0, set @<-RA
 						break;
@@ -620,24 +653,24 @@ void execute(VM* vm)
 						if(byte % 4 == 2 || byte % 4 == 3)
 						{
 							if(byte / 4 == 0)
-								*reg_X = getByteFromMem(A);
+								*reg_X = getByteFromMem(vm, A);
 							else if(byte / 4 == 1)
-								*reg_X = getWydeFromMem(A);	
+								*reg_X = getWydeFromMem(vm, A);	
 							else if(byte / 4 == 2)
-								*reg_X = getTetraFromMem(A);
+								*reg_X = getTetraFromMem(vm, A);
 							else
-								*reg_X = getOctaFromMem(A);
+								*reg_X = getOctaFromMem(vm, A);
 						}
 						else
 						{
 							if(byte / 4 == 0)
-								*reg_X = s(getByteFromMem(A));
+								*reg_X = s(getByteFromMem(vm, A));
 							else if(byte / 4 == 1)
-								*reg_X = s(getWydeFromMem(A));	
+								*reg_X = s(getWydeFromMem(vm, A));	
 							else if(byte / 4 == 2)
-								*reg_X = s(getTetraFromMem(A));
+								*reg_X = s(getTetraFromMem(vm, A));
 							else
-								*reg_X = s(getOctaFromMem(A));
+								*reg_X = s(getOctaFromMem(vm, A));
 						}
 
 						break;
@@ -647,8 +680,13 @@ void execute(VM* vm)
 					case OP_LSDFI:
 						break;
 					case OP_LDHT: // load high tetra
-						break;
 					case OP_LDHTI:
+						if(byte % 2 == 1)
+							addition64bit(*reg_Y, *reg_Z, A);
+						else
+							addition64bit(*reg_Y, Z, A);
+						
+						*reg_X = getTetraFromMem(vm, A) << 32;
 						break;
 					case OP_CSWAP: // compare and swap octabytes: if u(M8[A] = u(rP), where rP is the special prediction reigster,
 												 // set u(M8[A]<-u($X) and u($X)<-1. Otherwise set u(rP)<-u(M8[A]) and u($X)<-0.
@@ -677,48 +715,95 @@ void execute(VM* vm)
 					case OP_GOI:
 						break;
 					case OP_STB: // store byte s(M1[A])<-s($X)
-						break;
 					case OP_STBI:
-						break;
 					case OP_STBU: // u(M1[A])<-u($X) mod 2^8
-						break;
 					case OP_STBUI:
-						break;
 					case OP_STW: // store wyde s(M2[A])<-s($X)
-						break;
 					case OP_STWI:
-						break;
 					case OP_STWU: // u(M2[A])<-u($X) mod 2^16
-						break;
 					case OP_STWUI:
-						break;
 					case OP_STT: // store tetra s(M4[A])<-s($X)
-						break;
 					case OP_STTI:
-						break;
 					case OP_STTU: // u(M4[A])<-u($X) mod 2^32
-						break;
 					case OP_STTUI:
-						break;
 					case OP_STO: // store octo s(M8[A])<-s($X)
-						break;
 					case OP_STOI:
-						break;
 					case OP_STOU: // u(M8[A])<-u($X) mod 2^64
-						break;
 					case OP_STOUI:
+						byte -= OP_STB;
+						
+						if(byte % 2 == 1)
+							addition64bit(*reg_Y, *reg_Z, A);
+						else
+							addition64bit(*reg_Y, Z, A);
+
+						if(byte / 4 == 0)
+						{
+							if(byte / 2 % 2 == 1)
+							{
+								addByteToMem(vm, A, *reg_X);
+							}
+							else
+							{
+								addByteToMem(vm, A, s(*reg_X));
+							}
+						}
+						else if(byte / 4 == 1)
+						{
+							if(byte / 2 % 2 == 1)
+							{
+								addWydeToMem(vm, A, *reg_X);
+							}
+							else
+							{
+								addWydeToMem(vm, A, s(*reg_X));
+							}
+						}
+						else if(byte / 4 == 2)
+						{
+							if(byte / 2 % 2 == 1)
+							{
+								addTetraToMem(vm, A, *reg_X);
+							}
+							else
+							{
+								addTetraToMem(vm, A, s(*reg_X));
+							}
+						}
+						else
+						{
+							if(byte / 2 % 2 == 1)
+							{
+								addOctaToMem(vm, A, *reg_X);
+							}
+							else
+							{
+								addOctaToMem(vm, A, s(*reg_X));
+							}
+						}
+
 						break;
 					case OP_STSF: // store short float: f(M4[A])<-f($X)
 						break;
 					case OP_STSFI:
 						break;
 					case OP_STHT:
-						break;
 					case OP_STHTI:
+						if(byte % 2 == 1)
+							addition64bit(*reg_Y, *reg_Z, A);
+						else
+							addition64bit(*reg_Y, Z, A);
+						
+						addTetraToMem(vm, A, *reg_X >> 32);
 						break;
 					case OP_STCO: // store constant octabyte u(M8[A])<-X
-						break;
 					case OP_STCOI:
+						if(byte % 2 == 1)
+							addition64bit(*reg_Y, *reg_Z, A);
+						else
+							addition64bit(*reg_Y, Z, A);
+	
+						addOctaToMem(vm, A, X);
 						break;
 					case OP_STUNC: // store octa uncached: s(M8[A)<-s($X)
 						break;
