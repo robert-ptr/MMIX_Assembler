@@ -136,20 +136,46 @@ static int64_t s(uint64_t unsig)
 	return sig;
 }
 
-static Byte getByteFromMem(VM* vm)
+static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 {
-	return ;
+	addToMemory();
 }
 
-static Wyde getWydeFromMem(VM* vm)
+static void addWydeFromMem(VM* vm, uint64_t address, Wyde wyde)
+{
+	addToMemory();
+}
+
+static void addTetraFromMem(VM* vm, uint64_t address, Tetra tetra)
+{
+	addToMemory();
+}
+
+static void addOctaFromMem(VM* vm, uint64_t address, Octa octa)
+{
+	addToMemory();
+}
+
+static Byte getByteFromMem(VM* vm, uint64_t index)
+{
+	int* val;
+	if(findInTable(vm->memory, , val)
+	{
+		return *val;
+	}
+
+	return 0;
+}
+
+static Wyde getWydeFromMem(VM* vm, uint64_t index)
 {
 }
 
-static Tetra getTetraFromMem(VM* vm)
+static Tetra getTetraFromMem(VM* vm, uint64_t index)
 {
 }
 
-static Octa getOctaFromMem(VM* vm)
+static Octa getOctaFromMem(VM* vm, uint64_t index)
 {
 }
 

@@ -21,10 +21,10 @@ void freeTable(Table* table)
 	initTable(table);
 }
 
-uint32_t hashString(char* s, int32_t n)
+static uint64_t hashString(char* s, uint64_t n)
 {
-	uint32_t hash = 2166136261u;
-	for (int32_t i = 0; i < n; i++)
+	uint64_t hash = 2166136261u;
+	for (uint64_t i = 0; i < n; i++)
 	{
 		hash ^= (uint8_t)s[i];
 		hash *= 16777619;
@@ -33,9 +33,14 @@ uint32_t hashString(char* s, int32_t n)
 	return hash;
 }
 
-Entry* findEntry(Entry* entries, int32_t size, char* s, int32_t n, uint32_t hash)
+static uint64_t hashInteger(uint64_t s)
 {
-	uint32_t index = hash % size;
+	// find a good hash for an integer
+}
+
+Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t hash)
+{
+	uint64_t index = hash % size;
 	for (;;)
 	{
 		Entry* entry = &entries[index];
@@ -51,10 +56,10 @@ Entry* findEntry(Entry* entries, int32_t size, char* s, int32_t n, uint32_t hash
 	}
 }
 
-bool findInTable(Table* table, char* s, int32_t* val)
+bool findInTable(Table* table, char* s, uint64_t* val)
 {
-	int32_t n = strlen(s);
-	uint32_t hash = hashString(s, n);	
+	uint64_t n = strlen(s);
+	uint64_t hash = hashString(s, n);	
 	
 	Entry* entry = findEntry(table->entries, table->size, s, n, hash);
 	if(entry->key == NULL)
@@ -64,16 +69,29 @@ bool findInTable(Table* table, char* s, int32_t* val)
 	return true;
 }
 
-static void adjustSize(Table* table, int32_t capacity)
+bool findInMemory(Table* table, uint64_t address, uint64_t* val)
+{
+	uint64_t hash = hashInteger(address);	
+	
+	Entry* entry = findEntry(table->entries, table->size, address, n, hash);
+	if(entry->key == NULL)
+		return false;
+
+	*val = entry->value;
+	return true;
+
+}
+
+static void adjustSize(Table* table, uint64_t capacity)
 {
 	Entry* entries = (Entry*)malloc(capacity * sizeof(Entry));
-	for(int32_t i = 0; i < capacity; i++)
+	for(uint64_t i = 0; i < capacity; i++)
 	{
 		entries[i].key = NULL;
 		entries[i].value = 0;
 	}
 
-	for(int32_t i = 0; i < table->size; i++)
+	for(uint64_t i = 0; i < table->size; i++)
 	{
 		Entry* entry = &table->entries[i];
 		if (entry->key == NULL) continue;
@@ -90,15 +108,15 @@ static void adjustSize(Table* table, int32_t capacity)
 	table->entries = entries;
 }
 
-bool addToTable(Table* table, char* s, int32_t n)
+bool addToTable(Table* table, char* s, uint64_t n)
 {
 	if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
 	{
-		int32_t capacity = GROW_LIST(table->size);
+		uint64_t capacity = GROW_LIST(table->size);
 		adjustSize(table, capacity);
 	}
 	
-	uint32_t hash = hashString(s, n);
+	uint64_t hash = hashString(s, n);
 	Entry* entry = findEntry(table->entries, table->size, s, n, hash);
 	bool isNewEntry = (entry->key == NULL); 
 	if (isNewEntry) table->count++;
@@ -110,8 +128,29 @@ bool addToTable(Table* table, char* s, int32_t n)
 	return isNewEntry;
 }
 
+bool addToMemory(Table* table, uint64_t address, uint64_t n)
+{
+	if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
+	{
+		uint64_t capacity = GROW_LIST(table->size);
+		adjustSize(table, capacity);
+	}
+	
+	uint64_t hash = hashInteger(address);
+	Entry* entry = findEntry(table->entries, table->size, address, n, hash);
+	bool isNewEntry = (entry->key == NULL); 
+	if (isNewEntry) table->count++;
+
+	entry->key = address;
+	entry->hash = hash;
+	entry->value++;
+	entry->key_length = n;
+	return isNewEntry;
+
+}
+
 /* for testing
-int32_t main()
+int main()
 {
 	initTable(&t);
 	printf("%d", addToTable(&t, "add", 3, -211));

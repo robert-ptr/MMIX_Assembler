@@ -467,6 +467,7 @@ static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)
 		// Somethings needs to be done here
 		addToTable(vm->table, word, parser->current.start); 
 	}
+
 	instructionStatement(parser, scanner, vm);
 }
 

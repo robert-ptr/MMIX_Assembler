@@ -8,21 +8,24 @@
 typedef struct
 {
 	char* key;
-	uint32_t hash;
-	int32_t key_length;
-	int32_t value;
+	uint64_t hash;
+	uint64_t key_length;
+	uint64_t value;
 } Entry;
 
 typedef struct
 {
-	int32_t size;
-	int32_t count;
+	uint64_t size;
+	uint64_t count;
 	Entry* entries;
 } Table;
 
 void initTable(Table* table);
-uint32_t hashString(char* s, int32_t n);
-Entry* findEntry(Entry* entries, int32_t size, char* s, int32_t n, uint32_t hash);
+Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t hash);
 bool findInTable(Table* table, char* s, int32_t* value);
+bool findInMemory(Table* table, uint64_t address, int32_t* value);
+
 bool addToTable(Table* table, char* s, int32_t n);
+bool addToMemory(Table* table, uint64_t address, int32_t n);
+
 void freeTable(Table* table);
