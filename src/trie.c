@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "trie.h"
-#include "common.h"
-#include "scanner.h"
 
 TrieNode* getNode(void)
 {
@@ -96,7 +94,7 @@ void createInstructionTrie(TrieNode* node)
 		}
 
 		word[length] = '\0';
-		toLowercase(&word);
+		stringToLowercase(&word);
 		words[n] = word;
 		index++;
 
@@ -126,12 +124,3 @@ int32_t findWord(TrieNode* node, char* word)
 
 	return node->isWord;
 }
-
-/* for testing
-int32_t main()
-{
-	TrieNode* root = getNode();
-	createInstructionTrie(root);
-	printf("%d", findWord(root, "trap"));
-}
-*/

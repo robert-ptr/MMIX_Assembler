@@ -118,15 +118,3 @@ bool addToTable(Table* table, char* s, uint64_t value)
 	
 	return isNewEntry;
 }
-
-/* for testing
-int main()
-{
-	initTable(&t);
-	printf("%d", addToTable(&t, "add", 3, -211));
-	addToTable(&t, "add", 3, 200);
-	Entry* entry = findEntry(&t, "add", 3, hashString("add",3));
-	printf("%d", (entry->value));
-	freeTable(&t);
-}
-*/

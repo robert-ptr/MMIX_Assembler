@@ -13,7 +13,7 @@ static void addition64bit(uint64_t a, uint64_t b, uint64_t* result) // done to a
 	uint64_t _result1 = p1 + p3; // max 33 bits
 	uint64_t _result2 = (p2 + p4 + _result1 >> 32) & 0xFFFFFFFF; // max 33 bits
 	_result1 &= 0xFFFFFFFF;
-	*result = _result1 | (result_2 << 32);
+	*result = _result1 | (_result2 << 32);
 }
 
 static void multiplication64bit(uint64_t a, uint64_t b, uint64_t* result1, uint64_t* result2)
@@ -30,7 +30,7 @@ static void multiplication64bit(uint64_t a, uint64_t b, uint64_t* result1, uint6
 					 
 	if(_result4 >> 32 == 0)
 	{
-		*result1 = _result1 + _result2 + _result3 + _resul4;
+		*result1 = _result1 + _result2 + _result3 + _result4;
 	}
 	else
 	{
@@ -105,25 +105,20 @@ static bool isAtEnd(VM* vm)
 
 static Byte currentByte(VM* vm)
 {
-	if(!isAtEnd(vm))
-		return *vm->ip; 
-	return NULL;
+	return *vm->ip; 
 }
 
 static Byte getByte(VM* vm)
 {
-	if(!isAtEnd(vm))
-		return *(vm-ip++);
-
-	return NULL;
+	return *(vm->ip++);
 }
 
-static uint64_t* getReg(VM* vm, uint8_t index)
+static Register getReg(VM* vm, uint8_t index)
 {
 	return vm->general_registers[index];
 }
 
-static uint64_t* getSpecialReg(VM* vm, uint8_t index)
+static Register getSpecialReg(VM* vm, uint8_t index)
 {
 	return vm->special_registers[index];
 }
@@ -132,7 +127,7 @@ static int64_t s(uint64_t unsig)
 {
 	int64_t sig;
 	// convert from unsigned to signed
-	sig = unsig - (unsig >> 63) * (1 >> 64);
+	sig = unsig - (unsig >> 63) * (1 >> 63);
 	return sig;
 }
 
@@ -141,10 +136,10 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 	uint8_t offset = address % 8;
 	address -= offset;
 
-	char* key = intToStr(address);
+	char* key = intToString(address);
 	
 	uint64_t value;
-	findInTable(vm->table, key, &value);
+	findInTable(vm->memory, key, &value);
 	value = value | (0xFF << (8 * offset)) & byte << (8 * offset);
 
 	addToTable(vm->memory, key, value);
@@ -155,10 +150,10 @@ static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 	uint8_t offset = address % 4;
 	address -= offset;
 
-	char* key = intToStr(address);
+	char* key = intToString(address);
 	
 	uint64_t value;
-	findInTable(vm->table, key, &value);
+	findInTable(vm->memory, key, &value);
 	value = value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
 
 	addToTable(vm->memory, key, value);
@@ -169,10 +164,10 @@ static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 	uint8_t offset = address % 2;
 	address -= offset;
 
-	char* key = intToStr(address);
+	char* key = intToString(address);
 	
 	uint64_t value;
-	findInTable(vm->table, key, &value);
+	findInTable(vm->memory, key, &value);
 	value = value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
 
 	addToTable(vm->memory, key, value);

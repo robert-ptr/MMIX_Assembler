@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include "scanner.h"
-#include "common.h"
-#include "trie.h"
 
 static bool isAtEnd(Scanner* scanner)
 {
@@ -116,9 +114,8 @@ static TokenType identifierType(Scanner* scanner)
 	return TOKEN_LABEL;
 }
 
-Scanner* initScanner(char* source)
+Scanner* initScanner(Scanner* scanner, char* source)
 {
-	Scanner* scanner = (Scanner*)malloc(sizeof(Scanner));
 	scanner->start = source;
 	scanner->current = source;
 	scanner->line = 1;

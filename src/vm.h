@@ -12,7 +12,7 @@ typedef enum
 {
 	rA, rB,	rC,	rD,	rE,	rF,	rG,	rH,	rI,	rJ,	rK, rL, rM,	rN,	rO,	rP,	rQ,
 	rR, rS, rT, rU, rV, rX, rY, rZ, rBB, rTT, rWW, rXX, rYY, rZZ,
-} SpecialRegisters
+} SpecialRegisters;
 
 /*																						saved? put?
  	rA		arithmetic status register				21		*			*
@@ -47,7 +47,7 @@ typedef enum
 	rXX 	execution register (trap)					29					*
 	rYY 	Y operand (trap)									30					*
 	rZZ		Z operand (trap)									31					*
- * /
+ */
 
 typedef enum
 {
@@ -102,11 +102,11 @@ typedef struct
 
 typedef struct
 {
-	ByteSet byte_set;
+	ByteSet* byte_set;
 	Byte* ip;
 	Register general_registers[256];
 	Register special_registers[32];
-	Table memory;
+	Table* memory;
 } VM;
 
 void initVM(VM* vm);

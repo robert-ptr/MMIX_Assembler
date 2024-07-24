@@ -26,11 +26,15 @@ int32_t main(int32_t argc, const char* argv[])
 	const char* flags;
 	const char* source;
 	FILE* output_fd;
+	
+	Scanner* scanner;
+	Parser* parser;
+	VM* vm;
+
+	
 	if (argc == 2)
 	{
 		source = readFile(argv[1]);
-		Scanner* scanner = initScanner(source);
-		freeScanner(scanner);
 	}
 	else if (argc == 3)
 	{
@@ -48,16 +52,25 @@ int32_t main(int32_t argc, const char* argv[])
 	}	
 	else if (argc == 4)
 	{
+		flags = (char*)malloc(sizeof(argv[1]));
 		strcpy(flags, ++argv[1]);
 		source = readFile(argv[2]);
 		output_fd = createFile(argv[3]);
 	}
 	else
 	{
-		fprintf(stderr, "Usage: mmix [options] [input file path] [output file path(optional)\n");
+		fprintf(stderr, "Usage: mmix [-options] [input file path] [output file path(default: out.mmix)]\n");
 		exit(64);
 	}
 
-//	freeVM();
+	initScanner(scanner, source);
+	initParser(parser);
+	initVM(vm);
+
+	freeVM(vm);
+	freeParser(parser);
+	freeScanner(scanner);
+
+	free(flags);
 	return 0;
 }

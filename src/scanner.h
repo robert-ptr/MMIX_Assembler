@@ -2,6 +2,7 @@
 #define mmix_proj_scanner
 
 #include "trie.h"
+#include "common.h"
 
 typedef struct
 {
@@ -18,7 +19,7 @@ typedef enum
 	TOKEN_STRING, TOKEN_COMMA, TOKEN_CONSTANT ,TOKEN_ERR, TOKEN_EOF, TOKEN_PLUS, TOKEN_MINUS, TOKEN_SLASH,
 	TOKEN_STAR, TOKEN_AROUND, TOKEN_DSLASH, TOKEN_LSHIFT, TOKEN_RSHIFT, TOKEN_AND, TOKEN_OR, TOKEN_XOR,
 	TOKEN_MOD ,TOKEN_SEMICOLON, TOKEN_REGISTER, TOKEN_COMPLEMENT, TOKEN_LPAREN, TOKEN_RPAREN,
-	TOKEN_SCONST,
+	TOKEN_SCONST, 
 } TokenType;
 
 typedef struct
@@ -29,7 +30,7 @@ typedef struct
 	int32_t line;
 } Token;
 
-Scanner* initScanner(char* source);
+Scanner* initScanner(Scanner* scanner, char* source);
 void freeScanner(Scanner* scanner);
 Token scanToken(Scanner* scanner);
 
