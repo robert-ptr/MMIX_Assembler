@@ -22,15 +22,19 @@ ErrorType runFile(const char* source)
 
 int32_t main(int32_t argc, const char* argv[])
 {
-//	initVM();
 	const char* flags;
+	// possible options
+	// -s (for running time statistics when the program ends)
+	// -P (profile showing exactly how often each instruction was executed)
+	// -v ("verbose" details about everything the simulator did)
+	// -t2 (trace each instruction the first two times it is performed
+	// -i (run simulator in interactive mode)
 	const char* source;
 	FILE* output_fd;
 	
 	Scanner* scanner;
 	Parser* parser;
 	VM* vm;
-
 	
 	if (argc == 2)
 	{

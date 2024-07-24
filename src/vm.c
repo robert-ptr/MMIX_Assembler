@@ -113,12 +113,12 @@ static Byte getByte(VM* vm)
 	return *(vm->ip++);
 }
 
-static Register getReg(VM* vm, uint8_t index)
+static MMIX_Register getReg(VM* vm, uint8_t index)
 {
 	return vm->general_registers[index];
 }
 
-static Register getSpecialReg(VM* vm, uint8_t index)
+static MMIX_Register getSpecialReg(VM* vm, uint8_t index)
 {
 	return vm->special_registers[index];
 }
@@ -258,9 +258,9 @@ void execute(VM* vm)
 		Y = getByte(vm);
 		Z = getByte(vm);
 		
-		Register* reg_X = getReg(vm, X);
-		Register* reg_Y = getReg(vm, Y);
-		Register* reg_Z = getReg(vm, Z);
+		MMIX_Register* reg_X = getReg(vm, X);
+		MMIX_Register* reg_Y = getReg(vm, Y);
+		MMIX_Register* reg_Z = getReg(vm, Z);
 		Octa* A;
 		Octa* result1;
 		Octa* result2;
@@ -345,7 +345,7 @@ void execute(VM* vm)
 						break;
 					case OP_DIVUI:
 						*reg_X = *reg_Y / Z;
-						*getSpecialRegister(vm, rR) = *reg_Y % Z;
+						*getSpecialReg(vm, rR) = *reg_Y % Z;
 						break;
 					case OP_ADD: //add s($X)<-s($Y)+s($Z)
 						if(s(*reg_Y) < 0 && s(*reg_Z) > 0)

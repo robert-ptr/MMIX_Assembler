@@ -70,43 +70,9 @@ int32_t parseNumber(char* buffer, int32_t* index)
 
 void createInstructionTrie(TrieNode* node)
 {
-	char* buffer = readFile("instructions2.txt");
-	
-	int32_t index = 0;
-	int32_t n = 0;
-	char** words = (char**)malloc(256 * sizeof(char*));
-	int32_t* values = (int32_t*)malloc(256 * sizeof(int32_t));
-
-	while(buffer[index] != '\0')
+	for(int32_t i = 0; i < 256; i++)
 	{
-		int32_t start = index;
-		while(buffer[index] != ' ')
-		{
-			index++;
-		}
-
-		int32_t length = index - start;
-		char* word = (char*)malloc((length + 1) * sizeof(char));
-
-		for(int32_t i = 0; i < length; i++)
-		{
-			word[i] = buffer[start + i];
-		}
-
-		word[length] = '\0';
-		stringToLowercase(&word);
-		words[n] = word;
-		index++;
-
-		values[n++] = parseNumber(buffer, &index);
-
-		if(buffer[index] == '\n')
-			index++;
-	}
-
-	for(int32_t i = 0; i < n; i++)
-	{
-		insertNode(node, words[i], values[i]);
+		insertNode(node, instr[i].name, instr[i].op_code);
 	}
 }
 

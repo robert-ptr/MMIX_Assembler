@@ -91,7 +91,7 @@ typedef uint16_t Wyde;
 typedef uint32_t Tetra;
 typedef uint32_t Instruction;
 typedef uint64_t Octa;
-typedef uint64_t Register;
+typedef uint64_t MMIX_Register;
 
 typedef struct
 {
@@ -104,8 +104,8 @@ typedef struct
 {
 	ByteSet* byte_set;
 	Byte* ip;
-	Register general_registers[256];
-	Register special_registers[32];
+	MMIX_Register general_registers[256];
+	MMIX_Register special_registers[32];
 	Table* memory;
 } VM;
 

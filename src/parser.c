@@ -273,13 +273,11 @@ static int32_t term(Scanner* scanner)
 	return a;
 }
 
-static int32_t strongOperators(Scanner* scanner, double* opt)
+static int32_t strongOperators(Scanner* scanner)
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
-	bool fpo = false;
 	int32_t a = term(scanner);
 	int32_t b;
-	double opt_b;
 	while(!isAtEnd(scanner) && !isRightParen(peek(scanner)) && !isWeakOperator(peek(scanner)))
 	{
 		printf("%c ", peek(scanner));
@@ -291,10 +289,7 @@ static int32_t strongOperators(Scanner* scanner, double* opt)
 			{
 				case '*':
 					b = term(scanner);
-					if(!fpo)
 						a *= b;
-					else
-						*opt *=opt_b;
 					break;
 				case '&':
 					b = term(scanner);
@@ -312,20 +307,16 @@ static int32_t strongOperators(Scanner* scanner, double* opt)
 					break;
 				case '/':
 				{
-					if(peekNext(scanner) == '/')
+					if(peekNext(scanner) == '/')			// will be used later for floating point operations
 					{
 						advance(scanner);
 						b = term(scanner);
-						fpo = true;
-						*opt = (double)a / (double)b;	
+						//*opt = (double)a / (double)b;	
 					}
 					else
 					{
 						b = term(scanner);
-						if(!fpo)
-							a /= b;
-						else
-							*opt /= opt_b;
+						a /= b;
 					}
 					break;
 				}
@@ -333,20 +324,14 @@ static int32_t strongOperators(Scanner* scanner, double* opt)
 				{
 					advance(scanner);
 					b = term(scanner);
-					if(!fpo)
-						a <<= b;
-					else
-						printf("Invalid operands.\n");
+					a <<= b;
 					break;
 				}
 				case '>':
 				{
 					advance(scanner);
 					b = term(scanner);
-					if(!fpo)
-						a >>= b;
-					else
-						printf("Invalid operands.\n");
+					a >>= b;
 					break;
 				}
 			}
@@ -364,16 +349,14 @@ static int32_t strongOperators(Scanner* scanner, double* opt)
 static int32_t expression(Scanner* scanner)
 {
 	// weak binary operators: +,-,|,^
-	double opt;
-	int a = strongOperators(scanner, &opt);
+	int a = strongOperators(scanner);
 	int b;
 	while(!isAtEnd(scanner) && !isRightParen(peek(scanner)))
 	{
 		if(isWeakOperator(peek(scanner)))
 		{
 			char op = advance(scanner);
-			double opt_b;
-			b = strongOperators(scanner, &opt_b);
+			b = strongOperators(scanner);
 			switch(op)
 			{
 				case '+':
@@ -400,15 +383,73 @@ static int32_t expression(Scanner* scanner)
 	return a;
 }
 
-static void commaStatement(Parser* parser, Scanner* scanner, VM* vm)
+static void commaStatement(Parser* parser, Scanner* scanner, VM* vm, bool reg)
 {
-	int32_t value = expression(scanner);
-//	emitByte(vm, ); // complete later 
-	while(check(parser, TOKEN_COMMA))
+	uint32_t operand1 = expression(scanner, reg);
+	uint32_t operand2;
+	uint32_t operand3;
+
+	if(check(parser, TOKEN_COMMA))
 	{
 		advance(parser, scanner);
-		value = expression(scanner);
-//		emitByte(vm, value);
+		operand2 = expression(scanner, reg);
+	}
+	else
+	{
+		emitByte(vm, operand1 >> 16);
+		emitByte(vm, operand1 >> 8 & 0xFF);
+		emitByte(vm, operand1 & 0xFF);
+		return;
+	}
+	if(check(parser,TOKEN_COMMA))
+	{
+		advance(parser, scanner);
+		operand3 = expression(scanner, reg);
+		if(operand1 > 255)
+		{
+		}
+		else
+		{
+			emitByte(vm, operand1);
+		}
+
+		if(operand2 > 255)
+		{
+		}
+		else
+		{
+			emitByte(vm, operand2);
+		}
+
+		if(operand3 > 255)
+		{
+		}
+		else
+		{
+			emitByte(vm, operand3);
+		}
+	}
+	else
+	{
+		if(operand1 > 255)
+		{
+		}
+		else
+		{
+			emitByte(vm, operand1);
+		}
+
+		if(operand1 > 65535)
+		{
+		}
+		else
+		{
+			emitByte(vm, operand2);
+		}
+	}
+
+	if(check(parser, TOKEN_COMMA))
+	{
 	}
 }
 
@@ -429,7 +470,7 @@ static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
 		if((emitValue = findWord(root, word)) != -1)
 		{
 			Byte byte = (uint8_t)emitValue;
-//			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
+			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
 		}
 		else
 		{
@@ -456,13 +497,40 @@ static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)
 	{
 		advance(parser, scanner);
 
-		/* either a label for a register,a value or something along these lines
-		 * or a label for a position(line) in the code
-		addToTable(parser->table, word, ); 
-		*/
+		// a label for a register,a value or something along these lines
+		addToTable(parser->table, word, expression(scanner)); 
 	}
+	else
+	{
+		// that was a label for the current line
+		
+		instructionStatement(parser, scanner, vm);
+	}
+}
 
-	instructionStatement(parser, scanner, vm);
+static void semicolonStatement(Parser* parser, Scanner* scanner, VM* vm) // if you write macros/instructions on the same line
+{
+	if(parser->previous->type == TOKEN_LABEL)
+	{
+		labelStatement(parser, scanner, vm);
+	}
+	else
+	{
+		instructionStatement(parser, scanner, vm);
+	}
+	
+	while(check(parser, TOKEN_SEMICOLON))
+	{
+		advance(parser, scanner);
+		if(parser->previous->type == TOKEN_LABEL)
+		{
+			labelStatement(parser, scanner, vm);
+		}
+		else
+		{
+			instructionStatement(parser, scanner, vm);
+		}
+	}
 }
 
 void initParser(Parser* parser)
@@ -484,12 +552,8 @@ void parse(Parser* parser, Scanner* scanner, VM* vm)
 {
 	advance(parser, scanner);
 
-	if(parser->previous->type == TOKEN_LABEL)
+	while(!check(TOKEN_EOF))
 	{
-		labelStatement(parser, scanner, vm);
-	}
-	else
-	{
-		instructionStatement(parser, scanner, vm);
+		semicolonStatement(parser, scanner, vm);
 	}
 }
