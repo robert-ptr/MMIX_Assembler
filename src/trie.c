@@ -72,7 +72,7 @@ void createInstructionTrie(TrieNode* node)
 {
 	for(int32_t i = 0; i < 256; i++)
 	{
-		insertNode(node, instr[i].name, instr[i].op_code);
+		insertNode(node, instr[i].name, i);
 	}
 }
 
