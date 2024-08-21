@@ -6,17 +6,17 @@
 #include "vm.h"
 #include "trie.h"
 
-typedef struct
+struct
 {
 	Token* current;
 	Token* previous;
 	bool hadError;
 	bool panicMode;
 	Table* table;
-} Parser;
+} parser;
 
-void parse(Parser* parser, Scanner* scanner, VM* vm);
-void initParser(Parser* parser);
-void freeParser(Parser* parser);
+void parse(VM* vm);
+void initParser();
+void freeParser();
 
 #endif

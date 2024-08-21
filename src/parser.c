@@ -4,74 +4,6 @@
 #include <stdbool.h>
 #include "parser.h"
 
-static bool isStrongOperator(char c)
-{
-	char next = peekNext(scanner);
-	return (c == '*' || c == '%' || c == '&' || c == '/' || (c == '<' && next == '<') || (c == '>' && next == '>'));
-}
-
-static bool isWeakOperator(char c)
-{
-	return (c == '+' || c == '-' || c == '|' || c == '^');
-}
-
-static bool isAtEnd(Scanner* scanner)
-{
-	if(peek(scanner) == '\0' || peek(scanner) == '\n')
-		return true;
-
-	return false;
-}
-
-static bool isUnary(char c)
-{
-	return c == '+' || c == '-' || c == '~' || c == '$';
-}
-
-static bool isAlphanumeric(char c)
-{
-		return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':');
-}
-
-static bool isNumeric(char c)
-{
-	return c >= '0' && c <= '9';
-}
-
-static bool isRightParen(char c)
-{
-	return c == ')';
-}
-
-static bool isHexadecimal(char c)
-{
-	charToLowercase(&c);
-	return isNumeric(c) || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
-}
-
-static int32_t fromHexadecimal(Scanner* scanner)
-{
-	int32_t n = 0;
-	char c = peek(scanner);
-	charToLowercase(&c);
-	while(isHexadecimal(peek(scanner)))
-	{
-		if(c >= 'a')
-		{
-			n = n * 16 + (c - 'a' + 10);
-		}
-		else
-		{
-			n = n * 16 + (c - '0'); 
-		}
-		advance(scanner);
-		c = peek(scanner);
-		charToLowercase(&c);
-	}
-
-	return n;
-}
-
 static void errorAt(Token* token, const char* message)
 {
 	fprintf(stderr, "[line %d] Error", token->line);
@@ -79,7 +11,7 @@ static void errorAt(Token* token, const char* message)
 	{
 		fprintf(stderr, " at end");
 	} 
-	else if (token->type == TOKEN_ERROR) 
+	else if (token->type == TOKEN_ERR) 
 	{
 		
 	} 
@@ -91,33 +23,37 @@ static void errorAt(Token* token, const char* message)
 	parser.hadError = true;
 }
 
-static void errorAtCurrent(Parser* parser, const char* message)
+static void errorAtCurrent(const char* message)
 {
-	errorAt(parser->current, message);	
+	errorAt(parser.current, message);	
 }
 
-static void error(Parser* parser, const char* message)
+static void error(const char* message)
 {
-	errorAt(parser->previous, message);
+	errorAt(parser.previous, message);
+}
+static bool check(TokenType type)
+{
+	return parser.current->type == type;
 }
 
-static void advance(Parser* parser, Scanner* scanner)
+static void advance()
 {
-	parser->previous = parser->current;
+	parser.previous = parser.current;
 
 	for (;;)
 	{
-		parser->current = scanToken(scanner);
-		if(parser->current->type != TOKEN_ERR)
+		*parser.current = scanToken();
+		if(parser.current->type != TOKEN_ERR)
 			break;
 
-		errorAtCurrent(parser, );
+		errorAtCurrent("Unknown expression");
 	}
 }
 
-static void consume(Parser* parser, TokenType type, const char* message)
+static void consume(TokenType type, const char* message)
 {
-	if (parser->current->type == type)
+	if (parser.current->type == type)
 	{
 		advance();
 		return;
@@ -126,39 +62,39 @@ static void consume(Parser* parser, TokenType type, const char* message)
 	errorAtCurrent(message);
 }
 
-static bool check(Parser* parser, TokenType type)
+static bool isStrongOperator()
 {
-	return parser->current->type == type;
+	return check(TOKEN_STAR) || check(TOKEN_MOD) || check(TOKEN_AND) || check(TOKEN_SLASH) || check(TOKEN_LSHIFT) || check(TOKEN_RSHIFT);
+}
+
+static bool isWeakOperator()
+{
+	return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_OR) || check(TOKEN_XOR);
+}
+
+static bool isAtEnd()
+{
+	return check(TOKEN_EOF);
+}
+
+static bool isUnary()
+{
+	return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_COMPLEMENT) || check(TOKEN_REGISTER);
+}
+
+static bool isRightParen()
+{
+	return check(TOKEN_RPAREN);
+}
+
+static int32_t fromHexadecimal()
+{
+	// repair this function
 }
 
 static void emitByte(VM* vm, Byte byte)
 {
 	addByte(vm->byte_set, byte);
-}
-
-static bool isMacro(Parser* parser)
-{
-	Token* token = parser->current;
-	// IS, GREG, BYTE, WYDE, TETRA, OCTA
-	if(token->length == 2 && memcmp(token->start, "is", 2))
-	{
-		return true;	
-	}
-	else if (token->length == 4)
-	{
-		if(memcmp(token->start, "greg", 4))
-			return true;
-		else if(memcmp(token->start, "byte", 4))
-			return true;
-		else if(memcmp(token->start, "wyde", 4))
-			return true;
-		else if(memcmp(token->start, "octa", 4))
-			return true;
-	}
-	else if (token->length == 5 && memcmp(token->start, "tetra", 5))
-		return true;
-
-	return false;
 }
 
 static bool match(char* instruction, int32_t start, char* pattern, int32_t length)
@@ -169,28 +105,38 @@ static bool match(char* instruction, int32_t start, char* pattern, int32_t lengt
 	return false;
 }
 
-static int32_t symbol(Scanner* scanner)
+static bool isMacro()
 {
-	// retrieve the symbol from the hashtable
-	scanner->start = scanner->current;
-	while(isAlphanumeric(peek(scanner)))
+	Token* token = parser.current;
+	// IS, GREG, BYTE, WYDE, TETRA, OCTA
+	if(token->length == 2 && memcmp(token->start, "is", 2))
 	{
-		advance(scanner);
+		return true;	
 	}
-
-	int32_t length = scanner->current - scanner->start;
-	char* symbol = (char*)malloc((length + 1) * sizeof(char));
-	symbol[length] = '\0';
-
-	for(int32_t i = 0; i < length; i++)
+	else if (token->length == 4)
 	{
-		symbol[i] = *(scanner->start + i);
+		if(match(token->start, 0, "greg", 4))
+			return true;
+		else if(match(token->start, 0, "byte", 4))
+			return true;
+		else if(match(token->start, 0, "wyde", 4))
+			return true;
+		else if(match(token->start, 0, "octa", 4))
+			return true;
 	}
+	else if (token->length == 5 && memcmp(token->start, "tetra", 5))
+		return true;
 
+	return false;
+}
+
+static int32_t symbol()
+{
+	// repair this function
 	stringToLowercase(&symbol);
 
-	int32_t value;
-	if(findInTable(parser->table, symbol, &value))
+	uint64_t value;
+	if(findInTable(parser.table, symbol, &value))
 		return value;
 	else
 	{
@@ -199,70 +145,69 @@ static int32_t symbol(Scanner* scanner)
 	}
 }
 
-static int32_t constant(Scanner* scanner)
+static int32_t constant()
 {
 	int32_t n = 0;
-	while(isNumeric(scanner))
-	{
-		n = n * 10 + (advance(scanner) - '0');
-	}
-
+	// repair this function
+	
 	return n;
 }
 
-static Byte reg(Scanner* scanner)
+static Byte reg()
 {
 	return constant();
 }
+static int32_t location()
+{
+}
 
-static int32_t expression(Scanner* scanner);
+static int32_t expression();
 
-static int32_t term(Scanner* scanner)
+static int32_t term()
 {
 	// possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
 	// unary operators: +, -, ~, $
 	int a;
-	if(isUnary(peek(scanner)))
+	if(isUnary())
 	{
-		char op = advance(scanner);
-		a = term(scanner);
-		switch(op)
+		a = term();
+		switch(parser.current->type)
 		{
-			case '+':
+			case TOKEN_PLUS:
 				break;
-			case '-':
+			case TOKEN_MINUS:
 				a = -a;
 				break;
-			case '~':
+			case TOKEN_COMPLEMENT:
 				a = ~a;
 				break;
-			case '$':
-				a = reg(scanner);
+			case TOKEN_REGISTER:
+				a = reg();
 				break;
 		}
 	}
-	else if(peek(scanner) == '(')
+	else if(parser.current->type == TOKEN_LPAREN)
 	{
-		advance(scanner); // skip the '('
-		a = expression(scanner);
-		advance(scanner); // skip the ')'
+		advance(); // skip the '('
+		a = expression();
+		advance(); // skip the ')'
 	}
-	else if(peek(scanner) == '@')
+	else if(parser.current->type == TOKEN_AROUND)
 	{
-		a = location(scanner);
+		a = location();
 	}
-	else if(peek() == '#')
+	else if(parser.current->type == TOKEN_CONSTANT)
 	{
-		advance(scanner);
-		a = fromHexadecimal(scanner);
+		advance();
+		a = fromHexadecimal();
 	}
-	else if(isAlphanumeric(peek(scanner)) && !isNumeric(peek(scanner)))
+	else if(parser.current->type == TOKEN_LABEL)
 	{
-		a = symbol(scanner);
+		a = symbol();
 	}
-	else if(isNumeric(peek(scanner)))
+	else if(parser.current->type == TOKEN_IMMEDIATE)
 	{
-		a = constant(scanner);
+		a = constant();
 	}
 	else
 	{
@@ -273,64 +218,59 @@ static int32_t term(Scanner* scanner)
 	return a;
 }
 
-static int32_t strongOperators(Scanner* scanner)
+static int32_t strongOperators()
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
-	int32_t a = term(scanner);
+	int32_t a = term();
 	int32_t b;
-	while(!isAtEnd(scanner) && !isRightParen(peek(scanner)) && !isWeakOperator(peek(scanner)))
+	while(!isAtEnd() && !isRightParen() && !isWeakOperator())
 	{
-		printf("%c ", peek(scanner));
-		if(isStrongOperator(peek(scanner)))
+		if(isStrongOperator())
 		{
-			char op = advance(scanner);
 			int32_t b;
-			switch(op)
+			switch(parser.current->type)
 			{
-				case '*':
-					b = term(scanner);
+				case TOKEN_STAR:
+					b = term();
 						a *= b;
 					break;
-				case '&':
-					b = term(scanner);
-					if(!fpo)
+				case TOKEN_AND:
+					b = term();
+					if(true) // fix this
 						a &= b;
 					else
 						printf("Invalid operands.\n");
 					break;
-				case '%':
-					b = term(scanner);
-					if(!fpo)
+				case TOKEN_MOD:
+					b = term();
+					if(true) // fix this
 						a %= b;
 					else
 						printf("Invalid operands.\n");
 					break;
-				case '/':
+				case TOKEN_DSLASH:
 				{
-					if(peekNext(scanner) == '/')			// will be used later for floating point operations
-					{
-						advance(scanner);
-						b = term(scanner);
-						//*opt = (double)a / (double)b;	
-					}
-					else
-					{
-						b = term(scanner);
-						a /= b;
-					}
+					advance();
+					b = term();
 					break;
 				}
-				case '<':
+				case TOKEN_SLASH:
 				{
-					advance(scanner);
-					b = term(scanner);
+					b = term();
+					a /= b;
+					break;
+				}
+				case TOKEN_LSHIFT:
+				{
+					advance();
+					b = term();
 					a <<= b;
 					break;
 				}
-				case '>':
+				case TOKEN_RSHIFT:
 				{
-					advance(scanner);
-					b = term(scanner);
+					advance();
+					b = term();
 					a >>= b;
 					break;
 				}
@@ -346,29 +286,28 @@ static int32_t strongOperators(Scanner* scanner)
 	return a;
 }
 
-static int32_t expression(Scanner* scanner)
+static int32_t expression()
 {
 	// weak binary operators: +,-,|,^
-	int a = strongOperators(scanner);
+	int a = strongOperators();
 	int b;
-	while(!isAtEnd(scanner) && !isRightParen(peek(scanner)))
+	while(!isAtEnd() && !isRightParen())
 	{
-		if(isWeakOperator(peek(scanner)))
+		if(isWeakOperator())
 		{
-			char op = advance(scanner);
-			b = strongOperators(scanner);
-			switch(op)
+			b = strongOperators();
+			switch(parser.current->type)
 			{
-				case '+':
+				case TOKEN_PLUS:
 					a += b;
 					break;
-				case '-':
+				case TOKEN_MINUS:
 					a -= b;
 					break;
-				case '|':
+				case TOKEN_OR:
 					a |= b;
 					break;
-				case '^':
+				case TOKEN_XOR:
 					a ^= b;
 					break;
 			}
@@ -383,16 +322,16 @@ static int32_t expression(Scanner* scanner)
 	return a;
 }
 
-static void commaStatement(Parser* parser, Scanner* scanner, VM* vm, bool reg)
+static void commaStatement(VM* vm, bool reg)
 {
-	uint32_t operand1 = expression(scanner, reg);
+	uint32_t operand1 = expression(reg);
 	uint32_t operand2;
 	uint32_t operand3;
 
-	if(check(parser, TOKEN_COMMA))
+	if(check(TOKEN_COMMA))
 	{
-		advance(parser, scanner);
-		operand2 = expression(scanner, reg);
+		advance();
+		operand2 = expression(reg);
 	}
 	else
 	{
@@ -401,10 +340,10 @@ static void commaStatement(Parser* parser, Scanner* scanner, VM* vm, bool reg)
 		emitByte(vm, operand1 & 0xFF);
 		return;
 	}
-	if(check(parser,TOKEN_COMMA))
+	if(check(TOKEN_COMMA))
 	{
-		advance(parser, scanner);
-		operand3 = expression(scanner, reg);
+		advance();
+		operand3 = expression(reg);
 		if(operand1 > 255)
 		{
 		}
@@ -448,24 +387,24 @@ static void commaStatement(Parser* parser, Scanner* scanner, VM* vm, bool reg)
 		}
 	}
 
-	if(check(parser, TOKEN_COMMA))
+	if(check(TOKEN_COMMA))
 	{
 	}
 }
 
-static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
+static void instructionStatement(VM* vm)
 {
-	advance(parser, scanner);
+	advance();
 	TrieNode* root = getNode();
 	createInstructionTrie(root);
-	if(parser->current->type == TOKEN_INSTRUCTION)
+	if(parser.current->type == TOKEN_INSTRUCTION)
 	{
-		char* word = (char*)malloc((parser->current->length + 1) * sizeof(char));
-		for(int32_t i = 0; i < parser->current->length; i++)
+		char* word = (char*)malloc((parser.current->length + 1) * sizeof(char));
+		for(int32_t i = 0; i < parser.current->length; i++)
 		{
-			word[i] = parser->current->start[i];
+			word[i] = parser.current->start[i];
 		}
-		word[parser->current->length] = '\0';
+		word[parser.current->length] = '\0';
 		int32_t emitValue;
 		if((emitValue = findWord(root, word)) != -1)
 		{
@@ -474,7 +413,7 @@ static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
 		}
 		else
 		{
-			errorAtCurrent(parser, "Unknown instruction.");
+			errorAtCurrent("Unknown instruction.");
 		}
 
 		free(word);
@@ -482,78 +421,78 @@ static void instructionStatement(Parser* parser, Scanner* scanner, VM* vm)
 	else
 	{
 		// Report an error
-		errorAtCurrent(parser, "Unknown instruction.");
+		errorAtCurrent("Unknown instruction.");
 	}
-	commaStatement(parser,scanner,vm);
+	commaStatement(vm);
 }
 
-static void labelStatement(Parser* parser, Scanner* scanner, VM* vm)
+static void labelStatement(VM* vm)
 {
-	char* word = (char*)malloc((parser->previous->length + 1) * sizeof(char));
-	word = parser->previous->start;
-	word[parser->previous->length] = '\0';
+	char* word = (char*)malloc((parser.previous->length + 1) * sizeof(char));
+	word = parser.previous->start;
+	word[parser.previous->length] = '\0';
 
-	if(isMacro(parser))
+	if(isMacro())
 	{
-		advance(parser, scanner);
+		advance();
 
 		// a label for a register,a value or something along these lines
-		addToTable(parser->table, word, expression(scanner)); 
+		addToTable(parser.table, word, expression()); 
 	}
 	else
 	{
 		// that was a label for the current line
 		
-		instructionStatement(parser, scanner, vm);
+		instructionStatement(vm);
 	}
 }
 
-static void semicolonStatement(Parser* parser, Scanner* scanner, VM* vm) // if you write macros/instructions on the same line
+static void semicolonStatement(VM* vm) // if you write macros/instructions on the same line
 {
-	if(parser->previous->type == TOKEN_LABEL)
+	if(parser.previous->type == TOKEN_LABEL)
 	{
-		labelStatement(parser, scanner, vm);
+		labelStatement(vm);
 	}
 	else
 	{
-		instructionStatement(parser, scanner, vm);
+		instructionStatement(vm);
 	}
 	
-	while(check(parser, TOKEN_SEMICOLON))
+	while(check(TOKEN_SEMICOLON))
 	{
-		advance(parser, scanner);
-		if(parser->previous->type == TOKEN_LABEL)
+		advance();
+		if(parser.previous->type == TOKEN_LABEL)
 		{
-			labelStatement(parser, scanner, vm);
+			labelStatement(vm);
 		}
 		else
 		{
-			instructionStatement(parser, scanner, vm);
+			instructionStatement(vm);
 		}
 	}
 }
 
-void initParser(Parser* parser)
+void initParser()
 {
-	parser->hadError = false;
-	parser->panicMode = false;
-	parser->previous = NULL;
-	parser->current = NULL;
-	initTable(parser->table);
+	parser.hadError = false;
+	parser.panicMode = false;
+	parser.previous = NULL;
+	parser.current = NULL;
+	initTable(parser.table);
 }
 
-void freeParser(Parser* parser)
+void freeParser()
 {
-	initParser(parser); // not much to be done here, so we just reset the parser
-	freeTable(parser->table); // then free the table
+	initParser(); // not much to be done here, so we just reset the parser
+	freeTable(parser.table); // then free the table
 }
 
-void parse(Parser* parser, Scanner* scanner, VM* vm)
+void parse(VM* vm)
 {
-	advance(parser, scanner);
+	advance();
 
 	while(!check(TOKEN_EOF))
 	{
-		semicolonStatement(parser, scanner, vm);
+		semicolonStatement(vm);
 	}
 }

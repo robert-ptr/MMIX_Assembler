@@ -89,7 +89,7 @@ typedef enum
 typedef uint8_t Byte;
 typedef uint16_t Wyde;
 typedef uint32_t Tetra;
-typedef uint32_t Instruction;
+typedef uint32_t InstructionType;
 typedef uint64_t Octa;
 typedef uint64_t MMIX_Register;
 

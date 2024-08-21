@@ -4,14 +4,14 @@
 #include "trie.h"
 #include "common.h"
 
-typedef struct
+struct
 {
 	char* start;
 	char* current;
 	int32_t line;
 
 	TrieNode* trie;
-} Scanner;
+} scanner;
 
 typedef enum
 {
@@ -30,8 +30,8 @@ typedef struct
 	int32_t line;
 } Token;
 
-Scanner* initScanner(Scanner* scanner, char* source);
-void freeScanner(Scanner* scanner);
-Token scanToken(Scanner* scanner);
+void initScanner(char* source);
+void freeScanner();
+Token scanToken();
 
 #endif

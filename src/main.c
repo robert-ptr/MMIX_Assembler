@@ -32,8 +32,6 @@ int32_t main(int32_t argc, const char* argv[])
 	const char* source;
 	FILE* output_fd;
 	
-	Scanner* scanner;
-	Parser* parser;
 	VM* vm;
 	
 	if (argc == 2)
@@ -67,13 +65,13 @@ int32_t main(int32_t argc, const char* argv[])
 		exit(64);
 	}
 
-	initScanner(scanner, source);
-	initParser(parser);
+	initScanner(source);
+	initParser();
 	initVM(vm);
 
 	freeVM(vm);
-	freeParser(parser);
-	freeScanner(scanner);
+	freeParser();
+	freeScanner();
 
 	free(flags);
 	return 0;
