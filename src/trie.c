@@ -28,11 +28,13 @@ void insertNode(TrieNode* node, char* word, int32_t value)
 {
 		TrieNode* copy = node;
 		int32_t n = strlen(word);
+		
 		for(int32_t i = 0; i < n; i++)
 		{
 			if(alphabetIndex(word[i]) == -1)
 				return;
 		}
+
 		for(int32_t i = 0; i < n; i++)
 		{
 			int32_t index = alphabetIndex(word[i]);
@@ -41,11 +43,9 @@ void insertNode(TrieNode* node, char* word, int32_t value)
 				copy->nodes[index] = getNode();
 			}
 			copy = copy->nodes[index];
-			
 		}
 
 		copy->isWord = value; // true is -2, false is -1
-
 }
 
 void createTrie(TrieNode* node, char** words, int32_t n)

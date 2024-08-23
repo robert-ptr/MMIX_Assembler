@@ -106,7 +106,7 @@ char** importInstructions(const char* path, int32_t* size)
 	return strings;
 }
 
-char* intToString(uint64_t n)
+char* intToHexString(uint64_t n)
 {
 	uint64_t c = n;
 	uint64_t size = 0;
@@ -116,9 +116,15 @@ char* intToString(uint64_t n)
 		size++;
 	}
 
-	char* str = (char*)malloc(size * sizeof(char));
+	char* str = (char*)malloc(19 * sizeof(char));
+	str[0] = '0';
+	str[1] = 'x';
+	for(int i = 2; i < 18; i++)
+	{
+		str[i] = '0';
+	}
 	
-	for(int i = 0; i < size; i++, n /= 16)
+	for(int i = 17; i > 1; i--, n /= 16)
 	{
 		c = n % 16;
 		switch(c)
@@ -175,4 +181,107 @@ char* intToString(uint64_t n)
 	}
 
 	return str;
+}
+
+char* intToBinaryString(uint64_t n)
+{
+	char* str = (char*)malloc(65 * sizeof(char));
+
+	for(int i = 0; i < 64; i++)
+	{
+		str[i] = '0';
+	}
+
+	for(int i = 63; i >= 0 && n > 0; i--)
+	{
+		if(n & 1 == 1)
+			str[i] = '1';
+		else
+			str[i] = '0';
+
+		n >>= 1;
+	}
+}
+
+char* intToBinaryString(uint64_t n)
+{
+	char* str = (char*)malloc(11 * sizeof(char));
+
+	for(int i = 0; i < 10; i++)
+	{
+		str[i] = '0';
+	}
+
+	for(int i = 9; i >= 0 && n > 0; i--)
+	{
+		str[i] = '0' + n % 10;
+		n /= 10;
+	}
+}
+
+uint64_t fromHexadecimal(const char* str)
+{
+	uint64_t result = 0;
+	int32_t n = strlen(str);
+	char* new_str = (char*)malloc((n + 1) * sizeof(char));
+	stringToLowercase(new_str);	
+	for(int i = 0; i < n; i++)
+	{
+		switch(new_str[i])
+		{
+			case '0':
+				result *= 16;
+				break;
+			case '1':
+				result = result * 16 + 1;
+				break;
+			case '2':
+				result = result * 16 + 2;
+				break;
+			case '3':
+				result = result * 16 + 3;
+				break;
+			case '4':
+				result = result * 16 + 4;
+				break;
+			case '5':
+				result = result * 16 + 5;
+				break;
+			case '6':
+				result = result * 16 + 6;
+				break;
+			case '7':
+				result = result * 16 + 7;
+				break;
+			case '8':
+				result = result * 16 + 8;
+				break;
+			case '9':
+				result = result * 16 + 9;
+				break;
+			case 'a':
+				result = result * 16 + 10;
+				break;
+			case 'b':
+				result = result * 16 + 11;
+				break;
+			case 'c':
+				result = result * 16 + 12;
+				break;
+			case 'd':
+				result = result * 16 + 13;
+				break;
+			case 'e':
+				result = result * 16 + 14;
+				break;
+			case 'f':
+				result = result * 16 + 15;
+				break;
+			default:
+				fprintf(stderr, "Invalid hex digit!");
+				break;
+		}
+	}
+
+	free(new_str);
 }

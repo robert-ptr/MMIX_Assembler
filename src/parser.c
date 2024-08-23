@@ -87,11 +87,6 @@ static bool isRightParen()
 	return check(TOKEN_RPAREN);
 }
 
-static int32_t fromHexadecimal()
-{
-	// repair this function
-}
-
 static void emitByte(VM* vm, Byte byte)
 {
 	addByte(vm->byte_set, byte);

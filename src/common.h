@@ -13,6 +13,9 @@ FILE* createFile(const char* path);
 void charToLowercase(char* c);
 void stringToLowercase(char** s);
 char** importInstructions(const char* path, int* size);
-char* intToString(uint64_t n);
+char* intToHexString(uint64_t n);
+char* intToBinaryString(uint64_t n);
+char* intToDecimalString(uint64_t n);
+uint64_t fromHexadecimal(const char* str);
 
 #endif
