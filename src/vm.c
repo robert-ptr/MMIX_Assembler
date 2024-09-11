@@ -418,57 +418,51 @@ void execute(VM* vm)
 						
 						// 1 oops
 					case OP_SUB: 			//subtract s($X)<-S($Y)-S($Z)
+						*reg_X = s(*reg_Y) - s(*reg_Z);
+						break;
 					case OP_SUBI:
+						*reg_X = s(*reg_Y) - s(Z);
+						break;
 					case OP_SUBU:
+						*reg_X = *reg_Y - *reg_Z;
+						break;
 					case OP_SUBUI:
-						byte -= OP_SUB;
-
-						if(byte % 2 == 0 && byte / 2 == 0)
-							*reg_X = s(*reg_Y) - s(*reg_Z);
-						else if(byte % 2 == 1 && byte / 2 == 0)
-							*reg_X = s(*reg_Y) - s(Z);
-						else if(byte % 2 == 0 && byte / 2 == 1)
-							*reg_X = *reg_Y - *reg_Z;
-						else
-							*reg_X = *reg_Y - Z;
-
+						*reg_X = *reg_Y - Z;
 						break;					
 						
 						// 1 oops
 					case OP_2ADDU: 		//times 2 and add unsigned u($X)<-(u($Y)x2+u($Z)) mod 2^64
-					case OP_2ADDUI:
-					case OP_4ADDU: 		// times 4 and add unsigned
-					case OP_4ADDUI:
-					case OP_8ADDU: 		// times 8 and add unsigned
-					case OP_8ADDUI:
-					case OP_16ADDU: 	// times 16 and add unsigned
-					case OP_16ADDUI:
-					{
-						byte -= OP_2ADDU;
-						uint64_t operand1;
-						uint64_t operand2;
-						uint64_t operand3;
-					
-						if(byte % 2 == 1)
-							operand3 = Z;
-						else
-							operand3 = *reg_Z;
-
-						if(byte / 2 == 0)
-							operand2 = 2;
-						else if(byte / 2 == 1)
-							operand2 = 4;
-						else if(byte / 2 == 2)
-							operand2 = 8;
-						else
-							operand2 = 16;
-
-						multiplication64bit(operand1, operand2, &result1, &result2);
-						addition64bit(result1, operand3, reg_X);
-
+						multiplication64bit(*reg_Y, 2, &result1, &result2);
+						addition64bit(result1, *reg_Z, reg_X);
 						break;
-					}
-					
+					case OP_2ADDUI:
+						multiplication64bit(*reg_Y, 2, &result1, &result2);
+						addition64bit(result1, Z, reg_X);
+						break;
+					case OP_4ADDU: 		// times 4 and add unsigned
+						multiplication64bit(*reg_Y, 4, &result1, &result2);
+						addition64bit(result1, *reg_Z, reg_X);
+						break;
+					case OP_4ADDUI:
+						multiplication64bit(*reg_Y, 4, &result1, &result2);
+						addition64bit(result1, Z, reg_X);
+						break;
+					case OP_8ADDU: 		// times 8 and add unsigned
+						multiplication64bit(*reg_Y, 8, &result1, &result2);
+						addition64bit(result1, *reg_Z, reg_X);
+						break;
+					case OP_8ADDUI:
+						multiplication64bit(*reg_Y, 8, &result1, &result2);
+						addition64bit(result1, Z, reg_X);
+						break;
+					case OP_16ADDU: 	// times 16 and add unsigned
+						multiplication64bit(*reg_Y, 16, &result1, &result2);
+						addition64bit(result1, *reg_Z, reg_X);
+						break;
+					case OP_16ADDUI:
+						multiplication64bit(*reg_Y, 16, &result1, &result2);
+						addition64bit(result1, Z, reg_X);
+						break;
 
 					case OP_CMP: 			// compare s($X)<-[s($Y) > s($Z)] - [s($Y) < s($Z)]
 														// 1 oops
@@ -712,89 +706,70 @@ void execute(VM* vm)
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = s(getByteFromMem(vm, A));
-
 						break;
 					case OP_LDBI: 
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = s(getByteFromMem(vm, A));
-
 						break;
 					case OP_LDBU: 
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = getByteFromMem(vm, A);
-
 						break;
 					case OP_LDBUI:
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = getByteFromMem(vm, A);
-
 						break;
 					case OP_LDW: 			// load wyde s($X)<-s(M2[A])
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = s(getWydeFromMem(vm, A));
-
 						break;
 					case OP_LDWI:
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = s(getWydeFromMem(vm, A));
-
 						break;
 					case OP_LDWU:
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = getWydeFromMem(vm, A);
-
 						break;
 					case OP_LDWUI:
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = getWydeFromMem(vm, A);
-
 						break;
 					case OP_LDT: 			// load tetra s($X)<-s(M4[A])
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = s(getTetraFromMem(vm, A));
-
 						break;
 					case OP_LDTI:
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = s(getTetraFromMem(vm, A));
-
 						break;
 					case OP_LDTU:
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = getTetraFromMem(vm, A);
-
 						break;
 					case OP_LDTUI:
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = getByteTetraMem(vm, A);
-
 						break;
 					case OP_LDO: 			// load octa s($X)<-s(M8[A])
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = s(getOctaFromMem(vm, A));
-
 						break;
 					case OP_LDOI:
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = s(getOctaFromMem(vm, A));
-
 						break;
 					case OP_LDOU:
 						addition64bit(*reg_Y, *reg_Z, &A);
 						*reg_X = getOctaFromMem(vm, A);
-
 						break;
 					case OP_LDOUI:
-					{
-						
 						addition64bit(*reg_Y, Z, &A);
 						*reg_X = getOctaFromMem(vm, A);
-
 						break;
-					}
 					case OP_LDSF: 		// load short float: f($X)<-f(M4[A]_
 														// 1 mem + 1 oops
 						break;
@@ -852,89 +827,73 @@ void execute(VM* vm)
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addByteToMem(vm, A, s(*reg_X));
-						
 						break;
 					case OP_STBI:
 						addition64bit(*reg_Y, Z, &A);
 						addByteToMem(vm, A, s(*reg_X));
-						
 						break;
 					case OP_STBU: 		// u(M1[A])<-u($X) mod 2^8
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addByteToMem(vm, A, *reg_X);
-						
 						break;
 					case OP_STBUI:
 						addition64bit(*reg_Y, Z, &A);
 						addByteToMem(vm, A, *reg_X);
-						
 						break;
 					case OP_STW: 			// store wyde s(M2[A])<-s($X)
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addWydeToMem(vm, A, s(*reg_X));
-						
 						break;
 					case OP_STWI:
 						addition64bit(*reg_Y, Z, &A);
 						addWydeToMem(vm, A, s(*reg_X));
-						
 						break;
 					case OP_STWU: 		// u(M2[A])<-u($X) mod 2^16
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addWydeToMem(vm, A, *reg_X);
-						
 						break;
 					case OP_STWUI:
 						addition64bit(*reg_Y, Z, &A);
 						addWydeToMem(vm, A, *reg_X);
-				
 						break;
 					case OP_STT: 			// store tetra s(M4[A])<-s($X)
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addTetraToMem(vm, A, s(*reg_X));
-
 						break;
 					case OP_STTI:
 						addition64bit(*reg_Y, Z, &A);
 						addTetraToMem(vm, A, s(*reg_X));
-
 						break;
 					case OP_STTU:			// u(M4[A])<-u($X) mod 2^32
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addTetraToMem(vm, A, *reg_X);
-
 						break;
 					case OP_STTUI:
 						addition64bit(*reg_Y, Z, &A);
 						addTetraToMem(vm, A, *reg_X);
-
 						break;
 					case OP_STO: 			// store octo s(M8[A])<-s($X)
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addOctaToMem(vm, A, s(*reg_X));
-
 						break;
 					case OP_STOI:
 						addition64bit(*reg_Y, Z, &A);
 						addOctaToMem(vm, A, s(*reg_X));
-
 						break;
 					case OP_STOU: 		// u(M8[A])<-u($X) mod 2^64
 														// 1 mem + 1 oops
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addOctaToMem(vm, A, *reg_X);
-
 						break;
 					case OP_STOUI:
 						addition64bit(*reg_Y, *reg_Z, &A);
 						addOctaToMem(vm, A, *reg_X);
-
 						break;
 					case OP_STSF: 			// store short float: f(M4[A])<-f($X)
 															// 1 mem + 1 oops

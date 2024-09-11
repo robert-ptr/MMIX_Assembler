@@ -1,5 +1,46 @@
 #include "debug.h"
 
+static void dumpGeneralRegister(Debugger* debugger, uint8_t index)
+{
+	printf("G. Reg. number: %d value: %s", index, "placeholder"); // support for showing register value in binary,hexa and decimal
+}
+
+static void dumpSpecialRegister(Debugger* debugger, uint8_t index)
+{
+}
+
+static void dumpGeneralRegisters(Debugger* debugger)
+{
+	for(int i = 0; i < 256; i++)
+	{
+		dumpGeneralRegister(debugger, i);
+	}
+}
+
+static void dumpSpecialRegisters(Debugger* debugger)
+{
+	for(int i = 0; i < 32; i++)
+	{
+		dumpSpecialRegister(debugger, i);
+	}
+}
+
+static void dumpMemory(Debugger* debugger)
+{
+}
+
+static void dumpRegisterStack(Debugger* debugger)
+{
+}
+
+static void dumpStackTop(Debugger* debugger)
+{
+}
+
+static void dumpStack(Debugger* debugger)
+{
+}
+
 void debug(Debugger* debugger)
 {
 	// TO DO: think of features to add
@@ -48,43 +89,4 @@ void debug(Debugger* debugger)
 	}
 }
 
-static void dumpGeneralRegister(Debugger* debugger, uint8_t index)
-{
-	printf("G. Reg. number: %d value: %s")
-}
 
-static void dumpSpecialRegister(Debugger* debugger, uint8_t index)
-{
-}
-
-static void dumpGeneralRegisters(Debugger* debugger)
-{
-	for(int i = 0; i < 256; i++)
-	{
-		dumpGeneralRegister(debugger, i);
-	}
-}
-
-static void dumpSpecialRegisters(Debugger* debugger)
-{
-	for(int i = 0; i < 32; i++)
-	{
-		dumpSpecialRegister(debugger, i);
-	}
-}
-
-static void dumpMemory(Debugger* debugger)
-{
-}
-
-static void dumpRegisterStack(Debugger* debugger)
-{
-}
-
-static void dumpStackTop(Debugger* debugger)
-{
-}
-
-static void dumpStack(Debugger* debugger)
-{
-}

@@ -111,14 +111,14 @@ RunningTime times[256] = 	{ {.oopsies=5	, .mems=0}, {.oopsies=1	, .mems=0}, {.oo
 														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
 														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
 														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
-														{.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, // 4x
-														{.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, // 4x
-														{.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, // 4x
-														{.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, {.oopsies=1+branch_time, .mems=0}, // 4x
-														{.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, // 5x
-														{.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, // 5x
-														{.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, // 5x
-														{.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, {.oopsies=3-branch_time, .mems=0}, // 5x
+														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
+														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
+														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
+														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0}, // 5x
 														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
 														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
 														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x

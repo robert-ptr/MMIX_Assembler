@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "common.h"
 
 char* getString(char* buffer, int32_t length, int32_t buf_index)

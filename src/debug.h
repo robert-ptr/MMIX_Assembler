@@ -3,8 +3,8 @@
 
 #include "vm.h"
 
-#define FLAG_ALL_GREGS 0x0001
-#define FLAG_ALL_SPREGS 0x0002
+#define FLAG_GREGS 0x0001
+#define FLAG_SPREGS 0x0002
 #define FLAG_REGSTACK 0x0004
 #define FLAG_INSTRSTACK 0x0008
 #define FLAG_STACKTOP 0x0010

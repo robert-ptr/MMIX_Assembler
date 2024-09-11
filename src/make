@@ -1,0 +1,1 @@
+gcc main.c vm.h vm.c parser.h parser.c scanner.h scanner.c common.h common.c trie.h trie.c table.h table.c debug.h debug.c

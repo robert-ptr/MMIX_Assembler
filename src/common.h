@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define GROW_LIST(x) ( (x) == 0 ? 8 : (2 * (x)))
 
