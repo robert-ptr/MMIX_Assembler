@@ -287,6 +287,7 @@ void execute(VM* vm)
 					case OP_FIXU: 	// convert floating to fixed unsigned: u($X)<-[int32_t f($Z)) mod 2^64
 													// 4 oops
 						break;
+
 					case OP_FLOT: 	// convert fixed to floating: f($X)<-s($Z)
 													// 4 oops
 						break;
@@ -307,6 +308,7 @@ void execute(VM* vm)
 						break;
 					case OP_SFLOTUI:
 						break;
+					
 					case OP_FMUL: 	// floating multiply: f($X)<-f($Y)/f($Z)
 													// 4 oops
 						break;
@@ -331,7 +333,8 @@ void execute(VM* vm)
 					case OP_FINT: 	// floating integer: f($X)<-int32_t f($Z)
 													// 4 oops
 						break;
-													// 10 oops
+					
+						// 10 oops
 					case OP_MUL: 		//multiply s($X)<-s($Y)xs($Z)
 						multiplication64bit(*reg_Y, *reg_Z, reg_X, &result2);
 						if(s(*reg_Y) > 0 && s(*reg_Z) < 0 || s(*reg_Z) < 0 && s(*reg_Y) > 0)
@@ -348,7 +351,8 @@ void execute(VM* vm)
 					case OP_MULUI:
 						multiplication64bit(*reg_Y, Z, reg_X, getSpecialReg(vm, rH));
 						break;
-													// 60 oops
+						
+						// 60 oops
 					case OP_DIV: 		//divide s($X)<-floor(s($Y)/s($Z))[$Z!=0] and s(rR)<-s($Y)mod s($Z)
 						*reg_X = s(*reg_Y) / s(*reg_Z);
 						*getSpecialReg(vm, rR) = s(*reg_Y) % s(*reg_Z);
@@ -365,7 +369,8 @@ void execute(VM* vm)
 						*reg_X = *reg_Y / Z;
 						*getSpecialReg(vm, rR) = *reg_Y % Z;
 						break;
-													// 1 oops
+						
+						// 1 oops
 					case OP_ADD: 		//add s($X)<-s($Y)+s($Z)
 						if(s(*reg_Y) < 0 && s(*reg_Z) > 0)
 						{
@@ -410,7 +415,8 @@ void execute(VM* vm)
 					case OP_ADDUI:
 						addition64bit(*reg_Y, Z, reg_X);
 						break;
-														// 1 oops
+						
+						// 1 oops
 					case OP_SUB: 			//subtract s($X)<-S($Y)-S($Z)
 					case OP_SUBI:
 					case OP_SUBU:
@@ -427,7 +433,8 @@ void execute(VM* vm)
 							*reg_X = *reg_Y - Z;
 
 						break;					
-														// 1 oops
+						
+						// 1 oops
 					case OP_2ADDU: 		//times 2 and add unsigned u($X)<-(u($Y)x2+u($Z)) mod 2^64
 					case OP_2ADDUI:
 					case OP_4ADDU: 		// times 4 and add unsigned
@@ -461,6 +468,8 @@ void execute(VM* vm)
 
 						break;
 					}
+					
+
 					case OP_CMP: 			// compare s($X)<-[s($Y) > s($Z)] - [s($Y) < s($Z)]
 														// 1 oops
 						*reg_X = (s(*reg_Y) > s(*reg_Z)) - (s(*reg_Y) < s(*reg_Z));
@@ -475,6 +484,8 @@ void execute(VM* vm)
 					case OP_CMPUI:
 						*reg_X = (*reg_Y > Z) - (*reg_Y < Z);
 						break;
+					
+
 					case OP_NEG:			// negate s($X)<-Y-s($Z)
 														// 1 oops
 						*reg_X = Y - s(*reg_Z);
@@ -495,6 +506,8 @@ void execute(VM* vm)
 						else
 							*reg_X = (Y - Z) & 0x7FFFFFFF;
 						break;
+					
+
 					case OP_SL: 			// shift left s($X)<-s($Y)x2^(u($Z))
 														// 1 oops
 						*reg_X = s(*reg_Y) << *reg_Z;
@@ -509,6 +522,8 @@ void execute(VM* vm)
 					case OP_SLUI:
 						*reg_X = *reg_Y << Z;
 						break;
+					
+
 					case OP_SR: 			// shift right s($X)<-floor(s($Y)/2^u($Z))
 														// 1 oops
 						*reg_X = s(*reg_Y) >> *reg_Z;
@@ -523,6 +538,8 @@ void execute(VM* vm)
 					case OP_SRUI:
 						*reg_X = *reg_Y >> Z;
 						break;
+					
+
 					case OP_BN: 			// branch if negative: if s($X) < 0, set @<-RA
 														// 3 oops if branch is taken, 1 oops if not
 						break;
@@ -563,6 +580,8 @@ void execute(VM* vm)
 						break;
 					case OP_BEVB:
 						break;
+					
+
 					case OP_PBN: 			// probable branch if negative: if s($X)<0, set @<-RA
 														// 3 oops if wrong, 1 oops if right
 						break;
@@ -603,6 +622,8 @@ void execute(VM* vm)
 						break;
 					case OP_PBEVB:
 						break;
+					
+
 					case OP_CSN: 			// conditional set if negative: if s($Y) < 0, set $X<-$Z
 														// 1 oops
 						break;
@@ -643,6 +664,8 @@ void execute(VM* vm)
 						break;
 					case OP_CSEVI:
 						break;
+					
+
 					case OP_ZSN: 			// zero or set if negative: $X<-$Z[s($Y) < 0]
 														// 1 oops
 						break;
@@ -683,56 +706,92 @@ void execute(VM* vm)
 						break;
 					case OP_ZSEVI:
 						break;
+					
+
 					case OP_LDB: 			// load byte s($X)<-s(M1[A])
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = s(getByteFromMem(vm, A));
+
+						break;
 					case OP_LDBI: 
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = s(getByteFromMem(vm, A));
+
+						break;
 					case OP_LDBU: 
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = getByteFromMem(vm, A);
+
+						break;
 					case OP_LDBUI:
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = getByteFromMem(vm, A);
+
+						break;
 					case OP_LDW: 			// load wyde s($X)<-s(M2[A])
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = s(getWydeFromMem(vm, A));
+
+						break;
 					case OP_LDWI:
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = s(getWydeFromMem(vm, A));
+
+						break;
 					case OP_LDWU:
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = getWydeFromMem(vm, A);
+
+						break;
 					case OP_LDWUI:
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = getWydeFromMem(vm, A);
+
+						break;
 					case OP_LDT: 			// load tetra s($X)<-s(M4[A])
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = s(getTetraFromMem(vm, A));
+
+						break;
 					case OP_LDTI:
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = s(getTetraFromMem(vm, A));
+
+						break;
 					case OP_LDTU:
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = getTetraFromMem(vm, A);
+
+						break;
 					case OP_LDTUI:
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = getByteTetraMem(vm, A);
+
+						break;
 					case OP_LDO: 			// load octa s($X)<-s(M8[A])
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = s(getOctaFromMem(vm, A));
+
+						break;
 					case OP_LDOI:
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = s(getOctaFromMem(vm, A));
+
+						break;
 					case OP_LDOU:
+						addition64bit(*reg_Y, *reg_Z, &A);
+						*reg_X = getOctaFromMem(vm, A);
+
+						break;
 					case OP_LDOUI:
 					{
-						byte -= OP_LDB;
 						
-						if(byte % 2 == 1)
-							addition64bit(*reg_Y, *reg_Z, &A);
-						else
-							addition64bit(*reg_Y, Z, &A);
-
-						if(byte % 4 == 2 || byte % 4 == 3)
-						{
-							if(byte / 4 == 0)
-								*reg_X = getByteFromMem(vm, A);
-							else if(byte / 4 == 1)
-								*reg_X = getWydeFromMem(vm, A);	
-							else if(byte / 4 == 2)
-								*reg_X = getTetraFromMem(vm, A);
-							else
-								*reg_X = getOctaFromMem(vm, A);
-						}
-						else
-						{
-							if(byte / 4 == 0)
-								*reg_X = s(getByteFromMem(vm, A));
-							else if(byte / 4 == 1)
-								*reg_X = s(getWydeFromMem(vm, A));	
-							else if(byte / 4 == 2)
-								*reg_X = s(getTetraFromMem(vm, A));
-							else
-								*reg_X = s(getOctaFromMem(vm, A));
-						}
+						addition64bit(*reg_Y, Z, &A);
+						*reg_X = getOctaFromMem(vm, A);
 
 						break;
 					}
@@ -751,6 +810,8 @@ void execute(VM* vm)
 						
 						*reg_X = (Octa)getTetraFromMem(vm, A) << 32;
 						break;
+					
+
 					case OP_CSWAP: 		// compare and swap octabytes: if u(M8[A] = u(rP), where rP is the special prediction reigster,
 												 		// set u(M8[A]<-u($X) and u($X)<-1. Otherwise set u(rP)<-u(M8[A]) and u($X)<-0.
 												 		// This is an atomic operation, useful when independent computers share a common memory.
@@ -778,86 +839,101 @@ void execute(VM* vm)
 						break;
 					case OP_PREGOI:
 						break;
+					
+
 					case OP_GO: 			// go: u($X)<-@+4, then @<-a
 														// 3 oops
 						break;
 					case OP_GOI:
 						break;
+					
+
 					case OP_STB: 			// store byte s(M1[A])<-s($X)
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addByteToMem(vm, A, s(*reg_X));
+						
+						break;
 					case OP_STBI:
+						addition64bit(*reg_Y, Z, &A);
+						addByteToMem(vm, A, s(*reg_X));
+						
+						break;
 					case OP_STBU: 		// u(M1[A])<-u($X) mod 2^8
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addByteToMem(vm, A, *reg_X);
+						
+						break;
 					case OP_STBUI:
+						addition64bit(*reg_Y, Z, &A);
+						addByteToMem(vm, A, *reg_X);
+						
+						break;
 					case OP_STW: 			// store wyde s(M2[A])<-s($X)
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addWydeToMem(vm, A, s(*reg_X));
+						
+						break;
 					case OP_STWI:
+						addition64bit(*reg_Y, Z, &A);
+						addWydeToMem(vm, A, s(*reg_X));
+						
+						break;
 					case OP_STWU: 		// u(M2[A])<-u($X) mod 2^16
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addWydeToMem(vm, A, *reg_X);
+						
+						break;
 					case OP_STWUI:
+						addition64bit(*reg_Y, Z, &A);
+						addWydeToMem(vm, A, *reg_X);
+				
+						break;
 					case OP_STT: 			// store tetra s(M4[A])<-s($X)
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addTetraToMem(vm, A, s(*reg_X));
+
+						break;
 					case OP_STTI:
+						addition64bit(*reg_Y, Z, &A);
+						addTetraToMem(vm, A, s(*reg_X));
+
+						break;
 					case OP_STTU:			// u(M4[A])<-u($X) mod 2^32
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addTetraToMem(vm, A, *reg_X);
+
+						break;
 					case OP_STTUI:
+						addition64bit(*reg_Y, Z, &A);
+						addTetraToMem(vm, A, *reg_X);
+
+						break;
 					case OP_STO: 			// store octo s(M8[A])<-s($X)
 														// 1 mem + 1 oops
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addOctaToMem(vm, A, s(*reg_X));
+
+						break;
 					case OP_STOI:
+						addition64bit(*reg_Y, Z, &A);
+						addOctaToMem(vm, A, s(*reg_X));
+
+						break;
 					case OP_STOU: 		// u(M8[A])<-u($X) mod 2^64
 														// 1 mem + 1 oops
-					case OP_STOUI:
-						byte -= OP_STB;
-						
-						if(byte % 2 == 1)
-							addition64bit(*reg_Y, *reg_Z, &A);
-						else
-							addition64bit(*reg_Y, Z, &A);
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addOctaToMem(vm, A, *reg_X);
 
-						if(byte / 4 == 0)
-						{
-							if(byte / 2 % 2 == 1)
-							{
-								addByteToMem(vm, A, *reg_X);
-							}
-							else
-							{
-								addByteToMem(vm, A, s(*reg_X));
-							}
-						}
-						else if(byte / 4 == 1)
-						{
-							if(byte / 2 % 2 == 1)
-							{
-								addWydeToMem(vm, A, *reg_X);
-							}
-							else
-							{
-								addWydeToMem(vm, A, s(*reg_X));
-							}
-						}
-						else if(byte / 4 == 2)
-						{
-							if(byte / 2 % 2 == 1)
-							{
-								addTetraToMem(vm, A, *reg_X);
-							}
-							else
-							{
-								addTetraToMem(vm, A, s(*reg_X));
-							}
-						}
-						else
-						{
-							if(byte / 2 % 2 == 1)
-							{
-								addOctaToMem(vm, A, *reg_X);
-							}
-							else
-							{
-								addOctaToMem(vm, A, s(*reg_X));
-							}
-						}
+						break;
+					case OP_STOUI:
+						addition64bit(*reg_Y, *reg_Z, &A);
+						addOctaToMem(vm, A, *reg_X);
 
 						break;
 					case OP_STSF: 			// store short float: f(M4[A])<-f($X)
@@ -889,6 +965,8 @@ void execute(VM* vm)
 						break;
 					case OP_STUNCI:
 						break;
+					
+
 					case OP_SYNCD: 	// synchronize data: says that all of the bytes M[A] through M[A+X] must be brought up to date in the physical memory, so that other computers and input/output devices can read them.
 													// 1 oops
 						break;
@@ -899,16 +977,22 @@ void execute(VM* vm)
 						break;
 					case OP_PRESTI:
 						break;
+					
+
 					case OP_SYNCID: // synchronize instructions and data: says that all of the bytes M[A] through M[A+X] must be fetched again before being interpreted as instructions.
 													// 1 oops
 						break;
 					case OP_SYNCIDI:
 						break;
+					
+
 					case OP_PUSHGO: // push registers and go: push(X) and set rJ<-@ + 4, then set @<-A
 													// 3 oops
 						break;
 					case OP_PUSHGOI:
 						break;
+
+
 /* SET */	case OP_OR: 		// bitwise or: v($X)<-v($Y) | v($Z)
 /* $X $Y */								// 1 oops
 /* <=> */
@@ -916,21 +1000,29 @@ void execute(VM* vm)
 						break;
 					case OP_ORI:
 						break;
+
+
 					case OP_ORN: 		// bitwise or-not: v($X)<-v($Y) | !v($Z)
 													// 1 oops
 						break;
 					case OP_ORNI:
 						break;
+
+
 					case OP_NOR: 		// bitwise not-or: !v($X)<-v($Y) | v($Z)
 													// 1 oops
 						break;
 					case OP_NORI:
 						break;
+
+
 					case OP_XOR: 		// bitwise exclusive-or: v($X)<-v($Y) ^ v($Z)
 													// 1 oops
 						break;
 					case OP_XORI:
 						break;
+
+
 					case OP_AND: 		// bitwise and: v($X)<-v($Y) & v($Z)
 													// 1 oops
 						break;
@@ -946,12 +1038,16 @@ void execute(VM* vm)
 						break;
 					case OP_NANDI:
 						break;
+
+
 					case OP_NXOR: 	// bitwise not-exclusive-or: !v($X)<-v($Y) ^ v($Z)
 													// 1 oops
 						break;
 					case OP_NXORI:
 						break;
 						// y .-. z = max(0, y - z) (saturating subtraction)
+
+
 					case OP_BDIF: 	// byte difference: b($X)<-b($Y) .-. b($Z)
 													// 1 oops
 						break;
@@ -972,6 +1068,8 @@ void execute(VM* vm)
 						break;
 					case OP_ODIFI:
 						break;
+
+
 					case OP_MUX: 		// bitwise multiplex (combines two bit vectors by looking at the special multiples mask regiser rM: v($X)<-(v($Y) & v(rM)) | (v($Z) & !v(rM))
 													// 1 oops
 						break;
@@ -992,6 +1090,8 @@ void execute(VM* vm)
 						break;
 					case OP_MXORI:
 						break;
+
+
 					case OP_SETH: 	// set high wyde: u($X)<-YZ x 2^48
 													// 1 oops
 						break;
@@ -1004,6 +1104,8 @@ void execute(VM* vm)
 /*SET*/		case OP_SETL: 	// set low wyde: u($X)<-YZ
 													// 1 oops
 						break;
+
+
 					case OP_INCH: 	// increase by high wyde: u($X)<-(u($X) + YZ) mod 2^64
 													// 1 oops
 						break;
@@ -1016,6 +1118,8 @@ void execute(VM* vm)
 					case OP_INCL: 	// increase by low wyde: u($X)<-(u($X) + YZ) mod 2^64
 													// 1 oops
 						break;
+
+
 					case OP_ORH: 		// bitwise or with high wyde: v($X)<-v($X)|v(YZ<<48)
 													// 1 oops
 						break;
@@ -1028,6 +1132,8 @@ void execute(VM* vm)
 					case OP_ORL: 		// bitwise or with low wyde: v($X)<-v($X)|v(YZ)
 													// 1 oops
 						break;
+
+
 					case OP_ANDH: 	// bitwise and-not high wyde: v($X)<-v($X)&!v(YZ<<48)
 													// 1 oops
 						break;
@@ -1040,26 +1146,36 @@ void execute(VM* vm)
 					case OP_ANDNL: 	// bitwise and-not low wyde: v($X)<-v($X)&!v(YZ)
 													// 1 oops
 						break;
+
+
 					case OP_JMP: 		// jump: @<-RA (a three byte relative address) <=> @+4xXYZ (can also be negative)
 													// 1 oops
 						break;
 					case OP_JMPB:
 						break;
+	
+
 					case OP_PUSHJ: 	// push registers and jump: push(X) and set rJ<-@ + 4, then set @<-RA
 													// 1 oops
 						break;
 					case OP_PUSHJB:
 						break;
+
+
 					case OP_GETA: 	// get address: u($X)<-RA
 													// 1 oops
 						break;
 					case OP_GETAB:
 						break;
+
+
 					case OP_PUT: 		// put into special register: u(g[X])<-u($Z), where 0 <= X < 32
 													// 1 oops
 						break;
 					case OP_PUTI:
 						break;
+					
+
 					case OP_POP: 		// pop registers and return: pop(X), then @<-rJ + 4xYZ
 													// 3 oops
 						break;
