@@ -23,6 +23,17 @@ typedef struct
 	uint8_t format;
 } Debugger;
 
-void debug(Debugger* debugger);
+void debug(Debugger* debugger); // for the VM basically
+
+#define ASM_DEBUG_SCANNER
+#define ASM_DEBUG_PARSER
+
+#ifdef ASM_DEBUG_SCANNER
+void debugScanner();
+#endif
+
+#ifdef ASM_DEBUG_PARSER
+void debugParser();
+#endif
 
 #endif

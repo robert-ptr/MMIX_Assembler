@@ -13,6 +13,7 @@ struct
 	bool hadError;
 	bool panicMode;
 	Table* table;
+    uint32_t line;
 } parser;
 
 void parse(VM* vm);

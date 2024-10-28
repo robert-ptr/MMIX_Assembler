@@ -125,6 +125,14 @@ static bool isMacro()
 	return false;
 }
 
+static char* getTokenString(Token* token)
+{
+    int word_length = token->length + 1; // +1 for '\0' 
+    char* word = (char*)malloc(word_length * sizeof(char));
+    strncpy(word, token->start, token->length);
+    word[token->length] = '\0';
+}
+
 static int32_t symbol()
 {
 	// repair this function
@@ -165,8 +173,10 @@ static int32_t term()
 	int a;
 	if(isUnary())
 	{
+		TokenType token_type = parser.current->type;
+		advance();
 		a = term();
-		switch(parser.current->type)
+		switch(token_type)
 		{
 			case TOKEN_PLUS:
 				break;
@@ -194,7 +204,9 @@ static int32_t term()
 	else if(parser.current->type == TOKEN_CONSTANT)
 	{
 		advance();
-		a = fromHexadecimal();
+        char* hexa = getTokenString(parser.current);
+		a = fromHexadecimal(hexa);
+        free(hexa);
 	}
 	else if(parser.current->type == TOKEN_LABEL)
 	{
@@ -220,62 +232,38 @@ static int32_t strongOperators()
 	int32_t b;
 	while(!isAtEnd() && !isRightParen() && !isWeakOperator())
 	{
-		if(isStrongOperator())
-		{
-			int32_t b;
-			switch(parser.current->type)
-			{
-				case TOKEN_STAR:
-					b = term();
-						a *= b;
-					break;
-				case TOKEN_AND:
-					b = term();
-					if(true) // fix this
-						a &= b;
-					else
-						printf("Invalid operands.\n");
-					break;
-				case TOKEN_MOD:
-					b = term();
-					if(true) // fix this
-						a %= b;
-					else
-						printf("Invalid operands.\n");
-					break;
-				case TOKEN_DSLASH:
-				{
-					advance();
-					b = term();
-					break;
-				}
-				case TOKEN_SLASH:
-				{
-					b = term();
-					a /= b;
-					break;
-				}
-				case TOKEN_LSHIFT:
-				{
-					advance();
-					b = term();
-					a <<= b;
-					break;
-				}
-				case TOKEN_RSHIFT:
-				{
-					advance();
-					b = term();
-					a >>= b;
-					break;
-				}
-			}
-		}
-		else
-		{
-			printf("Error in strongOperators.\n");
-			return -1;
-		}
+        switch(parser.current->type)
+        {
+            case TOKEN_STAR:
+                b = term();
+                a *= b;
+                break;
+            case TOKEN_AND:
+                b = term();
+                a &= b;
+                break;
+            case TOKEN_MOD:
+                a %= b;
+                break;
+            case TOKEN_DSLASH:
+                advance();
+                b = term();
+                break;
+            case TOKEN_SLASH:
+                b = term();
+                a /= b;
+                break;
+            case TOKEN_LSHIFT:
+                advance();
+                b = term();
+                a <<= b;
+                break;
+            case TOKEN_RSHIFT:
+                advance();
+                b = term();
+                a >>= b;
+                break;
+        }
 	}
 
 	return a;
@@ -288,45 +276,40 @@ static int32_t expression()
 	int b;
 	while(!isAtEnd() && !isRightParen())
 	{
-		if(isWeakOperator())
-		{
-			b = strongOperators();
-			switch(parser.current->type)
-			{
-				case TOKEN_PLUS:
-					a += b;
-					break;
-				case TOKEN_MINUS:
-					a -= b;
-					break;
-				case TOKEN_OR:
-					a |= b;
-					break;
-				case TOKEN_XOR:
-					a ^= b;
-					break;
-			}
-		}
-		else
-		{
-			printf("Error in expression\n");
-			return -1;
-		}
+        switch(parser.current->type)
+        {
+            case TOKEN_PLUS:
+                b = strongOperators();
+                a += b;
+                break;
+            case TOKEN_MINUS:
+                b = strongOperators();
+                a -= b;
+                break;
+            case TOKEN_OR:
+                b = strongOperators();
+                a |= b;
+                break;
+            case TOKEN_XOR:
+                b = strongOperators();
+                a ^= b;
+                break;
+        }
 	}
 
 	return a;
 }
 
-static void commaStatement(VM* vm, bool reg)
+static void commaStatement(VM* vm)
 {
-	uint32_t operand1 = expression(reg);
+	uint32_t operand1 = expression();
 	uint32_t operand2;
 	uint32_t operand3;
 
 	if(check(TOKEN_COMMA))
 	{
 		advance();
-		operand2 = expression(reg);
+		operand2 = expression();
 	}
 	else
 	{
@@ -338,9 +321,10 @@ static void commaStatement(VM* vm, bool reg)
 	if(check(TOKEN_COMMA))
 	{
 		advance();
-		operand3 = expression(reg);
+		operand3 = expression();
 		if(operand1 > 255)
 		{
+            error("First argument is of the wrong size! Can be at most 8 bits.");
 		}
 		else
 		{
@@ -349,6 +333,7 @@ static void commaStatement(VM* vm, bool reg)
 
 		if(operand2 > 255)
 		{
+            error("Second argument is of the wrong size! Can be at most 8 bits.");
 		}
 		else
 		{
@@ -357,6 +342,7 @@ static void commaStatement(VM* vm, bool reg)
 
 		if(operand3 > 255)
 		{
+            error("Third argument is of the wrong size! Can be at most 8 bits.");
 		}
 		else
 		{
@@ -367,14 +353,16 @@ static void commaStatement(VM* vm, bool reg)
 	{
 		if(operand1 > 255)
 		{
+            error("First argument is of the wrong size! Can be at most 8 bits.");
 		}
 		else
 		{
 			emitByte(vm, operand1);
 		}
 
-		if(operand1 > 65535)
+		if(operand2 > 65535)
 		{
+            error("Second argument is of the wrong size! Can be at most 16 bits.");
 		}
 		else
 		{
@@ -392,16 +380,12 @@ static void instructionStatement(VM* vm)
 	advance();
 	TrieNode* root = getNode();
 	createInstructionTrie(root);
+
 	if(parser.current->type == TOKEN_INSTRUCTION)
 	{
-		char* word = (char*)malloc((parser.current->length + 1) * sizeof(char));
-		for(int32_t i = 0; i < parser.current->length; i++)
-		{
-			word[i] = parser.current->start[i];
-		}
-		word[parser.current->length] = '\0';
-		int32_t emitValue;
-		if((emitValue = findWord(root, word)) != -1)
+		char* instruction = getTokenString(parser.current);
+        int32_t emitValue;
+		if((emitValue = findWord(root, instruction)) != -1)
 		{
 			Byte byte = (uint8_t)emitValue;
 			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
@@ -411,7 +395,7 @@ static void instructionStatement(VM* vm)
 			errorAtCurrent("Unknown instruction.");
 		}
 
-		free(word);
+		free(instruction);
 	}
 	else
 	{
@@ -423,16 +407,14 @@ static void instructionStatement(VM* vm)
 
 static void labelStatement(VM* vm)
 {
-	char* word = (char*)malloc((parser.previous->length + 1) * sizeof(char));
-	word = parser.previous->start;
-	word[parser.previous->length] = '\0';
+    char* label = getTokenString(parser.previous);
 
 	if(isMacro())
 	{
 		advance();
 
 		// a label for a register,a value or something along these lines
-		addToTable(parser.table, word, expression()); 
+		addToTable(parser.table, label, parser.line); // add line position
 	}
 	else
 	{
@@ -440,6 +422,8 @@ static void labelStatement(VM* vm)
 		
 		instructionStatement(vm);
 	}
+
+    free(label);
 }
 
 static void semicolonStatement(VM* vm) // if you write macros/instructions on the same line
@@ -473,7 +457,8 @@ void initParser()
 	parser.panicMode = false;
 	parser.previous = NULL;
 	parser.current = NULL;
-	initTable(parser.table);
+	parser.line = 1;
+    initTable(parser.table);
 }
 
 void freeParser()
@@ -489,5 +474,6 @@ void parse(VM* vm)
 	while(!check(TOKEN_EOF))
 	{
 		semicolonStatement(vm);
+        parser.line++;
 	}
 }

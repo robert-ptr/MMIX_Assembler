@@ -1,5 +1,29 @@
 #include "debug.h"
 
+#ifdef ASM_DEBUG_SCANNER
+static void dumpTokens()
+{
+
+}
+
+void debugScanner()
+{
+    dumpTokens();
+}
+#endif
+
+#ifdef ASM_DEBUG_PARSER
+static void dumpBinary()
+{
+}
+
+void debugParser()
+{
+    dumpBinary();
+}
+#endif
+
+/* these are all for debugging code in the VM */
 static void dumpGeneralRegister(Debugger* debugger, uint8_t index)
 {
 	printf("G. Reg. number: %d value: %s", index, "placeholder"); // support for showing register value in binary,hexa and decimal
