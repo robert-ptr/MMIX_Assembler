@@ -27,6 +27,8 @@ void debug(Debugger* debugger); // for the VM basically
 
 #define ASM_DEBUG_SCANNER
 #define ASM_DEBUG_PARSER
+#define ASM_DEBUG_TABLE
+#define ASM_DEBUG_TRIE
 
 #ifdef ASM_DEBUG_SCANNER
 void debugScanner();
@@ -34,6 +36,14 @@ void debugScanner();
 
 #ifdef ASM_DEBUG_PARSER
 void debugParser();
+#endif
+
+#ifdef ASM_DEBUG_TABLE
+void debugTable();
+#endif
+
+#ifdef ASM_DEBUG_TRIE
+void debugTrie();
 #endif
 
 #endif

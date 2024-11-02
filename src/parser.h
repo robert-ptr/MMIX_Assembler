@@ -5,6 +5,7 @@
 #include "scanner.h"
 #include "vm.h"
 #include "trie.h"
+#include "table.h"
 
 struct
 {
@@ -15,6 +16,8 @@ struct
 	Table* table;
     uint32_t line;
 } parser;
+
+Table* instr_indices;
 
 void parse(VM* vm);
 void initParser();
