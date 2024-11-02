@@ -23,6 +23,18 @@ void debugParser()
 }
 #endif
 
+#ifdef ASM_DEBUG_TABLE
+void debugTable()
+{
+}
+#endif
+
+#ifdef ASM_DEBUG_TRIE
+void debugTrie()
+{
+}
+#endif
+
 /* these are all for debugging code in the VM */
 static void dumpGeneralRegister(Debugger* debugger, uint8_t index)
 {

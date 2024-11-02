@@ -14,7 +14,7 @@ TrieNode* getNode(void)
 	return new_node;
 }
 
-static int32_t alphabetIndex(char c)
+static int32_t alphabetIndex(char c) // the alphabet is 'a...z0...9'
 {
 	if(c >= '0' && c <= '9')
 		return 26 + (c - '0');
@@ -24,7 +24,7 @@ static int32_t alphabetIndex(char c)
 		return -1;
 }
 
-void insertNode(TrieNode* node, char* word, int32_t value)
+void insertNode(TrieNode* node, char* word, bool value)
 {
 		TrieNode* copy = node;
 		int32_t n = strlen(word);
@@ -45,14 +45,14 @@ void insertNode(TrieNode* node, char* word, int32_t value)
 			copy = copy->nodes[index];
 		}
 
-		copy->isWord = value; // true is -2, false is -1
+		copy->isWord = value; 
 }
 
 void createTrie(TrieNode* node, char** words, int32_t n)
 {
 	for(int32_t i = 0; i < n; i++)
 	{
-		insertNode(node, words[i], -2);
+		insertNode(node, words[i], true);
 	}
 }
 
@@ -66,14 +66,6 @@ int32_t parseNumber(char* buffer, int32_t* index)
 	}
 
 	return number;
-}
-
-void createInstructionTrie(TrieNode* node)
-{
-	for(int32_t i = 0; i < 256; i++)
-	{
-		insertNode(node, instr[i].name, i);
-	}
 }
 
 int32_t findWord(TrieNode* node, char* word)

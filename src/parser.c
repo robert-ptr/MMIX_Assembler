@@ -13,7 +13,7 @@ static void errorAt(Token* token, const char* message)
 	} 
 	else if (token->type == TOKEN_ERR) 
 	{
-		
+	    fprintf(stderr, "Unknown token.");	
 	} 
 	else 
 	{
@@ -414,7 +414,7 @@ static void labelStatement(VM* vm)
 		advance();
 
 		// a label for a register,a value or something along these lines
-		addToTable(parser.table, label, parser.line); // add line position
+		addToTable_int64_t(parser.table, label, parser.line); // add line position
 	}
 	else
 	{
@@ -459,6 +459,12 @@ void initParser()
 	parser.current = NULL;
 	parser.line = 1;
     initTable(parser.table);
+    initTable(instr_indices);
+
+    for(int i = 0; i < 256; i++)
+    {
+        addToTable_int64_t(instr_indices, instructions[i].name, i);
+    }
 }
 
 void freeParser()

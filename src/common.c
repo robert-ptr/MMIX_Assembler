@@ -3,6 +3,20 @@
 #include <string.h>
 #include "common.h"
 
+static const char to_lowercase[] = {
+    ['A'] = 'a', ['B'] = 'b', ['C'] = 'c', ['D'] = 'd', ['E'] = 'e', ['F'] = 'f', 
+    ['G'] = 'g', ['H'] = 'h', ['I'] = 'i', ['J'] = 'j', ['K'] = 'k', ['L'] = 'l', 
+    ['M'] = 'm', ['N'] = 'n', ['O'] = 'o', ['P'] = 'p', ['Q'] = 'q', ['R'] = 'r',
+    ['S'] = 's', ['T'] = 't', ['U'] = 'u', ['V'] = 'v', ['W'] = 'w', ['X'] = 'x',
+    ['Y'] = 'y', ['Z'] = 'z',
+    ['a'] = 'a', ['b'] = 'b', ['c'] = 'c', ['d'] = 'd', ['e'] = 'e', ['f'] = 'f', 
+    ['g'] = 'g', ['h'] = 'h', ['i'] = 'i', ['j'] = 'j', ['k'] = 'k', ['l'] = 'l', 
+    ['m'] = 'm', ['n'] = 'n', ['o'] = 'o', ['p'] = 'p', ['q'] = 'q', ['r'] = 'r',
+    ['s'] = 's', ['t'] = 't', ['u'] = 'u', ['v'] = 'v', ['w'] = 'w', ['x'] = 'x',
+    ['y'] = 'y', ['z'] = 'z',
+    ['0'] = '0', ['1'] = '1', ['2'] = '2', ['3'] = '3', ['4'] = '4', ['5'] = '5', ['6'] = '6', ['7'] = '7', ['8'] = '8', ['9'] = '9'
+};
+
 char* getString(char* buffer, int32_t length, int32_t buf_index)
 {
 	if(length <= 1)
@@ -66,8 +80,7 @@ FILE* createFile(const char* path)
 
 void charToLowercase(char* c)
 {
-	if(*c >= 'A' && *c <= 'Z')
-		(*c) += 32;
+    *c = to_lowercase[*c];
 }
 
 void stringToLowercase(char** s)
@@ -76,35 +89,6 @@ void stringToLowercase(char** s)
 	{
 		charToLowercase(&(*s)[i]);
 	}
-}
-
-char** importInstructions(const char* path, int32_t* size)
-{
-	char** strings = (char**)malloc(256 * sizeof(char*));
-
-	char* buffer = readFile(path);
-	int32_t length = 0;
-	int32_t index = 0;
-	int32_t buf_index = 0;
-	while(buffer[buf_index] != '\0')
-	{
-		if(buffer[buf_index] == ' ' || buffer[buf_index] == ';' || buffer[buf_index] == '\t' || buffer[buf_index] == '\n')
-		{
-			if(index == 0)
-				length++;
-			char* new_string = getString(buffer, length, buf_index);
-			if(new_string != NULL)
-			{
-				strings[index++] = new_string;
-			}
-			length = 0;
-		}
-		buf_index++;
-		length++;
-	}
-	*size = index;
-
-	return strings;
 }
 
 char* intToHexString(uint64_t n)
@@ -195,29 +179,15 @@ char* intToBinaryString(uint64_t n)
 
 	for(int i = 63; i >= 0 && n > 0; i--)
 	{
-		if(n & 1 == 1)
+		if(n & 1)
 			str[i] = '1';
 		else
 			str[i] = '0';
 
 		n >>= 1;
 	}
-}
 
-char* intToBinaryString(uint64_t n)
-{
-	char* str = (char*)malloc(11 * sizeof(char));
-
-	for(int i = 0; i < 10; i++)
-	{
-		str[i] = '0';
-	}
-
-	for(int i = 9; i >= 0 && n > 0; i--)
-	{
-		str[i] = '0' + n % 10;
-		n /= 10;
-	}
+    return str;
 }
 
 uint64_t fromHexadecimal(const char* str)
@@ -225,7 +195,7 @@ uint64_t fromHexadecimal(const char* str)
 	uint64_t result = 0;
 	int32_t n = strlen(str);
 	char* new_str = (char*)malloc((n + 1) * sizeof(char));
-	stringToLowercase(new_str);	
+	stringToLowercase(&new_str);	
 	for(int i = 0; i < n; i++)
 	{
 		switch(new_str[i])

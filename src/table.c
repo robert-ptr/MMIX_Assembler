@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include "table.h"
-#include "common.h"
 
 Table t;
 
@@ -51,7 +50,7 @@ Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t ha
 	}
 }
 
-bool findInTable(Table* table, char* s, uint64_t* val)
+bool findInTable(Table* table, char* s, EntryValue* val)
 {
 	uint64_t n;
 	uint64_t hash;
@@ -74,7 +73,11 @@ static void adjustSize(Table* table, uint64_t capacity)
 	for(uint64_t i = 0; i < capacity; i++)
 	{
 		entries[i].key = NULL;
-		entries[i].value = 0;
+		entries[i].value.int_value = 0;
+        entries[i].value.str_value = NULL;
+        entries[i].value.bool_value = false;
+        entries[i].value.float_value = 0.0f;
+        entries[i].value.double_value = 0.0;
 	}
 
 	for(uint64_t i = 0; i < table->size; i++)
@@ -94,27 +97,57 @@ static void adjustSize(Table* table, uint64_t capacity)
 	table->entries = entries;
 }
 
-bool addToTable(Table* table, char* s, uint64_t value)
+static void setEntry_int64_t(EntryValue* entry, int64_t value)
 {
-	if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
-	{
-		uint64_t capacity = GROW_LIST(table->size);
-		adjustSize(table, capacity);
-	}
-	
-	uint64_t hash, n;
-	n = strlen(s);
-	hash = hashString(s, n);
-	
-	Entry* entry = findEntry(table->entries, table->size, s, n, hash);
-	
-	bool isNewEntry = (entry->key == NULL); 
-	if (isNewEntry) table->count++;
-
-	entry->key = s;
-	entry->hash = hash;
-	entry->value = value;
-	entry->key_length = n;
-	
-	return isNewEntry;
+    entry->int_value = value;
 }
+
+static void setEntry_bool(EntryValue* entry, bool value)
+{
+    entry->bool_value = value;
+}
+
+static void setEntry_float(EntryValue* entry, float value)
+{
+    entry->float_value = value;
+}
+
+static void setEntry_double(EntryValue* entry, double value)
+{
+    entry->double_value = value;
+}
+
+static void setEntry_string(EntryValue* entry, char* str)
+{
+}
+
+#define GENERIC_INSERT_FUNC_DEF(type)                                           \
+    bool addToTable_##type(Table* table, char* s, type value)                   \
+    {                                                                           \
+        if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)                  \ 
+        {                                                                       \
+            uint64_t capacity = GROW_LIST(table->size);                         \
+            adjustSize(table, capacity);                                        \
+        }                                                                       \
+                                                                                \
+        uint64_t hash, n;                                                       \
+        n = strlen(s);                                                          \
+        hash = hashString(s, n);                                                \
+                                                                                \
+        Entry* entry = findEntry(table->entries, table->size, s, n, hash);      \
+                                                                                \
+        bool isNewEntry = (entry->key == NULL);                                 \
+        if (isNewEntry) table->count++;                                         \
+                                                                                \
+        entry->key = s;                                                         \
+        entry->hash = hash;                                                     \
+        setEntry_##type(&entry->value, value);                                  \
+        entry->key_length = n;                                                  \
+                                                                                \
+        return isNewEntry;                                                      \
+	}
+
+GENERIC_INSERT_FUNC_DEF(int64_t)
+GENERIC_INSERT_FUNC_DEF(bool)
+GENERIC_INSERT_FUNC_DEF(float)
+GENERIC_INSERT_FUNC_DEF(double)

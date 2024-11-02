@@ -9,6 +9,36 @@ static bool isAtEnd()
 	return *scanner.current == '\0';
 }
 
+static TokenType checkKeyword()
+{
+    for(int i = 0; i < 6; i++) // check if it's a keyword used by the preprocessor
+    {
+        switch(i)
+        {
+            case 0:
+                if (scanner.current - scanner.start == 2 && memcmp(scanner.start, "IS", 2) == 0)
+                    return TOKEN_IS;
+            case 1:
+                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "GREG", 4) == 0)
+                    return TOKEN_GREG;
+            case 2:
+                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "BYTE", 4) == 0)
+                    return TOKEN_BYTE;
+            case 3:
+                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "WYDE", 4) == 0)
+                    return TOKEN_WYDE;
+            case 4:
+                if (scanner.current - scanner.start == 5 && memcmp(scanner.start, "TETRA", 5) == 0)
+                    return TOKEN_TETRA;
+            case 5:
+                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "OCTA", 4) == 0)
+                    return TOKEN_OCTA;
+        }
+    }
+
+    return TOKEN_LABEL;
+}
+
 static Token makeToken(TokenType type)
 {
 	Token token;
@@ -108,10 +138,10 @@ static TokenType identifierType()
 		word[i] = *(scanner.start + i);
 	}
 	stringToLowercase(&word);
-	if(findWord(scanner.trie, word))
+	if(findWord(scanner.instruction_trie, word))
 		return TOKEN_INSTRUCTION;
 
-	return TOKEN_LABEL;
+    return checkKeyword();
 }
 
 void initScanner(char* source)
@@ -121,13 +151,11 @@ void initScanner(char* source)
 	scanner.line = 1;
 
 	int32_t size;
-	char** words = importInstructions("instructions.txt", &size);
-	scanner.trie = getNode();
-	for(int32_t i = 0; i < size; i++)
-	{
-		stringToLowercase(&words[i]);
-	}
-	createTrie(scanner.trie, words, size);
+	scanner.instruction_trie = getNode();
+    for(int i = 0; i < 256; i++)
+    {
+        insertNode(scanner.instruction_trie, instructions[i].name, true);
+    }
 }
 
 static Token immediate()
@@ -298,6 +326,20 @@ Token scanToken()
 
 			return token;
 		}
+        case 'g':
+            return makeToken(TOKEN_GREG);
+        case 'l':
+            return makeToken(TOKEN_LOC);
+        case 'b':
+            return makeToken(TOKEN_BYTE);
+        case 'w':
+            return makeToken(TOKEN_WYDE);
+        case 't':
+            return makeToken(TOKEN_TETRA);
+        case 'o':
+            return makeToken(TOKEN_OCTA);
+        case 'i':
+            return makeToken(TOKEN_IS);
 	}
 	return errorToken("Unexpected character.");
 }
