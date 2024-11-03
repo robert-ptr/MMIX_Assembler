@@ -100,31 +100,6 @@ static bool match(char* instruction, int32_t start, char* pattern, int32_t lengt
 	return false;
 }
 
-static bool isMacro()
-{
-	Token* token = parser.current;
-	// IS, GREG, BYTE, WYDE, TETRA, OCTA
-	if(token->length == 2 && memcmp(token->start, "is", 2))
-	{
-		return true;	
-	}
-	else if (token->length == 4)
-	{
-		if(match(token->start, 0, "greg", 4))
-			return true;
-		else if(match(token->start, 0, "byte", 4))
-			return true;
-		else if(match(token->start, 0, "wyde", 4))
-			return true;
-		else if(match(token->start, 0, "octa", 4))
-			return true;
-	}
-	else if (token->length == 5 && memcmp(token->start, "tetra", 5))
-		return true;
-
-	return false;
-}
-
 static char* getTokenString(Token* token)
 {
     int word_length = token->length + 1; // +1 for '\0' 
@@ -300,86 +275,62 @@ static int32_t expression()
 	return a;
 }
 
+static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
+{
+    if((op1 >> 8) + (op2 >> 8) + (op3 >> 8) != 0 )
+    {
+        error("Arguments of wrong size!");
+        return false;
+    }
+
+    return true;
+}
+
 static void commaStatement(VM* vm)
 {
 	uint32_t operand1 = expression();
-	uint32_t operand2;
-	uint32_t operand3;
+	uint32_t operand2 = 0;
+	uint32_t operand3 = 0;
+    uint8_t arity = 1;
 
-	if(check(TOKEN_COMMA))
+	if(check(TOKEN_COMMA)) // 2 arguments
 	{
 		advance();
 		operand2 = expression();
+        arity++;
 	}
-	else
-	{
-		emitByte(vm, operand1 >> 16);
-		emitByte(vm, operand1 >> 8 & 0xFF);
-		emitByte(vm, operand1 & 0xFF);
-		return;
-	}
-	if(check(TOKEN_COMMA))
+    if(check(TOKEN_COMMA)) // 3 arguments
 	{
 		advance();
 		operand3 = expression();
-		if(operand1 > 255)
-		{
-            error("First argument is of the wrong size! Can be at most 8 bits.");
-		}
-		else
-		{
-			emitByte(vm, operand1);
-		}
+        arity++;
+    }
+    if(check(TOKEN_COMMA)) // wrong number of arguments
+    {
+        error("Wrong number of arguments! Maximum 3.");
+    }
 
-		if(operand2 > 255)
-		{
-            error("Second argument is of the wrong size! Can be at most 8 bits.");
-		}
-		else
-		{
-			emitByte(vm, operand2);
-		}
+    if(arity == 1)
+    {
+        operand2 = operand1 >> 8 & 0xFF;
+        operand3 = operand1 & 0xFF;
+        operand1 >>= 16;
+    }
+    else if(arity == 2)
+    {
+        operand3 = operand2 & 0xFF;
+        operand2 >>= 8;
+    }
 
-		if(operand3 > 255)
-		{
-            error("Third argument is of the wrong size! Can be at most 8 bits.");
-		}
-		else
-		{
-			emitByte(vm, operand3);
-		}
-	}
-	else
-	{
-		if(operand1 > 255)
-		{
-            error("First argument is of the wrong size! Can be at most 8 bits.");
-		}
-		else
-		{
-			emitByte(vm, operand1);
-		}
-
-		if(operand2 > 65535)
-		{
-            error("Second argument is of the wrong size! Can be at most 16 bits.");
-		}
-		else
-		{
-			emitByte(vm, operand2);
-		}
-	}
-
-	if(check(TOKEN_COMMA))
-	{
-	}
+    checkOperandSizes(operand1, operand2, operand3);
+    emitByte(vm, operand1);
+    emitByte(vm, operand2); 
+    emitByte(vm, operand3);
 }
 
 static void instructionStatement(VM* vm)
 {
 	advance();
-	TrieNode* root = getNode();
-	createInstructionTrie(root);
 
 	if(parser.current->type == TOKEN_INSTRUCTION)
 	{
@@ -407,23 +358,16 @@ static void instructionStatement(VM* vm)
 
 static void labelStatement(VM* vm)
 {
-    char* label = getTokenString(parser.previous);
+    char* label = getTokenString(parser.previous); // maybe add it to a vector with all the labels?
 
-	if(isMacro())
-	{
-		advance();
+	advance();
 
 		// a label for a register,a value or something along these lines
-		addToTable_int64_t(parser.table, label, parser.line); // add line position
-	}
-	else
-	{
-		// that was a label for the current line
+	addToTable_int64_t(parser.table, label, parser.line); // add line position
 		
-		instructionStatement(vm);
-	}
+	instructionStatement(vm);
 
-    free(label);
+    // free(label); bad idea to free the string here
 }
 
 static void semicolonStatement(VM* vm) // if you write macros/instructions on the same line

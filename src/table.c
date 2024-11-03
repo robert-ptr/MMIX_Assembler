@@ -119,6 +119,10 @@ static void setEntry_double(EntryValue* entry, double value)
 
 static void setEntry_string(EntryValue* entry, char* str)
 {
+    size_t len = strlen(str);
+    entry->str_value = malloc(len + 1);
+    strcpy(entry->str_value, str);
+    entry->str_value[len] = '\0';
 }
 
 #define GENERIC_INSERT_FUNC_DEF(type)                                           \
@@ -147,6 +151,10 @@ static void setEntry_string(EntryValue* entry, char* str)
         return isNewEntry;                                                      \
 	}
 
+    // entry->key just points to the string, it doesn't own it so you can't just free it 
+    // should i copy it?
+
+GENERIC_INSERT_FUNC_DEF(string)
 GENERIC_INSERT_FUNC_DEF(int64_t)
 GENERIC_INSERT_FUNC_DEF(bool)
 GENERIC_INSERT_FUNC_DEF(float)

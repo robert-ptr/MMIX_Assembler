@@ -11,7 +11,7 @@ static bool isAtEnd()
 
 static TokenType checkKeyword()
 {
-    for(int i = 0; i < 6; i++) // check if it's a keyword used by the preprocessor
+    for(int i = 0; i < 7; i++) // check if it's a keyword used by the preprocessor
     {
         switch(i)
         {
@@ -33,6 +33,9 @@ static TokenType checkKeyword()
             case 5:
                 if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "OCTA", 4) == 0)
                     return TOKEN_OCTA;
+            case 6:
+                if (scanner.current - scanner.start == 6 && memcmp(scanner.start, "PREFIX", 6) == 0)
+                    return TOKEN_PREFIX;
         }
     }
 
