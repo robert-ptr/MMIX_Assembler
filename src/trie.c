@@ -14,6 +14,19 @@ TrieNode* getNode(void)
 	return new_node;
 }
 
+void freeTrie(TrieNode* root)
+{
+    for(int i = 0; i < ALPHABET_SIZE; i++)
+    {
+        if(root->nodes[i] != NULL)
+        {
+            freeTrie(root->nodes[i]);
+        }
+    }
+
+    free(root);
+}
+
 static int32_t alphabetIndex(char c) // the alphabet is 'a...z0...9'
 {
 	if(c >= '0' && c <= '9')

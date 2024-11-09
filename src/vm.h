@@ -1,5 +1,5 @@
-#ifndef mmix_proj_vm
-#define mmix_proj_vm
+#ifndef MMIX_PROJ_VM
+#define MMIX_PROJ_VM
 
 #include <stddef.h>
 #include <stdint.h>
@@ -92,74 +92,9 @@ typedef struct
 	uint8_t mems;
 } RunningTime;
 
-uint8_t branch_time = 0; // a global variable, TREMBLE IN FEAR
+extern uint8_t branch_time; // a global variable, TREMBLE IN FEAR
 											 // used for branch prediction time
-
-RunningTime times[256] = 	{ {.oopsies=5	, .mems=0}, {.oopsies=1	, .mems=0}, {.oopsies=1	, .mems=0 }, {.oopsies=1 , .mems=0 }, // 0x 
-														{.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0 }, {.oopsies=4 , .mems=0 }, // 0x
-														{.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0 }, {.oopsies=4 , .mems=0 }, // 0x
-														{.oopsies=4	, .mems=0}, {.oopsies=4 , .mems=0}, {.oopsies=4	, .mems=0 }, {.oopsies=4 , .mems=0 }, // 0x
-														{.oopsies=4	, .mems=0}, {.oopsies=4 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=4 , .mems=0 }, // 1x
-														{.oopsies=40, .mems=0}, {.oopsies=40, .mems=0}, {.oopsies=4 , .mems=0 }, {.oopsies=4 , .mems=0 }, // 1x
-														{.oopsies=10, .mems=0}, {.oopsies=10, .mems=0}, {.oopsies=10, .mems=0 }, {.oopsies=10, .mems=0 }, // 1x 
-														{.oopsies=60, .mems=0}, {.oopsies=60, .mems=0}, {.oopsies=60, .mems=0 }, {.oopsies=60, .mems=0 }, // 1x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1	, .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
-														{.oopsies=1	, .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
-														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
-														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
-														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
-														{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0}, // 5x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
-														{.oopsies=1	, .mems=1}, {.oopsies=1	, .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 9x
-														{.oopsies=2 , .mems=2}, {.oopsies=2 , .mems=2}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 9x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=0 }, // 9x
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 9x
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Bx
-														{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Bx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Bx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // Bx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Fx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Fx
-														{.oopsies=3 , .mems=0}, {.oopsies=5 , .mems=0}, {.oopsies=1 , .mems=20}, {.oopsies=1 , .mems=20}, // Fx
-														{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0	}, {.oopsies=5 , .mems=0 }};// Fx
-
+extern RunningTime times[256];
 typedef uint8_t Byte;
 typedef uint16_t Wyde;
 typedef uint32_t Tetra;

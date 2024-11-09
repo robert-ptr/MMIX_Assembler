@@ -3,9 +3,9 @@
 #include <string.h>
 #include "scanner.h"
 #include "parser.h"
-#include "vm.h"
+//#include "vm.h"
 #include "common.h"
-#include "debug.h"
+//#include "debug.h"
 
 typedef enum
 {
@@ -22,7 +22,7 @@ ErrorType runFile(const char* source)
 
 int32_t main(int32_t argc, const char* argv[])
 {
-	const char* flags;
+	const char* flags; // WIP
 	// possible options
 	// -s (for running time statistics when the program ends)
 	// -P (profile showing exactly how often each instruction was executed)
@@ -32,7 +32,7 @@ int32_t main(int32_t argc, const char* argv[])
 	const char* source;
 	FILE* output_fd;
 	
-	VM* vm;
+	//VM* vm;
 	
 	if (argc == 2)
 	{
@@ -67,9 +67,9 @@ int32_t main(int32_t argc, const char* argv[])
 
 	initScanner(source);
 	initParser();
-	initVM(vm);
+	//initVM(vm);
 
-	freeVM(vm);
+	//freeVM(vm);
 	freeParser();
 	freeScanner();
 

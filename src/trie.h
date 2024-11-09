@@ -16,6 +16,7 @@ struct TrieNode
 };
 
 TrieNode* getNode(void);
+void freeTrie(TrieNode* root);
 void insertNode(TrieNode* node, char* word, bool value);
 void createTrie(TrieNode* node, char** words, int32_t n);
 int32_t findWord(TrieNode* node, char* word);

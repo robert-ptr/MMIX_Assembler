@@ -1,5 +1,5 @@
-#ifndef mmix_proj_parser
-#define mmix_proj_parser
+#ifndef MMIX_PROJ_PARSER
+#define MMIX_PROJ_PARSER
 
 #include <stdbool.h>
 #include "scanner.h"
@@ -7,7 +7,7 @@
 #include "trie.h"
 #include "table.h"
 
-struct
+typedef struct
 {
 	Token* current;
 	Token* previous;
@@ -15,9 +15,11 @@ struct
 	bool panicMode;
 	Table* table;
     uint32_t line;
-} parser;
+} Parser;
 
-Table* instr_indices;
+extern Parser parser;
+
+extern Table* instr_indices;
 
 void parse(VM* vm);
 void initParser();

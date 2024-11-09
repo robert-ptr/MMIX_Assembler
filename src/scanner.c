@@ -4,6 +4,8 @@
 #include <string.h>
 #include "scanner.h"
 
+Scanner scanner;
+
 static bool isAtEnd()
 {
 	return *scanner.current == '\0';
@@ -349,5 +351,5 @@ Token scanToken()
 
 void freeScanner()
 {
-
+    freeTrie(scanner.instruction_trie);
 }

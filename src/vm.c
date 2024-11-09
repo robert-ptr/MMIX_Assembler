@@ -3,6 +3,73 @@
 #include <stdbool.h>
 #include "vm.h"
 
+uint8_t branch_time = 0;
+
+RunningTime times[256] ={   {.oopsies=5	, .mems=0}, {.oopsies=1	, .mems=0}, {.oopsies=1	, .mems=0 }, {.oopsies=1 , .mems=0 }, // 0x 
+						    {.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0 }, {.oopsies=4 , .mems=0 }, // 0x
+							{.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0}, {.oopsies=4	, .mems=0 }, {.oopsies=4 , .mems=0 }, // 0x
+							{.oopsies=4	, .mems=0}, {.oopsies=4 , .mems=0}, {.oopsies=4	, .mems=0 }, {.oopsies=4 , .mems=0 }, // 0x
+							{.oopsies=4	, .mems=0}, {.oopsies=4 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=4 , .mems=0 }, // 1x
+							{.oopsies=40, .mems=0}, {.oopsies=40, .mems=0}, {.oopsies=4 , .mems=0 }, {.oopsies=4 , .mems=0 }, // 1x
+							{.oopsies=10, .mems=0}, {.oopsies=10, .mems=0}, {.oopsies=10, .mems=0 }, {.oopsies=10, .mems=0 }, // 1x 
+							{.oopsies=60, .mems=0}, {.oopsies=60, .mems=0}, {.oopsies=60, .mems=0 }, {.oopsies=60, .mems=0 }, // 1x
+						    {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1	, .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
+							{.oopsies=1	, .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 2x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
+						    {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 3x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 4x
+							{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
+							{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
+							{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 5x
+							{.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0},  // 5x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 6x
+						    {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // 7x
+							{.oopsies=1	, .mems=1}, {.oopsies=1	, .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 8x
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 9x
+							{.oopsies=2 , .mems=2}, {.oopsies=2 , .mems=2}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // 9x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=0 }, // 9x
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // 9x
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Ax
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Bx
+							{.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1}, {.oopsies=1 , .mems=1 }, {.oopsies=1 , .mems=1 }, // Bx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Bx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=3 , .mems=0 }, {.oopsies=3 , .mems=0 }, // Bx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Cx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Dx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Ex
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Fx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=1 , .mems=0 }, // Fx
+							{.oopsies=3 , .mems=0}, {.oopsies=5 , .mems=0}, {.oopsies=1 , .mems=20}, {.oopsies=1 , .mems=20}, // Fx
+							{.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=5 , .mems=0 }};// Fx
+
 static void addition64bit(uint64_t a, uint64_t b, uint64_t* result) // done to avoid overflow
 {
 	uint32_t p1 = a >> 32;
@@ -136,20 +203,22 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 	uint8_t offset = address % 8;
 	address -= offset;
 
-	char* key = intToString(address);
+    /*
+	char* key = intToDecimalString(address);
 	
 	uint64_t value;
 	findInTable(vm->memory, key, &value);
 	value = value | (0xFF << (8 * offset)) & byte << (8 * offset);
 
 	addToTable(vm->memory, key, value);
+*/
 }
 
 static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 {
 	uint8_t offset = address % 4;
 	address -= offset;
-
+/*
 	char* key = intToString(address);
 	
 	uint64_t value;
@@ -157,13 +226,14 @@ static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 	value = value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
 
 	addToTable(vm->memory, key, value);
+*/
 }
 
 static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 {
 	uint8_t offset = address % 2;
 	address -= offset;
-
+/*
 	char* key = intToString(address);
 	
 	uint64_t value;
@@ -171,13 +241,16 @@ static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 	value = value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
 
 	addToTable(vm->memory, key, value);
+*/
 }
 
 static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
 {
+    /*
 	char* key = intToString(address);
 
 	addToTable(vm->memory, key, octa);
+*/
 }
 
 static Byte getByteFromMem(VM* vm, uint64_t address)
@@ -185,14 +258,14 @@ static Byte getByteFromMem(VM* vm, uint64_t address)
 	uint64_t* val;
 	uint8_t offset = address % 8;
 	address -= offset;
-
+/*
 	char* key = intToString(address);
 
 	if(findInTable(vm->memory, key, val))
 	{
 		return *val << (8 * (7 - offset)) >> 56;
 	}
-
+*/
 	return 0;
 }
 
@@ -201,14 +274,14 @@ static Wyde getWydeFromMem(VM* vm, uint64_t address)
 	uint64_t* val;
 	uint8_t offset = address % 4;
 	address -= offset;
-
+/*
 	char* key = intToString(address);
 
 	if(findInTable(vm->memory, key, val))
 	{
 		return *val << (16 * (3 - offset)) >> 48;
 	}
-
+*/
 	return 0;
 }
 
@@ -217,30 +290,32 @@ static Tetra getTetraFromMem(VM* vm, uint64_t address)
 	uint64_t* val;
 	uint8_t offset = address % 2;
 	address -= offset;
-
+/*
 	char* key = intToString(address);
 
 	if(findInTable(vm->memory, key, val))
 	{
 		return *val << (32 * (1 - offset)) >> 32;
 	}
-
+*/
 	return 0;
 }
 
 static Octa getOctaFromMem(VM* vm, uint64_t address)
 {
 	uint64_t* val;
-	char* key = intToString(address);
+/*
+    char* key = intToString(address);
 
 	if(findInTable(vm->memory, key, val))
 	{
 		return *val;
 	}
-
+*/
 	return 0;
 }
 
+/*
 void execute(VM* vm)
 {
 	for(;;)
@@ -409,7 +484,7 @@ void execute(VM* vm)
 							addition64bit(*reg_Y, *reg_Z, reg_X);
 						}
 						break;
-/* LOC*/	case OP_ADDU: 		// u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
+/* LOC*//*	case OP_ADDU: 		// u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
 						addition64bit(*reg_Y, *reg_Z, reg_X);
 						break;
 					case OP_ADDUI:
@@ -952,10 +1027,10 @@ void execute(VM* vm)
 						break;
 
 
-/* SET */	case OP_OR: 		// bitwise or: v($X)<-v($Y) | v($Z)
+/* SET */	//case OP_OR: 		// bitwise or: v($X)<-v($Y) | v($Z)
 /* $X $Y */								// 1 oops
 /* <=> */
-/* OR $X $Y 0 */
+/* OR $X $Y 0 *//*
 						break;
 					case OP_ORI:
 						break;
@@ -1060,8 +1135,8 @@ void execute(VM* vm)
 					case OP_SETML: 	// set medium low wide: u($X)<-YZ x 2^16
 													// 1 oops
 						break;
-/*SET*/		case OP_SETL: 	// set low wyde: u($X)<-YZ
-													// 1 oops
+/*SET*/	/*	case OP_SETL:*/ 	// set low wyde: u($X)<-YZ
+		/*											// 1 oops
 						break;
 
 
@@ -1161,4 +1236,4 @@ void execute(VM* vm)
 						break;
 		}
 	}
-}
+}*/

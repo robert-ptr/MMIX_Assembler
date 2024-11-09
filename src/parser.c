@@ -1,8 +1,12 @@
+#include <asm-generic/errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include "parser.h"
+
+Parser parser;
+Table* instr_indices;
 
 static void errorAt(Token* token, const char* message)
 {
@@ -111,11 +115,15 @@ static char* getTokenString(Token* token)
 static int32_t symbol()
 {
 	// repair this function
-	stringToLowercase(&symbol);
+	char* symbol = parser.current->start;
+    stringToLowercase(&symbol);
 
-	uint64_t value;
-	if(findInTable(parser.table, symbol, &value))
-		return value;
+	EntryValue* value;
+	if(findInTable(parser.table, symbol, value))
+    {
+        if(value->type == TYPE_INT)
+            return value->int_value;
+    }
 	else
 	{
 		printf("Unknown symbol.\n");
@@ -335,10 +343,10 @@ static void instructionStatement(VM* vm)
 	if(parser.current->type == TOKEN_INSTRUCTION)
 	{
 		char* instruction = getTokenString(parser.current);
-        int32_t emitValue;
-		if((emitValue = findWord(root, instruction)) != -1)
+        EntryValue* emitValue;
+		if(findInTable(instr_indices, instruction, emitValue) != false)
 		{
-			Byte byte = (uint8_t)emitValue;
+			Byte byte = (uint8_t)emitValue->int_value;
 			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
 		}
 		else
@@ -404,7 +412,7 @@ void initParser()
 	parser.line = 1;
     initTable(parser.table);
     initTable(instr_indices);
-
+    
     for(int i = 0; i < 256; i++)
     {
         addToTable_int64_t(instr_indices, instructions[i].name, i);
@@ -413,8 +421,8 @@ void initParser()
 
 void freeParser()
 {
-	initParser(); // not much to be done here, so we just reset the parser
-	freeTable(parser.table); // then free the table
+    initParser(); // not much to be done here, so we just reset the parser
+    freeTable(parser.table); // then free the table
 }
 
 void parse(VM* vm)

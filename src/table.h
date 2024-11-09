@@ -21,12 +21,15 @@ typedef enum {
     TYPE_DOUBLE,
 } EntryType;
 
-typedef union {
-    uint64_t int_value;
-    char* str_value;
-    bool bool_value;
-    float float_value;
-    double double_value;
+typedef struct {
+    EntryType type;
+    union {
+        uint64_t int_value;
+        char* str_value;
+        bool bool_value;
+        float float_value;
+        double double_value;
+    };
 } EntryValue;
 
 typedef struct
@@ -34,7 +37,6 @@ typedef struct
 	char* key;
 	uint64_t hash;
 	uint64_t key_length;
-    EntryType type;
     EntryValue value;
 } Entry;
 

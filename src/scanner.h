@@ -1,17 +1,19 @@
-#ifndef mmix_proj_scanner
-#define mmix_proj_scanner
+#ifndef MMIX_PROJ_SCANNER
+#define MMIX_PROJ_SCANNER
 
 #include "trie.h"
 #include "common.h"
 
-struct
+typedef struct
 {
 	char* start;
 	char* current;
 	int32_t line;
 
 	TrieNode* instruction_trie;
-} scanner;
+} Scanner;
+
+extern Scanner scanner;
 
 typedef enum
 {

@@ -1,5 +1,5 @@
-#ifndef mmix_proj_debugger
-#define mmix_proj_debugger
+#ifndef MMIX_PROJ_DEBUGGER
+#define MMIX_PROJ_DEBUGGER
 
 #include "vm.h"
 
