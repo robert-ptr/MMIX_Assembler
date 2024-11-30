@@ -2,6 +2,8 @@
 #define MMIX_PROJ_DEBUGGER
 
 #include "vm.h"
+#include "scanner.h"
+#include "parser.h"
 
 #define FLAG_GREGS 0x0001
 #define FLAG_SPREGS 0x0002

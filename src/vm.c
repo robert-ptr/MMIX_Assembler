@@ -203,119 +203,121 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 	uint8_t offset = address % 8;
 	address -= offset;
 
-    /*
-	char* key = intToDecimalString(address);
+	char* key = intToHexString(address);
 	
-	uint64_t value;
-	findInTable(vm->memory, key, &value);
-	value = value | (0xFF << (8 * offset)) & byte << (8 * offset);
+	EntryValue value;
+    value.type = TYPE_INT;
 
-	addToTable(vm->memory, key, value);
-*/
+	findInTable(vm->memory, key, &value);
+	value.int_value = value.int_value | (0xFF << (8 * offset)) & byte << (8 * offset);
+
+	addToTable_int64_t(vm->memory, key, value.int_value);
 }
 
 static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 {
 	uint8_t offset = address % 4;
 	address -= offset;
-/*
-	char* key = intToString(address);
+	char* key = intToHexString(address);
 	
-	uint64_t value;
-	findInTable(vm->memory, key, &value);
-	value = value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
+	EntryValue value;
+    value.type = TYPE_INT;
 
-	addToTable(vm->memory, key, value);
-*/
+	findInTable(vm->memory, key, &value);
+	value.int_value = value.int_value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
+
+	addToTable_int64_t(vm->memory, key, value.int_value);
 }
 
 static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 {
 	uint8_t offset = address % 2;
 	address -= offset;
-/*
-	char* key = intToString(address);
 	
-	uint64_t value;
-	findInTable(vm->memory, key, &value);
-	value = value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
+    char* key = intToHexString(address);
+	
+	EntryValue value;
+    value.type = TYPE_INT;
 
-	addToTable(vm->memory, key, value);
-*/
+	findInTable(vm->memory, key, &value);
+	value.int_value = value.int_value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
+
+	addToTable_int64_t(vm->memory, key, value.int_value);
 }
 
 static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
 {
-    /*
-	char* key = intToString(address);
+	char* key = intToHexString(address);
 
-	addToTable(vm->memory, key, octa);
-*/
+	addToTable_int64_t(vm->memory, key, octa);
 }
 
 static Byte getByteFromMem(VM* vm, uint64_t address)
 {
-	uint64_t* val;
+    EntryValue value;
+    value.type = TYPE_INT;
+
 	uint8_t offset = address % 8;
 	address -= offset;
-/*
-	char* key = intToString(address);
+	char* key = intToHexString(address);
 
-	if(findInTable(vm->memory, key, val))
+	if(findInTable(vm->memory, key, &value))
 	{
-		return *val << (8 * (7 - offset)) >> 56;
+		return value.int_value << (8 * (7 - offset)) >> 56;
 	}
-*/
-	return 0;
+	
+    return 0;
 }
 
 static Wyde getWydeFromMem(VM* vm, uint64_t address)
 {
-	uint64_t* val;
+    EntryValue value;
+    value.type = TYPE_INT;
+
 	uint8_t offset = address % 4;
 	address -= offset;
-/*
-	char* key = intToString(address);
+	char* key = intToHexString(address);
 
-	if(findInTable(vm->memory, key, val))
+	if(findInTable(vm->memory, key, &value))
 	{
-		return *val << (16 * (3 - offset)) >> 48;
+		return value.int_value << (16 * (3 - offset)) >> 48;
 	}
-*/
-	return 0;
+	
+    return 0;
 }
 
 static Tetra getTetraFromMem(VM* vm, uint64_t address)
 {
-	uint64_t* val;
+    EntryValue value;
+    value.type = TYPE_INT;
+
 	uint8_t offset = address % 2;
 	address -= offset;
-/*
-	char* key = intToString(address);
+	char* key = intToHexString(address);
 
-	if(findInTable(vm->memory, key, val))
+	if(findInTable(vm->memory, key, &value))
 	{
-		return *val << (32 * (1 - offset)) >> 32;
+		return value.int_value << (32 * (1 - offset)) >> 32;
 	}
-*/
-	return 0;
+	
+    return 0;
 }
 
 static Octa getOctaFromMem(VM* vm, uint64_t address)
-{
-	uint64_t* val;
-/*
-    char* key = intToString(address);
+{   
+    EntryValue value;
+    value.type = TYPE_INT;
 
-	if(findInTable(vm->memory, key, val))
+    char* key = intToHexString(address);
+
+	if(findInTable(vm->memory, key, &value))
 	{
-		return *val;
+		return value.int_value;
 	}
-*/
-	return 0;
+	
+    return 0;
 }
 
-/*
 void execute(VM* vm)
 {
 	for(;;)
@@ -484,7 +486,7 @@ void execute(VM* vm)
 							addition64bit(*reg_Y, *reg_Z, reg_X);
 						}
 						break;
-/* LOC*//*	case OP_ADDU: 		// u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
+/* LOC*/	        case OP_ADDU: 		// u($X)<-(u($Y)+u($Z)) mod 2^64 ;OP_LDA is equivalent to a version of this
 						addition64bit(*reg_Y, *reg_Z, reg_X);
 						break;
 					case OP_ADDUI:
@@ -553,7 +555,6 @@ void execute(VM* vm)
 					case OP_CMPUI:
 						*reg_X = (*reg_Y > Z) - (*reg_Y < Z);
 						break;
-					
 
 					case OP_NEG:			// negate s($X)<-Y-s($Z)
 														// 1 oops
@@ -575,7 +576,6 @@ void execute(VM* vm)
 						else
 							*reg_X = (Y - Z) & 0x7FFFFFFF;
 						break;
-					
 
 					case OP_SL: 			// shift left s($X)<-s($Y)x2^(u($Z))
 														// 1 oops
@@ -591,7 +591,6 @@ void execute(VM* vm)
 					case OP_SLUI:
 						*reg_X = *reg_Y << Z;
 						break;
-					
 
 					case OP_SR: 			// shift right s($X)<-floor(s($Y)/2^u($Z))
 														// 1 oops
@@ -607,7 +606,6 @@ void execute(VM* vm)
 					case OP_SRUI:
 						*reg_X = *reg_Y >> Z;
 						break;
-					
 
 					case OP_BN: 			// branch if negative: if s($X) < 0, set @<-RA
 														// 3 oops if branch is taken, 1 oops if not
@@ -826,7 +824,7 @@ void execute(VM* vm)
 						break;
 					case OP_LDTUI:
 						addition64bit(*reg_Y, Z, &A);
-						*reg_X = getByteTetraMem(vm, A);
+						*reg_X = getTetraFromMem(vm, A);
 						break;
 					case OP_LDO: 			// load octa s($X)<-s(M8[A])
 														// 1 mem + 1 oops
@@ -1027,10 +1025,10 @@ void execute(VM* vm)
 						break;
 
 
-/* SET */	//case OP_OR: 		// bitwise or: v($X)<-v($Y) | v($Z)
+/* SET */	        case OP_OR: 		// bitwise or: v($X)<-v($Y) | v($Z)
 /* $X $Y */								// 1 oops
 /* <=> */
-/* OR $X $Y 0 *//*
+/* OR $X $Y 0 */
 						break;
 					case OP_ORI:
 						break;
@@ -1135,10 +1133,9 @@ void execute(VM* vm)
 					case OP_SETML: 	// set medium low wide: u($X)<-YZ x 2^16
 													// 1 oops
 						break;
-/*SET*/	/*	case OP_SETL:*/ 	// set low wyde: u($X)<-YZ
-		/*											// 1 oops
+/*SET*/		        case OP_SETL: 	// set low wyde: u($X)<-YZ
+													// 1 oops
 						break;
-
 
 					case OP_INCH: 	// increase by high wyde: u($X)<-(u($X) + YZ) mod 2^64
 													// 1 oops
@@ -1167,7 +1164,6 @@ void execute(VM* vm)
 													// 1 oops
 						break;
 
-
 					case OP_ANDH: 	// bitwise and-not high wyde: v($X)<-v($X)&!v(YZ<<48)
 													// 1 oops
 						break;
@@ -1181,20 +1177,17 @@ void execute(VM* vm)
 													// 1 oops
 						break;
 
-
 					case OP_JMP: 		// jump: @<-RA (a three byte relative address) <=> @+4xXYZ (can also be negative)
 													// 1 oops
 						break;
 					case OP_JMPB:
 						break;
 	
-
 					case OP_PUSHJ: 	// push registers and jump: push(X) and set rJ<-@ + 4, then set @<-RA
 													// 1 oops
 						break;
 					case OP_PUSHJB:
 						break;
-
 
 					case OP_GETA: 	// get address: u($X)<-RA
 													// 1 oops
@@ -1202,13 +1195,11 @@ void execute(VM* vm)
 					case OP_GETAB:
 						break;
 
-
 					case OP_PUT: 		// put into special register: u(g[X])<-u($Z), where 0 <= X < 32
 													// 1 oops
 						break;
 					case OP_PUTI:
 						break;
-					
 
 					case OP_POP: 		// pop registers and return: pop(X), then @<-rJ + 4xYZ
 													// 3 oops
@@ -1236,4 +1227,4 @@ void execute(VM* vm)
 						break;
 		}
 	}
-}*/
+}

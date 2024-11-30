@@ -346,6 +346,7 @@ Token scanToken()
         case 'i':
             return makeToken(TOKEN_IS);
 	}
+
 	return errorToken("Unexpected character.");
 }
 
