@@ -5,7 +5,7 @@
 #include "parser.h"
 //#include "vm.h"
 #include "common.h"
-//#include "debug.h"
+#include "debug.h"
 
 typedef enum
 {
@@ -45,6 +45,8 @@ int32_t main(int32_t argc, const char* argv[])
 			flags = (char*)malloc(sizeof(argv[1]));
 			strcpy(flags, ++argv[1]);
 			source = readFile(argv[2]);
+
+            free(flags);
 		}
 		else
 		{
@@ -58,6 +60,8 @@ int32_t main(int32_t argc, const char* argv[])
 		strcpy(flags, ++argv[1]);
 		source = readFile(argv[2]);
 		output_fd = createFile(argv[3]);
+
+        free(flags);
 	}
 	else
 	{
@@ -68,11 +72,10 @@ int32_t main(int32_t argc, const char* argv[])
 	initScanner(source);
 	initParser();
 	//initVM(vm);
-
-	//freeVM(vm);
+	
+    //freeVM(vm);
 	freeParser();
 	freeScanner();
 
-	free(flags);
 	return 0;
 }

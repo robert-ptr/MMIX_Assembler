@@ -13,13 +13,13 @@ typedef struct
 	Token* previous;
 	bool hadError;
 	bool panicMode;
-	Table* table;
+	Table table;
     uint32_t line;
 } Parser;
 
 extern Parser parser;
 
-extern Table* instr_indices;
+extern Table instr_indices;
 
 void parse(VM* vm);
 void initParser();

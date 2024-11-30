@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include "vm.h"
 
+#define GROW_SET(x) ((x) == 0 ? 8 : ((x) * 2))
+
 uint8_t branch_time = 0;
 
 RunningTime times[256] ={   {.oopsies=5	, .mems=0}, {.oopsies=1	, .mems=0}, {.oopsies=1	, .mems=0 }, {.oopsies=1 , .mems=0 }, // 0x 
@@ -116,7 +118,7 @@ static void initByteSet(ByteSet* byte_set)
 
 static void growByteSet(ByteSet* byte_set)
 {
-	int32_t capacity = GROW_LIST(byte_set->capacity);
+	int32_t capacity = GROW_SET(byte_set->capacity);
 	Byte* new_list = (Byte*)malloc(capacity * sizeof(Byte)); 
 
 	for(int32_t i = 0; i < byte_set->count; i++)
@@ -211,7 +213,7 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 	findInTable(vm->memory, key, &value);
 	value.int_value = value.int_value | (0xFF << (8 * offset)) & byte << (8 * offset);
 
-	addToTable_int64_t(vm->memory, key, value.int_value);
+	addToTable_uint64_t(vm->memory, key, value.int_value);
 }
 
 static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
@@ -226,7 +228,7 @@ static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 	findInTable(vm->memory, key, &value);
 	value.int_value = value.int_value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
 
-	addToTable_int64_t(vm->memory, key, value.int_value);
+	addToTable_uint64_t(vm->memory, key, value.int_value);
 }
 
 static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
@@ -242,14 +244,14 @@ static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 	findInTable(vm->memory, key, &value);
 	value.int_value = value.int_value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
 
-	addToTable_int64_t(vm->memory, key, value.int_value);
+	addToTable_uint64_t(vm->memory, key, value.int_value);
 }
 
 static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
 {
 	char* key = intToHexString(address);
 
-	addToTable_int64_t(vm->memory, key, octa);
+	addToTable_uint64_t(vm->memory, key, octa);
 }
 
 static Byte getByteFromMem(VM* vm, uint64_t address)

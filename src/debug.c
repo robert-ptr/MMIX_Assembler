@@ -145,6 +145,66 @@ void debugParser()
 #ifdef ASM_DEBUG_TABLE
 void debugTable()
 {
+    // the simplest way to debug the table is to create one and perform all the actions you would perform on a hashtable
+    // and see if/where it breaks
+
+    Table test_table;
+    initTable(&test_table);
+    if(addToTable_bool(&test_table, "bool", true))
+    {
+        printf("Added bool value:true to table, key: 'bool'\n");
+    }
+    
+    if(addToTable_uint64_t(&test_table, "uint64_t", 351))
+    {
+        printf("Added uint64_t value:351 to table, key: 'uint64_t'\n");
+    }
+
+    if(addToTable_string(&test_table, "string", "string_value"))
+    {
+        printf("Added string value:string_value to table, key:'string'\n");
+    }
+
+    if(addToTable_float(&test_table, "float", 3.14f))
+    {
+        printf("Added float value:3.14 to table, key:'float'\n");
+    }
+
+    if(addToTable_double(&test_table, "double", 3.14159265))
+    {
+        printf("Added double value:3.14159265 to table, key:'double'\n");
+    }
+
+    printf("\n\n");
+
+    EntryValue value;
+
+    if(findInTable(&test_table, "bool", &value))
+    {
+        printf("'bool': %d\n", value.bool_value);
+    }
+
+    if(findInTable(&test_table, "uint64_t", &value))
+    {
+        printf("'uint64_t': %u\n", value.int_value);
+    }
+
+    if(findInTable(&test_table, "string", &value))
+    {
+        printf("'string': %s\n", value.str_value);
+    }
+
+    if(findInTable(&test_table, "float", &value))
+    {
+        printf("'float': %f\n", value.float_value);
+    }
+
+    if(findInTable(&test_table, "double", &value))
+    {
+        printf("'double': %lf\n", value.double_value);
+    }
+
+    freeTable(&test_table);
 }
 #endif
 

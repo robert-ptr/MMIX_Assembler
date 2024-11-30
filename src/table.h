@@ -52,7 +52,7 @@ void initTable(Table* table);
 bool findInTable(Table* table, char* s, EntryValue* value);
 
 GENERIC_INSERT_FUNC(string)
-GENERIC_INSERT_FUNC(int64_t)
+GENERIC_INSERT_FUNC(uint64_t)
 GENERIC_INSERT_FUNC(bool)
 GENERIC_INSERT_FUNC(float)
 GENERIC_INSERT_FUNC(double)

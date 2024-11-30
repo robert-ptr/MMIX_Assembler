@@ -14,39 +14,39 @@ typedef enum
 	rR, rS, rT, rU, rV, rX, rY, rZ, rBB, rTT, rWW, rXX, rYY, rZZ,
 } SpecialRegisters;
 
-/*																						saved? put?
- 	rA		arithmetic status register				21		*			*
-	rB		bootstrap register (trip)					0			*			*
-	rC		cycle counter											8			
-	rD		dividend register									1			*			*
-	rE		epsilon register									2			*			*
-	rF		failure location register					22					*
-	rG		global threshold register					19		*			*
-	rH		himult register										3			*			*
-	rI		interval counter									12		
-	rJ		return-jump register							4			*			*
-	rK		interrupt mask register						15
-	rL		local threshold register					20		*			*
-	rM		multiples mask register						5			*			*
-	rN		serial number											9
-	rO		register stack offset							10
-	rP		prediction register								23		*			*
+/*															saved? put?
+ 	rA		arithmetic status register				21	    *	    *
+	rB		bootstrap register (trip)				0		*		*
+	rC		cycle counter							8			
+	rD		dividend register						1		*		*
+	rE		epsilon register						2		*		*
+	rF		failure location register				22				*
+	rG		global threshold register				19		*		*
+	rH		himult register							3		*		*
+	rI		interval counter						12		
+	rJ		return-jump register					4		*		*
+	rK		interrupt mask register					15
+	rL		local threshold register				20		*	    *
+	rM		multiples mask register					5		*		*
+	rN		serial number							9
+	rO		register stack offset					10
+	rP		prediction register						23		*		*
 	rQ		interrupt request register				16
-	rR		remainder register								6			*			*
-	rS		register stack pointer						11
-	rT		trap address register							13
-	rU		usage counter											17
+	rR		remainder register						6		*		*
+	rS		register stack pointer					11
+	rT		trap address register					13
+	rU		usage counter							17
 	rV		virtual translation register			18
-	rW		where-interrupted register (trip)	24		*			*
-	rX		execution register (trip)					25		*			*
-	rY		Y operand (trip)									26		*			*
-	rZ		Z operand (trip)									27		*			*
-	rBB		bootstrap register (trap)					7						*
+	rW		where-interrupted register (trip)	    24		*		*
+	rX		execution register (trip)				25		*		*
+	rY		Y operand (trip)						26		*		*
+	rZ		Z operand (trip)						27		*		*
+	rBB		bootstrap register (trap)				7				*
 	rTT		dynamic trap address register			14
-	rWW		where-interrupted register (trap)	28					*
-	rXX 	execution register (trap)					29					*
-	rYY 	Y operand (trap)									30					*
-	rZZ		Z operand (trap)									31					*
+	rWW		where-interrupted register (trap)	    28				*
+	rXX 	execution register (trap)				29				*
+	rYY 	Y operand (trap)						30				*
+	rZZ		Z operand (trap)						31				*
 */
 
 typedef enum

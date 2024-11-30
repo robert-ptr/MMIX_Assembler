@@ -7,6 +7,8 @@
 
 Table t;
 
+#define GROW_LIST(x) ((x) == 0 ? 8 : ((x) * 2))
+
 void initTable(Table* table)
 {
 	table->size = 0;
@@ -17,7 +19,7 @@ void initTable(Table* table)
 void freeTable(Table* table)
 {
 	free(table->entries);
-	initTable(table);
+    initTable(table);
 }
 
 static uint64_t hashString(char* s, uint64_t n)
@@ -97,7 +99,7 @@ static void adjustSize(Table* table, uint64_t capacity)
 	table->entries = entries;
 }
 
-static void setEntry_int64_t(EntryValue* entry, int64_t value)
+static void setEntry_uint64_t(EntryValue* entry, int64_t value)
 {
     entry->int_value = value;
 }
@@ -155,7 +157,7 @@ static void setEntry_string(EntryValue* entry, char* str)
     // should i copy it?
 
 GENERIC_INSERT_FUNC_DEF(string)
-GENERIC_INSERT_FUNC_DEF(int64_t)
+GENERIC_INSERT_FUNC_DEF(uint64_t)
 GENERIC_INSERT_FUNC_DEF(bool)
 GENERIC_INSERT_FUNC_DEF(float)
 GENERIC_INSERT_FUNC_DEF(double)

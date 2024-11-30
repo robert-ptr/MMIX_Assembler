@@ -6,7 +6,7 @@
 #include "parser.h"
 
 Parser parser;
-Table* instr_indices;
+Table instr_indices;
 
 static void errorAt(Token* token, const char* message)
 {
@@ -118,11 +118,11 @@ static int32_t symbol()
 	char* symbol = parser.current->start;
     stringToLowercase(&symbol);
 
-	EntryValue* value;
-	if(findInTable(parser.table, symbol, value))
+	EntryValue value;
+	if(findInTable(&parser.table, symbol, &value))
     {
-        if(value->type == TYPE_INT)
-            return value->int_value;
+        if(value.type == TYPE_INT)
+            return value.int_value;
     }
 	else
 	{
@@ -172,6 +172,8 @@ static int32_t term()
 			case TOKEN_REGISTER:
 				a = reg();
 				break;
+            default:
+                errorAtCurrent("Unknown operator!");
 		}
 	}
 	else if(parser.current->type == TOKEN_LPAREN)
@@ -246,6 +248,8 @@ static int32_t strongOperators()
                 b = term();
                 a >>= b;
                 break;
+            default:
+                errorAtCurrent("Unknown operator!");
         }
 	}
 
@@ -277,6 +281,8 @@ static int32_t expression()
                 b = strongOperators();
                 a ^= b;
                 break;
+            default:
+                errorAtCurrent("Unknown operator!");
         }
 	}
 
@@ -343,10 +349,10 @@ static void instructionStatement(VM* vm)
 	if(parser.current->type == TOKEN_INSTRUCTION)
 	{
 		char* instruction = getTokenString(parser.current);
-        EntryValue* emitValue;
-		if(findInTable(instr_indices, instruction, emitValue) != false)
+        EntryValue emitValue;
+		if(findInTable(&instr_indices, instruction, &emitValue) != false)
 		{
-			Byte byte = (uint8_t)emitValue->int_value;
+			Byte byte = (uint8_t)emitValue.int_value;
 			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
 		}
 		else
@@ -371,7 +377,7 @@ static void labelStatement(VM* vm)
 	advance();
 
 		// a label for a register,a value or something along these lines
-	addToTable_int64_t(parser.table, label, parser.line); // add line position
+	addToTable_uint64_t(&parser.table, label, parser.line); // add line position
 		
 	instructionStatement(vm);
 
@@ -410,19 +416,20 @@ void initParser()
 	parser.previous = NULL;
 	parser.current = NULL;
 	parser.line = 1;
-    initTable(parser.table);
-    initTable(instr_indices);
+    initTable(&parser.table);
+    initTable(&instr_indices);
     
     for(int i = 0; i < 256; i++)
     {
-        addToTable_int64_t(instr_indices, instructions[i].name, i);
+        addToTable_uint64_t(&instr_indices, instructions[i].name, i);
     }
 }
 
 void freeParser()
 {
+    freeTable(&parser.table);
+    freeTable(&instr_indices);
     initParser(); // not much to be done here, so we just reset the parser
-    freeTable(parser.table); // then free the table
 }
 
 void parse(VM* vm)
