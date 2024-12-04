@@ -72,6 +72,7 @@ int32_t main(int32_t argc, const char* argv[])
 	initScanner(source);
 	initParser();
 	//initVM(vm);
+    debugTrie();
     //freeVM(vm);
 	freeParser();
 	freeScanner();

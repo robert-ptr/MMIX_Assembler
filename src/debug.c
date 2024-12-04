@@ -121,6 +121,7 @@ static void dumpTokens()
                 }
                 printf("\n");
         }
+        token = scanToken();
     }
     printf("\nTOKEN_EOF\n");
 }
@@ -280,6 +281,16 @@ void debugTrie()
     }
 
     traverseTrie(trie); // traverse the entire trie just to be sure everything is in order
+
+    if(findWord(trie, "random"))
+    {
+        printf("Found word that isn't supposed to be there.\n");
+    }
+
+    if(findWord(trie, "sflo"))
+    {
+        printf("Found word that isn't supposed to be there.\n");
+    }
 
     freeTrie(trie);
 }

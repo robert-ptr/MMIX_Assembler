@@ -89,7 +89,6 @@ static void skipWhitespace()
 	for(;;)
 	{
 		char c = peek();
-
 		switch(c)
 		{
 			case ' ':
@@ -107,7 +106,7 @@ static void skipWhitespace()
 				{
 					advance();
 				}
-			break;
+		    	break;
 			}
 			default:
 				return;
@@ -130,22 +129,26 @@ static bool isHexadecimal()
 
 static bool isAlphanumeric()
 {
-		char c = peek(scanner);
+		char c = peek();
 		return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':';
 }
 
 static TokenType identifierType()
 {
 	int32_t length = scanner.current - scanner.start;
-	char* word = (char*)malloc(length * sizeof(char));
-	for(int32_t i = 0; i < length; i++)
+	char* word = (char*)malloc((length + 1) * sizeof(char));
+	word[length] = '\0';
+    for(int32_t i = 0; i < length; i++)
 	{
-		word[i] = *(scanner.start + i);
+		word[i] = scanner.start[i];
 	}
 	stringToLowercase(&word);
-	if(findWord(scanner.instruction_trie, word))
-		return TOKEN_INSTRUCTION;
 
+	if(findWord(scanner.instruction_trie, word))
+    {
+        return TOKEN_INSTRUCTION;
+    }
+    
     return checkKeyword();
 }
 
@@ -218,7 +221,6 @@ static Token constant()
 
 static Token skipToEndOfLine()
 {
-	advance();
 	while(peek() != '\0' && peek() != '\n')
 		advance();
 	return scanToken();

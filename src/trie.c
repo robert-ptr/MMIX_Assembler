@@ -97,9 +97,9 @@ bool findWord(TrieNode* node, char* word)
 	{
 		int32_t index = charToIndex(word[i]);
 		if(index == -1)
-			return -1;
+			return false;
 		if(node->nodes[index] == NULL)
-			return -1;
+			return false;
 		node = node->nodes[index];
 	}
 
