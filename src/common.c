@@ -1045,6 +1045,18 @@ static const char to_lowercase[] = {
     ['0'] = '0', ['1'] = '1', ['2'] = '2', ['3'] = '3', ['4'] = '4', ['5'] = '5', ['6'] = '6', ['7'] = '7', ['8'] = '8', ['9'] = '9'
 };
 
+uint32_t parseNumber(char* buffer, int32_t* index)
+{
+	uint32_t number = 0;
+	while(buffer[*index] != '\0' && buffer[*index] != '\n')
+	{
+		number = number* 10 + (buffer[*index] - '0');
+		(*index)++;
+	}
+
+	return number;
+}
+
 char* getString(char* buffer, int32_t length, int32_t buf_index)
 {
 	if(length <= 1)

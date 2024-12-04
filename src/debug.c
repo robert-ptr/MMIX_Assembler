@@ -209,8 +209,79 @@ void debugTable()
 #endif
 
 #ifdef ASM_DEBUG_TRIE
+int number_of_words = 0;
+
+static void traverseTrie(TrieNode* trie)
+{
+    bool leaf = true;
+    for(int i = 0; i < ALPHABET_SIZE; i++)
+    {
+        if(trie->nodes[i] != NULL)
+        {
+            traverseTrie(trie->nodes[i]);
+            leaf = false;
+        }
+    }
+
+    if (leaf && !trie->isWord)
+    {
+        uint8_t buffer[128]; // this trie isn't intended to be used with extremely long words
+                          // but you could use a linked list or a dynamic buffer if there were long words in the trie
+        int i = 0;
+        while(trie->parent != NULL)
+        {
+            buffer[i++] = trie->index;
+            trie = trie->parent;
+        }
+
+        printf("Reached leaf but isn't word!\n");
+        for(int j = 0; j < i; j++)
+        {
+            printf("%c", indexToChar(buffer[j]));
+        }
+        printf("\n");
+    }
+
+    if(trie->isWord)
+    {
+        printf("Found word number %d!\n", number_of_words + 1);
+        number_of_words++;
+        uint8_t buffer[128]; // this trie isn't intended to be used with extremely long words
+                          // but you could use a linked list or a dynamic buffer if there were long words in the trie
+        int i = 0;
+        while(trie->parent != NULL)
+        {
+            buffer[i++] = trie->index;
+            trie = trie->parent;
+        }
+
+        for(int j = i - 1; j >= 0; j--)
+        {
+            printf("%c", indexToChar(buffer[j]));
+        }
+        printf("\n");
+    }
+}
+
 void debugTrie()
 {
+    TrieNode* trie = getNode();
+    for (int i = 0; i < 256; i++)
+    {
+        insertNode(trie, instructions[i].name, true);
+    }
+
+    for (int i = 0; i < 256; i++)
+    {
+        if(!findWord(trie, instructions[i].name))
+        {
+            printf("Couldn't find word: '%s'!\n", instructions[i].name);
+        }
+    }
+
+    traverseTrie(trie); // traverse the entire trie just to be sure everything is in order
+
+    freeTrie(trie);
 }
 #endif
 
