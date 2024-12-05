@@ -116,7 +116,7 @@ typedef struct
 	MMIX_Register general_registers[256];
 	MMIX_Register special_registers[32];
 	MMIX_Register* register_stack; // TO DO
-	Table* memory;
+	Table memory;
 } VM;
 
 void initVM(VM* vm);

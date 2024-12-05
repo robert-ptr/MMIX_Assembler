@@ -20,9 +20,9 @@ FILE* createFile(const char* path);
 
 void charToLowercase(char* c);
 void stringToLowercase(char** s);
-char* intToHexString(uint64_t n);
-char* intToBinaryString(uint64_t n);
-char* intToDecimalString(uint64_t n);
+char* intToHexString(uint64_t n, uint8_t bits);
+char* intToBinaryString(uint64_t n, uint8_t bits);
 uint64_t fromHexadecimal(const char* str);
+uint32_t parseNumber(char* buffer, int32_t* index);
 
 #endif

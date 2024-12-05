@@ -158,13 +158,13 @@ static void freeMemory(Table* memory)
 void initVM(VM* vm)
 {
 	initByteSet(vm->byte_set);
-	initMemory(vm->memory);
+	initMemory(&vm->memory);
 }
 
 void freeVM(VM* vm)
 {
 	freeByteSet(vm->byte_set);
-	freeMemory(vm->memory);
+	freeMemory(&vm->memory);
 }
 
 static bool isAtEnd(VM* vm)
@@ -205,30 +205,30 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 	uint8_t offset = address % 8;
 	address -= offset;
 
-	char* key = intToHexString(address);
+	char* key = intToHexString(address, 64);
 	
 	EntryValue value;
     value.type = TYPE_INT;
 
-	findInTable(vm->memory, key, &value);
+	findInTable(&vm->memory, key, &value);
 	value.int_value = value.int_value | (0xFF << (8 * offset)) & byte << (8 * offset);
 
-	addToTable_uint64_t(vm->memory, key, value.int_value);
+	addToTable_uint64_t(&vm->memory, key, value.int_value);
 }
 
 static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 {
 	uint8_t offset = address % 4;
 	address -= offset;
-	char* key = intToHexString(address);
+	char* key = intToHexString(address, 64);
 	
 	EntryValue value;
     value.type = TYPE_INT;
 
-	findInTable(vm->memory, key, &value);
+	findInTable(&vm->memory, key, &value);
 	value.int_value = value.int_value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
 
-	addToTable_uint64_t(vm->memory, key, value.int_value);
+	addToTable_uint64_t(&vm->memory, key, value.int_value);
 }
 
 static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
@@ -236,22 +236,22 @@ static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 	uint8_t offset = address % 2;
 	address -= offset;
 	
-    char* key = intToHexString(address);
+    char* key = intToHexString(address, 64);
 	
 	EntryValue value;
     value.type = TYPE_INT;
 
-	findInTable(vm->memory, key, &value);
+	findInTable(&vm->memory, key, &value);
 	value.int_value = value.int_value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
 
-	addToTable_uint64_t(vm->memory, key, value.int_value);
+	addToTable_uint64_t(&vm->memory, key, value.int_value);
 }
 
 static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
 {
-	char* key = intToHexString(address);
+	char* key = intToHexString(address, 64);
 
-	addToTable_uint64_t(vm->memory, key, octa);
+	addToTable_uint64_t(&vm->memory, key, octa);
 }
 
 static Byte getByteFromMem(VM* vm, uint64_t address)
@@ -261,9 +261,9 @@ static Byte getByteFromMem(VM* vm, uint64_t address)
 
 	uint8_t offset = address % 8;
 	address -= offset;
-	char* key = intToHexString(address);
+	char* key = intToHexString(address, 64);
 
-	if(findInTable(vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, &value))
 	{
 		return value.int_value << (8 * (7 - offset)) >> 56;
 	}
@@ -278,9 +278,9 @@ static Wyde getWydeFromMem(VM* vm, uint64_t address)
 
 	uint8_t offset = address % 4;
 	address -= offset;
-	char* key = intToHexString(address);
+	char* key = intToHexString(address, 64);
 
-	if(findInTable(vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, &value))
 	{
 		return value.int_value << (16 * (3 - offset)) >> 48;
 	}
@@ -295,9 +295,9 @@ static Tetra getTetraFromMem(VM* vm, uint64_t address)
 
 	uint8_t offset = address % 2;
 	address -= offset;
-	char* key = intToHexString(address);
+	char* key = intToHexString(address, 64);
 
-	if(findInTable(vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, &value))
 	{
 		return value.int_value << (32 * (1 - offset)) >> 32;
 	}
@@ -310,9 +310,9 @@ static Octa getOctaFromMem(VM* vm, uint64_t address)
     EntryValue value;
     value.type = TYPE_INT;
 
-    char* key = intToHexString(address);
+    char* key = intToHexString(address, 64);
 
-	if(findInTable(vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, &value))
 	{
 		return value.int_value;
 	}
@@ -342,7 +342,7 @@ void execute(VM* vm)
 
 		switch(byte)
 		{
-					case OP_TRAP: 	// thiscommand is analogous to TRIP, but it forces a trap to the operating system.
+					case OP_TRAP: 	// this command is analogous to TRIP, but it forces a trap to the operating system.
 													// 5 oops
 						break;
 					case OP_FCMP: 	// floating compare: s($X)<-[f($Y) > f($Z)] - [f($Y) < f($Z)]

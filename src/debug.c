@@ -133,13 +133,21 @@ void debugScanner()
 #endif
 
 #ifdef ASM_DEBUG_PARSER
-static void dumpBinary()
+static void dumpBinary(VM* vm)
 {
+    for(int i = 0; i < vm->byte_set->count; i++)
+    {
+        printf("%s", intToBinaryString(vm->byte_set->bytes[i], 8));
+        if((i + 1) % 4 == 0)
+        {
+            printf("\n");
+        }
+    }
 }
 
-void debugParser()
+void debugParser(VM* vm)
 {
-    dumpBinary();
+    dumpBinary(vm);
 }
 #endif
 

@@ -16,7 +16,7 @@ typedef enum
 
 ErrorType runFile(const char* source)
 {
-	//parse();
+//	parse();
 	//execute();
 }
 
@@ -69,11 +69,15 @@ int32_t main(int32_t argc, const char* argv[])
 		exit(64);
 	}
 
+    VM* vm;
+
 	initScanner(source);
 	initParser();
-	//initVM(vm);
-    debugTrie();
-    //freeVM(vm);
+	initVM(vm);
+    
+    parse(vm);
+
+    freeVM(vm);
 	freeParser();
 	freeScanner();
 

@@ -1131,25 +1131,27 @@ void stringToLowercase(char** s)
 	}
 }
 
-char* intToHexString(uint64_t n)
+char* intToHexString(uint64_t n, uint8_t bits) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
 {
 	uint64_t c = n;
 	uint64_t size = 0;
-	while(c > 0)
+    uint8_t digits = bits / 4;
+	
+    while(c > 0)
 	{
 		c /= 16;
 		size++;
 	}
 
-	char* str = (char*)malloc(19 * sizeof(char));
+	char* str = (char*)malloc((digits + 3) * sizeof(char)); // +3 for \0 and 0x at the beggining of the number
 	str[0] = '0';
 	str[1] = 'x';
-	for(int i = 2; i < 18; i++)
+	for(int i = 2; i < digits + 2; i++)
 	{
 		str[i] = '0';
 	}
 	
-	for(int i = 17; i > 1; i--, n /= 16)
+	for(int i = digits + 1; i > 1; i--, n /= 16)
 	{
 		c = n % 16;
 		switch(c)
@@ -1208,16 +1210,17 @@ char* intToHexString(uint64_t n)
 	return str;
 }
 
-char* intToBinaryString(uint64_t n)
+char* intToBinaryString(uint64_t n, uint8_t bits) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
 {
-	char* str = (char*)malloc(65 * sizeof(char));
+	char* str = (char*)malloc((bits + 1) * sizeof(char));
+    str[bits] = '\0';
 
-	for(int i = 0; i < 64; i++)
+	for(int i = 0; i < bits; i++)
 	{
 		str[i] = '0';
 	}
 
-	for(int i = 63; i >= 0 && n > 0; i--)
+	for(int i = bits - 1; i >= 0 && n > 0; i--)
 	{
 		if(n & 1)
 			str[i] = '1';
@@ -1295,4 +1298,6 @@ uint64_t fromHexadecimal(const char* str)
 	}
 
 	free(new_str);
+
+    return result;
 }

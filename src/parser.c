@@ -413,12 +413,12 @@ void initParser()
 {
 	parser.hadError = false;
 	parser.panicMode = false;
-	parser.previous = NULL;
-	parser.current = NULL;
+	parser.previous = (Token*)malloc(sizeof(Token));
+	parser.current = (Token*)malloc(sizeof(Token));
 	parser.line = 1;
     initTable(&parser.table);
     initTable(&instr_indices);
-    
+     
     for(int i = 0; i < 256; i++)
     {
         addToTable_uint64_t(&instr_indices, instructions[i].name, i);
@@ -429,7 +429,9 @@ void freeParser()
 {
     freeTable(&parser.table);
     freeTable(&instr_indices);
-    initParser(); // not much to be done here, so we just reset the parser
+
+    free(parser.previous);
+    free(parser.current);
 }
 
 void parse(VM* vm)

@@ -11,14 +11,18 @@ typedef struct TrieNode TrieNode;
 
 struct TrieNode
 {
+    uint8_t index;
 	TrieNode* nodes[ALPHABET_SIZE];
-	bool isWord;
+	TrieNode* parent;
+    bool isWord;
 };
 
 TrieNode* getNode(void);
 void freeTrie(TrieNode* root);
 void insertNode(TrieNode* node, char* word, bool value);
 void createTrie(TrieNode* node, char** words, int32_t n);
-int32_t findWord(TrieNode* node, char* word);
+bool findWord(TrieNode* node, char* word);
+uint8_t charToIndex(char c);
+char indexToChar(uint8_t i);
 
 #endif

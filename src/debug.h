@@ -4,6 +4,8 @@
 #include "vm.h"
 #include "scanner.h"
 #include "parser.h"
+#include "trie.h"
+#include "common.h"
 
 #define FLAG_GREGS 0x0001
 #define FLAG_SPREGS 0x0002
@@ -37,7 +39,7 @@ void debugScanner();
 #endif
 
 #ifdef ASM_DEBUG_PARSER
-void debugParser();
+void debugParser(VM* vm);
 #endif
 
 #ifdef ASM_DEBUG_TABLE
