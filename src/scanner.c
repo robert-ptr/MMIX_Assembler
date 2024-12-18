@@ -5,6 +5,7 @@
 #include "scanner.h"
 
 Scanner scanner;
+uint32_t scanned_chars = 0;
 
 static bool isAtEnd()
 {
@@ -50,7 +51,10 @@ static Token makeToken(TokenType type)
 	token.start = scanner.start;
 	token.line = scanner.line;
 	token.length = (int32_t)(scanner.current - scanner.start);
-	token.type = type;
+	token.offset = scanned_chars + 1;
+    token.type = type;
+
+    scanned_chars += token.length;
 
 	return token;
 }
@@ -95,12 +99,14 @@ static void skipWhitespace()
 			case '\t':
 			case '\r':
 				advance();
+                scanned_chars++;
 				break;
 			case '%': 
 			{
 				while(!isAtEnd() && peek() != '\n')
 				{
 					advance();
+                    scanned_chars++;
 				}
 		    	break;
 			}

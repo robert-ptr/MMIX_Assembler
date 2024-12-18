@@ -14,18 +14,21 @@ static bool check(TokenType type);
 
 static void triggerPanicMode() // something wrong happened, trigger panic mode, and try to get to the next line
 {
-    while(!isAtEnd() && !check(TOKEN_ENDLINE))
+    parser.panic_mode = true;
+    while(!isAtEnd() && !check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON)) // find next instruction, if available
     {
         advance();
     }
 
-    if(check(TOKEN_ENDLINE))
+    if(!isAtEnd())
+    {
         advance();
+    }
 }
 
 static void errorAt(Token* token, const char* message)
 {
-	fprintf(stderr, "[line %d] Error", token->line);
+	fprintf(stderr, "[line %d char %d] Error", token->line, token->offset);
 	if (token->type == TOKEN_EOF) 
 	{
 		fprintf(stderr, " at end");
@@ -106,6 +109,11 @@ static bool isRightParen()
 	return check(TOKEN_RPAREN);
 }
 
+static bool isEndOfInstr()
+{
+    return check(TOKEN_ENDLINE) || check(TOKEN_SEMICOLON);
+}
+
 static void emitByte(VM* vm, Byte byte)
 {
 	addByte(vm->byte_set, byte);
@@ -131,7 +139,6 @@ static char* getTokenString(Token* token)
 
 static int32_t symbol()
 {
-	// repair this function
 	char* symbol = parser.current->start;
     stringToLowercase(&symbol);
 
@@ -169,6 +176,10 @@ static int32_t term()
 		TokenType token_type = parser.current->type;
 		advance();
 		a = term();
+
+        if(parser.panic_mode) // something went wrong in term()
+            return -1;
+
 		switch(token_type)
 		{
 			case TOKEN_PLUS:
@@ -184,6 +195,7 @@ static int32_t term()
 				break;
             default:
                 errorAtCurrent("Unknown term!");
+                return -1;
 		}
 	}
 	else if(parser.current->type == TOKEN_LPAREN)
@@ -214,7 +226,7 @@ static int32_t term()
 	else
 	{
 		// Report an error
-		printf("Unknown term!\n");
+		errorAtCurrent("Unknown term!\n");
 		return -1;
 	}
 	return a;
@@ -224,9 +236,13 @@ static int32_t strongOperators()
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
 	int32_t a = term();
+
+    if(parser.panic_mode) // something went wrong in term
+        return -1;
+
     advance();
 	int32_t b;
-	while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !check(TOKEN_ENDLINE))
+	while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !isEndOfInstr())
 	{
         switch(parser.current->type)
         {
@@ -261,8 +277,12 @@ static int32_t strongOperators()
                 break;
             default:
                 errorAtCurrent("Unknown strong operator!");
+                return -1;
         }
 	}
+
+    if (parser.panic_mode) // something went wrong when calling term() for b 
+        return -1;
 
 	return a;
 }
@@ -271,8 +291,12 @@ static int32_t expression()
 {
 	// weak binary operators: +,-,|,^
 	int a = strongOperators();
+
+    if (parser.panic_mode)
+        return -1;
+
 	int b;
-	while(!isAtEnd() && !isRightParen() && !check(TOKEN_COMMA) && !check(TOKEN_ENDLINE))
+	while(!isAtEnd() && !isRightParen() && !check(TOKEN_COMMA) && !isEndOfInstr())
 	{
         switch(parser.current->type)
         {
@@ -294,8 +318,12 @@ static int32_t expression()
                 break;
             default:
                 errorAtCurrent("Unknown operator!");
+                return -1;
         }
 	}
+
+    if (parser.panic_mode)
+        return -1;
 
 	return a;
 }
@@ -311,9 +339,13 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
     return true;
 }
 
-static void commaStatement(VM* vm)
+static uint32_t commaStatement(VM* vm)
 {
 	uint32_t operand1 = expression();
+
+    if (parser.panic_mode)
+        return 0;
+
 	uint32_t operand2 = 0;
 	uint32_t operand3 = 0;
     uint8_t arity = 1;
@@ -322,17 +354,27 @@ static void commaStatement(VM* vm)
 	{
 		advance();
 		operand2 = expression();
+
+        if (parser.panic_mode)
+            return 0;
+
         arity++;
 	}
     if(check(TOKEN_COMMA)) // 3 arguments
 	{
 		advance();
 		operand3 = expression();
+        
+        if (parser.panic_mode)
+            return 0;
+
         arity++;
     }
+    
     if(check(TOKEN_COMMA)) // wrong number of arguments
     {
-        error("Wrong number of arguments! Maximum 3.");
+        errorAtCurrent("Wrong number of arguments! Maximum 3.");
+        return 0;
     }
 
     if(arity == 1)
@@ -348,19 +390,19 @@ static void commaStatement(VM* vm)
     }
 
     checkOperandSizes(operand1, operand2, operand3);
-    emitByte(vm, operand1);
-    emitByte(vm, operand2); 
-    emitByte(vm, operand3);
+    
+    return operand1 + (operand2 << 8) + (operand3 << 16);
 }
 
 static void instructionStatement(VM* vm)
 {
     char* instruction = getTokenString(parser.current);
     EntryValue emitValue;
+
+    Byte bytes[4];
     if(findInTable(&instr_indices, instruction, &emitValue) != false)
     {
-        Byte byte = (uint8_t)emitValue.int_value;
-        emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
+        bytes[0] = (uint8_t)emitValue.int_value;
     }
     else
     {
@@ -368,7 +410,21 @@ static void instructionStatement(VM* vm)
     }
 
     advance();
-    commaStatement(vm);
+    uint32_t temp = commaStatement(vm);
+    bytes[1] = temp & 0xFF;
+    bytes[2] = temp >> 8 & 0xFF;
+    bytes[3] = temp >> 16;
+    if (parser.panic_mode)
+    {
+        free(instruction);
+        return;
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        emitByte(vm, bytes[i]);
+    }
+
     advance();
 
     free(instruction);
@@ -382,7 +438,12 @@ static void labelStatement(VM* vm)
 	addToTable_uint64_t(&parser.table, label, parser.line); // add line position
 	
     if(check(TOKEN_INSTRUCTION))
+    {
 	    instructionStatement(vm);
+
+        if (parser.panic_mode)
+            return;
+    }
     else
     {
         switch(parser.current->type) // check for MMIXAL stuff
@@ -422,7 +483,8 @@ static void labelStatement(VM* vm)
 
 static void semicolonStatement(VM* vm) // if you write macros/instructions on the same line
 {
-	if(parser.previous->type == TOKEN_LABEL)
+    parser.panic_mode = false;
+	if(parser.current->type == TOKEN_LABEL)
 	{
 		labelStatement(vm);
 	}
@@ -433,7 +495,7 @@ static void semicolonStatement(VM* vm) // if you write macros/instructions on th
 	
 	while(check(TOKEN_SEMICOLON))
 	{
-		advance();
+		advance(); // consume semicolon
 		if(parser.previous->type == TOKEN_LABEL)
 		{
 			labelStatement(vm);
@@ -450,6 +512,7 @@ void initParser()
 	parser.previous = (Token*)malloc(sizeof(Token));
 	parser.current = (Token*)malloc(sizeof(Token));
 	parser.line = 1;
+    parser.panic_mode = false;
     initTable(&parser.table);
     initTable(&instr_indices);
      
