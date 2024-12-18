@@ -1045,14 +1045,14 @@ static const char to_lowercase[] = {
     ['0'] = '0', ['1'] = '1', ['2'] = '2', ['3'] = '3', ['4'] = '4', ['5'] = '5', ['6'] = '6', ['7'] = '7', ['8'] = '8', ['9'] = '9'
 };
 
-uint32_t parseNumber(char* buffer, int32_t* index)
+uint32_t parseNumber(char* buffer)
 {
 	uint32_t number = 0;
-	while(buffer[*index] != '\0' && buffer[*index] != '\n')
-	{
-		number = number* 10 + (buffer[*index] - '0');
-		(*index)++;
-	}
+
+    for (int i = 0; buffer[i] != '\0'; i++)
+    {
+        number = number * 10 + (buffer[i] - '0');
+    }
 
 	return number;
 }
@@ -1236,7 +1236,7 @@ char* intToBinaryString(uint64_t n, uint8_t bits) // bits means the number of us
 uint64_t fromHexadecimal(const char* str)
 {
 	uint64_t result = 0;
-	int32_t n = strlen(str);
+	size_t n = strlen(str);
 	char* new_str = (char*)malloc((n + 1) * sizeof(char));
 	stringToLowercase(&new_str);	
 	for(int i = 0; i < n; i++)

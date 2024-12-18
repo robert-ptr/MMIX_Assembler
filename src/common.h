@@ -23,6 +23,6 @@ void stringToLowercase(char** s);
 char* intToHexString(uint64_t n, uint8_t bits);
 char* intToBinaryString(uint64_t n, uint8_t bits);
 uint64_t fromHexadecimal(const char* str);
-uint32_t parseNumber(char* buffer, int32_t* index);
+uint32_t parseNumber(char* buffer);
 
 #endif

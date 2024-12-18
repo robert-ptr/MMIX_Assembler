@@ -11,8 +11,6 @@ typedef struct
 {
 	Token* current;
 	Token* previous;
-	bool hadError;
-	bool panicMode;
 	Table table;
     uint32_t line;
 } Parser;

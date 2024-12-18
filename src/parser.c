@@ -8,6 +8,21 @@
 Parser parser;
 Table instr_indices;
 
+static void advance();
+static bool isAtEnd();
+static bool check(TokenType type);
+
+static void triggerPanicMode() // something wrong happened, trigger panic mode, and try to get to the next line
+{
+    while(!isAtEnd() && !check(TOKEN_ENDLINE))
+    {
+        advance();
+    }
+
+    if(check(TOKEN_ENDLINE))
+        advance();
+}
+
 static void errorAt(Token* token, const char* message)
 {
 	fprintf(stderr, "[line %d] Error", token->line);
@@ -24,7 +39,7 @@ static void errorAt(Token* token, const char* message)
 		fprintf(stderr, " at '%.*s'", token->length, token->start);
 	}
 	fprintf(stderr, ": %s\n", message);
-	parser.hadError = true;
+    triggerPanicMode();
 }
 
 static void errorAtCurrent(const char* message)
@@ -110,6 +125,8 @@ static char* getTokenString(Token* token)
     char* word = (char*)malloc(word_length * sizeof(char));
     strncpy(word, token->start, token->length);
     word[token->length] = '\0';
+
+    return word;
 }
 
 static int32_t symbol()
@@ -124,24 +141,23 @@ static int32_t symbol()
         if(value.type == TYPE_INT)
             return value.int_value;
     }
-	else
-	{
-		printf("Unknown symbol.\n");
-		return -1;
-	}
+
+    printf("Unknown symbol.\n");
+    return -1;
 }
 
-static int32_t constant()
+static int32_t number()
 {
-	int32_t n = 0;
-	// repair this function
+    advance(); // consume the '$' 
+
+	uint8_t n = parseNumber(getTokenString(parser.current));
 	
 	return n;
 }
 
 static Byte reg()
 {
-	return constant();
+	return number();
 }
 static int32_t location()
 {
@@ -173,7 +189,7 @@ static int32_t term()
 				a = reg();
 				break;
             default:
-                errorAtCurrent("Unknown operator!");
+                errorAtCurrent("Unknown term!");
 		}
 	}
 	else if(parser.current->type == TOKEN_LPAREN)
@@ -188,8 +204,8 @@ static int32_t term()
 	}
 	else if(parser.current->type == TOKEN_CONSTANT)
 	{
-		advance();
         char* hexa = getTokenString(parser.current);
+        hexa[0] = '0';
 		a = fromHexadecimal(hexa);
         free(hexa);
 	}
@@ -199,7 +215,7 @@ static int32_t term()
 	}
 	else if(parser.current->type == TOKEN_IMMEDIATE)
 	{
-		a = constant();
+		a = number();
 	}
 	else
 	{
@@ -215,7 +231,7 @@ static int32_t strongOperators()
 	// strong binary operators: *,/,//,%,<<,>>,&
 	int32_t a = term();
 	int32_t b;
-	while(!isAtEnd() && !isRightParen() && !isWeakOperator())
+	while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !check(TOKEN_ENDLINE))
 	{
         switch(parser.current->type)
         {
@@ -249,7 +265,7 @@ static int32_t strongOperators()
                 a >>= b;
                 break;
             default:
-                errorAtCurrent("Unknown operator!");
+                errorAtCurrent("Unknown strong operator!");
         }
 	}
 
@@ -261,7 +277,7 @@ static int32_t expression()
 	// weak binary operators: +,-,|,^
 	int a = strongOperators();
 	int b;
-	while(!isAtEnd() && !isRightParen())
+	while(!isAtEnd() && !isRightParen() && !check(TOKEN_COMMA) && !check(TOKEN_ENDLINE))
 	{
         switch(parser.current->type)
         {
@@ -360,6 +376,8 @@ static void instructionStatement(VM* vm)
 			errorAtCurrent("Unknown instruction.");
 		}
 
+        commaStatement(vm);
+
 		free(instruction);
 	}
 	else
@@ -367,7 +385,6 @@ static void instructionStatement(VM* vm)
 		// Report an error
 		errorAtCurrent("Unknown instruction.");
 	}
-	commaStatement(vm);
 }
 
 static void labelStatement(VM* vm)
@@ -411,8 +428,6 @@ static void semicolonStatement(VM* vm) // if you write macros/instructions on th
 
 void initParser()
 {
-	parser.hadError = false;
-	parser.panicMode = false;
 	parser.previous = (Token*)malloc(sizeof(Token));
 	parser.current = (Token*)malloc(sizeof(Token));
 	parser.line = 1;
@@ -430,7 +445,7 @@ void freeParser()
     freeTable(&parser.table);
     freeTable(&instr_indices);
 
-    free(parser.previous);
+    //free(parser.previous);
     free(parser.current);
 }
 

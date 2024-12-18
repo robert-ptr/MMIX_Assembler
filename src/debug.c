@@ -113,6 +113,9 @@ static void dumpTokens()
             case TOKEN_PREFIX:
                 printf("TOKEN_PREFIX ");
                 break;
+            case TOKEN_ENDLINE:
+                printf("TOKEN_ENDLINE\n");
+                break;
             default:
                 printf("Unknown token type!Lexeme:");
                 for(int i = 0; i < token.length; i++)

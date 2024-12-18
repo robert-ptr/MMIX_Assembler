@@ -96,10 +96,6 @@ static void skipWhitespace()
 			case '\r':
 				advance();
 				break;
-			case '\n':
-				scanner.line++;
-				advance();
-				break;
 			case '%': 
 			{
 				while(!isAtEnd() && peek() != '\n')
@@ -247,6 +243,9 @@ Token scanToken()
 
 	switch(c)
 	{
+        case '\n':
+				scanner.line++;
+                return makeToken(TOKEN_ENDLINE);
 		case ',': return makeToken(TOKEN_COMMA);
 		case '$': return makeToken(TOKEN_REGISTER);
 		case 'r': return specialRegister();
@@ -262,7 +261,6 @@ Token scanToken()
 		case '(': return makeToken(TOKEN_LPAREN);
 		case ')': return makeToken(TOKEN_RPAREN);
 		case '/': 
-		{
 			if(peekNext() == '/') // this could also mark the beginning of a comment, according to Knuth
 			{				
 				advance();
@@ -282,18 +280,14 @@ Token scanToken()
 			}
 			else
 				return makeToken(TOKEN_SLASH);
-		}
 		case ';':
-		{
 			if(peekNext() == ';')
 			{
 				return skipToEndOfLine();
 			}
 			else
 				return makeToken(TOKEN_SEMICOLON);
-		}
 		case '<':
-		{
 			if(peekNext() == '<')
 			{
 				advance();
@@ -301,9 +295,7 @@ Token scanToken()
 			}
 			else
 				return errorToken("'<' operator is not defined, did you mean '<<'?");
-		}
 		case '>':
-		{
 			if(peekNext() == '>')
 			{
 				advance();
@@ -311,10 +303,8 @@ Token scanToken()
 			}
 			else
 				return errorToken("'>' operator is not defined, did you mean '>>'?");
-		}
 		case '@': return makeToken(TOKEN_AROUND);
 		case '"':
-		{
 			advance();
 			while(peek() != '"' && !isAtEnd())
 			{
@@ -332,7 +322,6 @@ Token scanToken()
 			token.line = scanner.line;
 
 			return token;
-		}
         case 'g':
             return makeToken(TOKEN_GREG);
         case 'l':
