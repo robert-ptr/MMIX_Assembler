@@ -98,7 +98,7 @@ static bool isAtEnd()
 
 static bool isUnary()
 {
-	return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_COMPLEMENT) || check(TOKEN_REGISTER);
+	return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_COMPLEMENT) || check(TOKEN_GENERAL_REGISTER);
 }
 
 static bool isRightParen()
@@ -148,17 +148,11 @@ static int32_t symbol()
 
 static int32_t number()
 {
-    advance(); // consume the '$' 
-
 	uint8_t n = parseNumber(getTokenString(parser.current));
-	
+
 	return n;
 }
 
-static Byte reg()
-{
-	return number();
-}
 static int32_t location()
 {
 }
@@ -185,8 +179,8 @@ static int32_t term()
 			case TOKEN_COMPLEMENT:
 				a = ~a;
 				break;
-			case TOKEN_REGISTER:
-				a = reg();
+			case TOKEN_GENERAL_REGISTER:
+				a = number();
 				break;
             default:
                 errorAtCurrent("Unknown term!");
@@ -220,7 +214,7 @@ static int32_t term()
 	else
 	{
 		// Report an error
-		printf("Unknown term.\n");
+		printf("Unknown term!\n");
 		return -1;
 	}
 	return a;
@@ -230,6 +224,7 @@ static int32_t strongOperators()
 {
 	// strong binary operators: *,/,//,%,<<,>>,&
 	int32_t a = term();
+    advance();
 	int32_t b;
 	while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !check(TOKEN_ENDLINE))
 	{
@@ -360,45 +355,69 @@ static void commaStatement(VM* vm)
 
 static void instructionStatement(VM* vm)
 {
-	advance();
+    char* instruction = getTokenString(parser.current);
+    EntryValue emitValue;
+    if(findInTable(&instr_indices, instruction, &emitValue) != false)
+    {
+        Byte byte = (uint8_t)emitValue.int_value;
+        emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
+    }
+    else
+    {
+        errorAtCurrent("Unknown instruction.");
+    }
 
-	if(parser.current->type == TOKEN_INSTRUCTION)
-	{
-		char* instruction = getTokenString(parser.current);
-        EntryValue emitValue;
-		if(findInTable(&instr_indices, instruction, &emitValue) != false)
-		{
-			Byte byte = (uint8_t)emitValue.int_value;
-			emitByte(vm, byte);	// check the operands in order to determine if you need to add 1
-		}
-		else
-		{
-			errorAtCurrent("Unknown instruction.");
-		}
+    advance();
+    commaStatement(vm);
+    advance();
 
-        commaStatement(vm);
-
-		free(instruction);
-	}
-	else
-	{
-		// Report an error
-		errorAtCurrent("Unknown instruction.");
-	}
+    free(instruction);
 }
 
 static void labelStatement(VM* vm)
 {
     char* label = getTokenString(parser.previous); // maybe add it to a vector with all the labels?
 
-	advance();
-
-		// a label for a register,a value or something along these lines
+	// a label for a register,a value or something along these lines
 	addToTable_uint64_t(&parser.table, label, parser.line); // add line position
-		
-	instructionStatement(vm);
+	
+    if(check(TOKEN_INSTRUCTION))
+	    instructionStatement(vm);
+    else
+    {
+        switch(parser.current->type) // check for MMIXAL stuff
+        {
+            case TOKEN_IS:
+                break;
+            case TOKEN_GREG:
+                break;
+            case TOKEN_BYTE:
+                break;
+            case TOKEN_WYDE:
+                break;
+            case TOKEN_TETRA:
+                break;
+            case TOKEN_OCTA:
+                break;
+            case TOKEN_PREFIX:
+                break;
+            case TOKEN_IMMEDIATE:
+                break;
+            case TOKEN_CONSTANT:
+                break;
+            case TOKEN_GENERAL_REGISTER:
+                break;
+            case TOKEN_SPECIAL_REGISTER:
+                break;
+            case TOKEN_AROUND:
+                break;
+            case TOKEN_LABEL:   // label for another label?
+                break;
+            default:
+                errorAtCurrent("Unknown literal after label!");
+        }
+    }
 
-    // free(label); bad idea to free the string here
 }
 
 static void semicolonStatement(VM* vm) // if you write macros/instructions on the same line
@@ -445,7 +464,6 @@ void freeParser()
     freeTable(&parser.table);
     freeTable(&instr_indices);
 
-    //free(parser.previous);
     free(parser.current);
 }
 

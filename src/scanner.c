@@ -247,7 +247,7 @@ Token scanToken()
 				scanner.line++;
                 return makeToken(TOKEN_ENDLINE);
 		case ',': return makeToken(TOKEN_COMMA);
-		case '$': return makeToken(TOKEN_REGISTER);
+		case '$': return makeToken(TOKEN_GENERAL_REGISTER);
 		case 'r': return specialRegister();
 		case '#': return constant();
 		case '+': return makeToken(TOKEN_PLUS);
