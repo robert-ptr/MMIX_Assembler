@@ -30,6 +30,7 @@ typedef struct
 	TokenType type;
 	char* start;
 	int32_t length;
+    int32_t offset;
 	int32_t line;
 } Token;
 

@@ -29,13 +29,14 @@ void freeTrie(TrieNode* root)
     free(root);
 }
 
-uint8_t charToIndex(char c) // the alphabet is 'a...z0...9'
+uint8_t charToIndex(const char c) // the alphabet is 'a...z0...9'
 {
-    charToLowercase(&c); // char must be lowercase
 	if(c >= '0' && c <= '9')
 		return 26 + (c - '0');
 	else if(c >= 'a' && c <= 'z')
 		return c - 'a';
+    else if(c >= 'A' && c <= 'Z')
+        return c - 'A';
 	else
 		return -1;
 }

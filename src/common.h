@@ -18,11 +18,10 @@ char* getString(char* buffer, int32_t length, int32_t buf_index);
 char* readFile(const char* path);
 FILE* createFile(const char* path);
 
-void charToLowercase(char* c);
-void stringToLowercase(char** s);
+void stringToLowercase(char* s);
 char* intToHexString(uint64_t n, uint8_t bits);
 char* intToBinaryString(uint64_t n, uint8_t bits);
-uint64_t fromHexadecimal(const char* str);
-uint32_t parseNumber(char* buffer);
+int64_t parseHexNumber(const char* str);
+int32_t parseNumber(char* buffer);
 
 #endif

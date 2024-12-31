@@ -13,6 +13,7 @@ typedef struct
 	Token* previous;
 	Table table;
     uint32_t line;
+    bool panic_mode;
 } Parser;
 
 extern Parser parser;

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include "scanner.h"
 
 Scanner scanner;
@@ -124,8 +125,7 @@ static bool isNumeric()
 
 static bool isHexadecimal()
 {
-	char c = peek();
-	charToLowercase(&c);
+	char c = tolower(peek());
 	return (c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e';
 }
 
@@ -144,7 +144,7 @@ static TokenType identifierType()
 	{
 		word[i] = scanner.start[i];
 	}
-	stringToLowercase(&word);
+	stringToLowercase(word);
 
 	if(findWord(scanner.instruction_trie, word))
     {

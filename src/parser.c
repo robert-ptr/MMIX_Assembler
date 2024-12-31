@@ -140,7 +140,7 @@ static char* getTokenString(Token* token)
 static int32_t symbol()
 {
 	char* symbol = parser.current->start;
-    stringToLowercase(&symbol);
+    stringToLowercase(symbol);
 
 	EntryValue value;
 	if(findInTable(&parser.table, symbol, &value))
@@ -212,7 +212,7 @@ static int32_t term()
 	{
         char* hexa = getTokenString(parser.current);
         hexa[0] = '0';
-		a = fromHexadecimal(hexa);
+		a = parseHexNumber(hexa);
         free(hexa);
 	}
 	else if(parser.current->type == TOKEN_LABEL)

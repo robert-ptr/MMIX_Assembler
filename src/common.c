@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "common.h"
 
 Instruction instructions[256] = 
@@ -1031,30 +1032,14 @@ Instruction instructions[256] =
 							{ 1, 0, 0}}}
 };
 
-static const char to_lowercase[] = {
-    ['A'] = 'a', ['B'] = 'b', ['C'] = 'c', ['D'] = 'd', ['E'] = 'e', ['F'] = 'f', 
-    ['G'] = 'g', ['H'] = 'h', ['I'] = 'i', ['J'] = 'j', ['K'] = 'k', ['L'] = 'l', 
-    ['M'] = 'm', ['N'] = 'n', ['O'] = 'o', ['P'] = 'p', ['Q'] = 'q', ['R'] = 'r',
-    ['S'] = 's', ['T'] = 't', ['U'] = 'u', ['V'] = 'v', ['W'] = 'w', ['X'] = 'x',
-    ['Y'] = 'y', ['Z'] = 'z',
-    ['a'] = 'a', ['b'] = 'b', ['c'] = 'c', ['d'] = 'd', ['e'] = 'e', ['f'] = 'f', 
-    ['g'] = 'g', ['h'] = 'h', ['i'] = 'i', ['j'] = 'j', ['k'] = 'k', ['l'] = 'l', 
-    ['m'] = 'm', ['n'] = 'n', ['o'] = 'o', ['p'] = 'p', ['q'] = 'q', ['r'] = 'r',
-    ['s'] = 's', ['t'] = 't', ['u'] = 'u', ['v'] = 'v', ['w'] = 'w', ['x'] = 'x',
-    ['y'] = 'y', ['z'] = 'z',
-    ['0'] = '0', ['1'] = '1', ['2'] = '2', ['3'] = '3', ['4'] = '4', ['5'] = '5', ['6'] = '6', ['7'] = '7', ['8'] = '8', ['9'] = '9'
-};
-
-uint32_t parseNumber(char* buffer)
+int32_t parseNumber(char* buffer)
 {
-	uint32_t number = 0;
+	int32_t number = 0;
 
-    for (int i = 0; buffer[i] != '\0'; i++)
-    {
-        number = number * 10 + (buffer[i] - '0');
-    }
+    if (sscanf(buffer, "%d", &number) == 1)
+        return number;
 
-	return number;
+	return -1;
 }
 
 char* getString(char* buffer, int32_t length, int32_t buf_index)
@@ -1118,109 +1103,36 @@ FILE* createFile(const char* path)
 	return fd;
 }
 
-void charToLowercase(char* c)
+void stringToLowercase(char* s)
 {
-    *c = to_lowercase[*c];
-}
-
-void stringToLowercase(char** s)
-{
-	for(int32_t i = 0; i < (*s)[i] != '\0'; i++)
+	for(int32_t i = 0; i < s[i] != '\0'; i++)
 	{
-		charToLowercase(&(*s)[i]);
+		s[i] = tolower(s[i]);
 	}
 }
 
-char* intToHexString(uint64_t n, uint8_t bits) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
+char* intToHexString(uint64_t n, uint8_t bytes) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
 {
-	uint64_t c = n;
-	uint64_t size = 0;
-    uint8_t digits = bits / 4;
-	
-    while(c > 0)
-	{
-		c /= 16;
-		size++;
-	}
+    char* str = (char*)malloc(2 * bytes * sizeof(char));
 
-	char* str = (char*)malloc((digits + 3) * sizeof(char)); // +3 for \0 and 0x at the beggining of the number
-	str[0] = '0';
-	str[1] = 'x';
-	for(int i = 2; i < digits + 2; i++)
-	{
-		str[i] = '0';
-	}
-	
-	for(int i = digits + 1; i > 1; i--, n /= 16)
-	{
-		c = n % 16;
-		switch(c)
-		{
-			case 0:
-				str[i] = '0';
-				break;
-			case 1:
-				str[i] = '1';
-				break;
-			case 2:
-				str[i] = '2';
-				break;
-			case 3:
-				str[i] = '3';
-				break;
-			case 4:
-				str[i] = '4';
-				break;
-			case 5:
-				str[i] = '5';
-				break;
-			case 6:
-				str[i] = '6';
-				break;
-			case 7:
-				str[i] = '7';
-				break;
-			case 8:
-				str[i] = '8';
-				break;
-			case 9:
-				str[i] = '9';
-				break;
-			case 10:
-				str[i] = 'A';
-				break;
-			case 11:
-				str[i] = 'B';
-				break;
-			case 12:
-				str[i] = 'C';
-				break;
-			case 13:
-				str[i] = 'D';
-				break;
-			case 14:
-				str[i] = 'E';
-				break;
-			case 15:
-				str[i] = 'F';
-				break;
-		}
-	}
+    if (snprintf(str, 2 * bytes + 2, "0x%x", n) != 2 * bytes + 2)
+        return NULL;
 
 	return str;
 }
 
-char* intToBinaryString(uint64_t n, uint8_t bits) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
+char* intToBinaryString(uint64_t n, uint8_t bytes) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
 {
-	char* str = (char*)malloc((bits + 1) * sizeof(char));
-    str[bits] = '\0';
+    uint8_t len = 8 * bytes;
+	char* str = (char*)malloc((len + 1) * sizeof(char));
+    str[len] = '\0';
 
-	for(int i = 0; i < bits; i++)
+	for(int i = 0; i < len; i++)
 	{
 		str[i] = '0';
 	}
 
-	for(int i = bits - 1; i >= 0 && n > 0; i--)
+	for(int i = len - 1; i >= 0 && n > 0; i--)
 	{
 		if(n & 1)
 			str[i] = '1';
@@ -1233,71 +1145,11 @@ char* intToBinaryString(uint64_t n, uint8_t bits) // bits means the number of us
     return str;
 }
 
-uint64_t fromHexadecimal(const char* str)
+int64_t parseHexNumber(const char* str)
 {
-	uint64_t result = 0;
-	size_t n = strlen(str);
-	char* new_str = (char*)malloc((n + 1) * sizeof(char));
-	stringToLowercase(&new_str);	
-	for(int i = 0; i < n; i++)
-	{
-		switch(new_str[i])
-		{
-			case '0':
-				result *= 16;
-				break;
-			case '1':
-				result = result * 16 + 1;
-				break;
-			case '2':
-				result = result * 16 + 2;
-				break;
-			case '3':
-				result = result * 16 + 3;
-				break;
-			case '4':
-				result = result * 16 + 4;
-				break;
-			case '5':
-				result = result * 16 + 5;
-				break;
-			case '6':
-				result = result * 16 + 6;
-				break;
-			case '7':
-				result = result * 16 + 7;
-				break;
-			case '8':
-				result = result * 16 + 8;
-				break;
-			case '9':
-				result = result * 16 + 9;
-				break;
-			case 'a':
-				result = result * 16 + 10;
-				break;
-			case 'b':
-				result = result * 16 + 11;
-				break;
-			case 'c':
-				result = result * 16 + 12;
-				break;
-			case 'd':
-				result = result * 16 + 13;
-				break;
-			case 'e':
-				result = result * 16 + 14;
-				break;
-			case 'f':
-				result = result * 16 + 15;
-				break;
-			default:
-				fprintf(stderr, "Invalid hex digit!");
-				break;
-		}
-	}
+    unsigned int number;
+    if (sscanf(str, "%x", &number) == 1)
+        return number;
 
-	free(new_str);
-
-    return result;
+    return -1; // failed
 }
