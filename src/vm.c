@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "vm.h"
 
 #define GROW_SET(x) ((x) == 0 ? 8 : ((x) * 2))
@@ -210,10 +211,12 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 	EntryValue value;
     value.type = TYPE_INT;
 
-	findInTable(&vm->memory, key, &value);
+    size_t n = strlen(key);
+
+	findInTable(&vm->memory, key, n, &value);
 	value.int_value = value.int_value | (0xFF << (8 * offset)) & byte << (8 * offset);
 
-	addToTable_uint64_t(&vm->memory, key, value.int_value);
+	addToTable_uint64_t(&vm->memory, key, n, value.int_value);
 }
 
 static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
@@ -225,10 +228,12 @@ static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 	EntryValue value;
     value.type = TYPE_INT;
 
-	findInTable(&vm->memory, key, &value);
+    size_t n = strlen(key);
+
+	findInTable(&vm->memory, key, n, &value);
 	value.int_value = value.int_value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
 
-	addToTable_uint64_t(&vm->memory, key, value.int_value);
+	addToTable_uint64_t(&vm->memory, key, n, value.int_value);
 }
 
 static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
@@ -241,17 +246,19 @@ static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 	EntryValue value;
     value.type = TYPE_INT;
 
-	findInTable(&vm->memory, key, &value);
+    size_t n = strlen(key);
+
+	findInTable(&vm->memory, key, n, &value);
 	value.int_value = value.int_value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
 
-	addToTable_uint64_t(&vm->memory, key, value.int_value);
+	addToTable_uint64_t(&vm->memory, key, n, value.int_value);
 }
 
 static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
 {
 	char* key = intToHexString(address, 64);
 
-	addToTable_uint64_t(&vm->memory, key, octa);
+	addToTable_uint64_t(&vm->memory, key, strlen(key), octa);
 }
 
 static Byte getByteFromMem(VM* vm, uint64_t address)
@@ -263,7 +270,7 @@ static Byte getByteFromMem(VM* vm, uint64_t address)
 	address -= offset;
 	char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value << (8 * (7 - offset)) >> 56;
 	}
@@ -280,7 +287,7 @@ static Wyde getWydeFromMem(VM* vm, uint64_t address)
 	address -= offset;
 	char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value << (16 * (3 - offset)) >> 48;
 	}
@@ -297,7 +304,7 @@ static Tetra getTetraFromMem(VM* vm, uint64_t address)
 	address -= offset;
 	char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value << (32 * (1 - offset)) >> 32;
 	}
@@ -312,7 +319,7 @@ static Octa getOctaFromMem(VM* vm, uint64_t address)
 
     char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, &value))
+	if(findInTable(&vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value;
 	}

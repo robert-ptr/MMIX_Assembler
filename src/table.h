@@ -9,7 +9,7 @@
 #define TABLE_LOAD_FACTOR 0.75
 
 #define GENERIC_INSERT_FUNC(type)                                               \
-    bool addToTable_##type(Table* table, char* s, type value);
+    bool addToTable_##type(Table* table, void* s, uint64_t n, type value);
 
 typedef char* string;
 
@@ -34,7 +34,7 @@ typedef struct {
 
 typedef struct
 {
-	char* key;
+	uint8_t* key;
 	uint64_t hash;
 	uint64_t key_length;
     EntryValue value;
@@ -49,7 +49,7 @@ typedef struct
 
 void initTable(Table* table);
 
-bool findInTable(Table* table, char* s, EntryValue* value);
+bool findInTable(Table* table, void* s, uint64_t n, EntryValue* value);
 
 GENERIC_INSERT_FUNC(string)
 GENERIC_INSERT_FUNC(uint64_t)

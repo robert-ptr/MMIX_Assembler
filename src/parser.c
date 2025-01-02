@@ -143,7 +143,7 @@ static int32_t symbol()
     stringToLowercase(symbol);
 
 	EntryValue value;
-	if(findInTable(&parser.table, symbol, &value))
+	if(findInTable(&parser.table, symbol, strlen(symbol), &value))
     {
         if(value.type == TYPE_INT)
             return value.int_value;
@@ -400,7 +400,7 @@ static void instructionStatement(VM* vm)
     EntryValue emitValue;
 
     Byte bytes[4];
-    if(findInTable(&instr_indices, instruction, &emitValue) != false)
+    if(findInTable(&instr_indices, instruction, strlen(instruction), &emitValue) != false)
     {
         bytes[0] = (uint8_t)emitValue.int_value;
     }
@@ -435,7 +435,7 @@ static void labelStatement(VM* vm)
     char* label = getTokenString(parser.previous); // maybe add it to a vector with all the labels?
 
 	// a label for a register,a value or something along these lines
-	addToTable_uint64_t(&parser.table, label, parser.line); // add line position
+	addToTable_uint64_t(&parser.table, label, strlen(label), parser.line); // add line position
 	
     if(check(TOKEN_INSTRUCTION))
     {
@@ -518,7 +518,7 @@ void initParser()
      
     for(int i = 0; i < 256; i++)
     {
-        addToTable_uint64_t(&instr_indices, instructions[i].name, i);
+        addToTable_uint64_t(&instr_indices, instructions[i].name, strlen(instructions[i].name), i);
     }
 }
 

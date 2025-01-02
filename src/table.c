@@ -22,7 +22,7 @@ void freeTable(Table* table)
     initTable(table);
 }
 
-static uint64_t hash(void* value, size_t n)
+static uint64_t hashFunc(void* value, size_t n)
 {
     uint64_t hash = 2166136261u;
     uint8_t* bytes = (uint8_t*)value;
@@ -35,32 +35,7 @@ static uint64_t hash(void* value, size_t n)
 	return hash;
 }
 
-static uint64_t hashBool(bool value) // after all... why not? Why shouldn't I hash a boolean
-{
-    return hash(&value, sizeof(value));
-}
-
-static uint64_t hashDouble(double value)
-{
-    return hash(&value, sizeof(value));
-}
-
-static uint64_t hashFloat(float value)
-{
-    return hash(&value, sizeof(value));
-}
-
-static uint64_t hashInt(uint64_t value) 
-{
-    return hash(&value, sizeof(value));
-}
-
-static uint64_t hashString(char* s, uint64_t n)
-{
-    return hash(s, n);
-}
-
-Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t hash)
+Entry* findEntry(Entry* entries, uint64_t size, uint8_t* s, uint64_t n, uint64_t hash)
 {
 	uint64_t index = hash % size;
 	for (;;)
@@ -78,14 +53,12 @@ Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t ha
 	}
 }
 
-bool findInTable(Table* table, char* s, EntryValue* val)
+bool findInTable(Table* table, void* s, uint64_t n, EntryValue* val)
 {
-	uint64_t n;
 	uint64_t hash;
 	Entry* entry;
 
-	n = strlen(s);
-	hash = hashString(s, n);
+	hash = hashFunc(s, n);
 	entry = findEntry(table->entries, table->size, s, n, hash);
 
 	if(entry->key == NULL)
@@ -128,21 +101,25 @@ static void adjustSize(Table* table, uint64_t capacity)
 static void setEntry_uint64_t(EntryValue* entry, int64_t value)
 {
     entry->int_value = value;
+    entry->type = TYPE_INT;
 }
 
 static void setEntry_bool(EntryValue* entry, bool value)
 {
     entry->bool_value = value;
+    entry->type = TYPE_BOOL;
 }
 
 static void setEntry_float(EntryValue* entry, float value)
 {
     entry->float_value = value;
+    entry->type = TYPE_FLOAT;
 }
 
 static void setEntry_double(EntryValue* entry, double value)
 {
     entry->double_value = value;
+    entry->type = TYPE_DOUBLE;
 }
 
 static void setEntry_string(EntryValue* entry, char* str)
@@ -151,10 +128,11 @@ static void setEntry_string(EntryValue* entry, char* str)
     entry->str_value = malloc(len + 1);
     strcpy(entry->str_value, str);
     entry->str_value[len] = '\0';
+    entry->type = TYPE_STR;
 }
 
 #define GENERIC_INSERT_FUNC_DEF(type)                                           \
-    bool addToTable_##type(Table* table, char* s, type value)                   \
+    bool addToTable_##type(Table* table, void* s, uint64_t n, type value)       \
     {                                                                           \
         if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)                  \ 
         {                                                                       \
@@ -162,9 +140,8 @@ static void setEntry_string(EntryValue* entry, char* str)
             adjustSize(table, capacity);                                        \
         }                                                                       \
                                                                                 \
-        uint64_t hash, n;                                                       \
-        n = strlen(s);                                                          \
-        hash = hashString(s, n);                                                \
+        uint64_t hash;                                                          \
+        hash = hashFunc(s, n);                                                  \
                                                                                 \
         Entry* entry = findEntry(table->entries, table->size, s, n, hash);      \
                                                                                 \
