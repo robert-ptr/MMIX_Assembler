@@ -22,16 +22,42 @@ void freeTable(Table* table)
     initTable(table);
 }
 
-static uint64_t hashString(char* s, uint64_t n)
+static uint64_t hash(void* value, size_t n)
 {
-	uint64_t hash = 2166136261u;
+    uint64_t hash = 2166136261u;
+    uint8_t* bytes = (uint8_t*)value;
 	for (uint64_t i = 0; i < n; i++)
 	{
-		hash ^= (uint8_t)s[i];
+		hash ^= bytes[i];
 		hash *= 16777619;
 	}
 
 	return hash;
+}
+
+static uint64_t hashBool(bool value) // after all... why not? Why shouldn't I hash a boolean
+{
+    return hash(&value, sizeof(value));
+}
+
+static uint64_t hashDouble(double value)
+{
+    return hash(&value, sizeof(value));
+}
+
+static uint64_t hashFloat(float value)
+{
+    return hash(&value, sizeof(value));
+}
+
+static uint64_t hashInt(uint64_t value) 
+{
+    return hash(&value, sizeof(value));
+}
+
+static uint64_t hashString(char* s, uint64_t n)
+{
+    return hash(s, n);
 }
 
 Entry* findEntry(Entry* entries, uint64_t size, char* s, uint64_t n, uint64_t hash)
