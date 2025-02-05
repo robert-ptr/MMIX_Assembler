@@ -63,9 +63,10 @@ static void advance()
 {
 	parser.previous = parser.current;
 
-	for (;;)
+    for (;;)
 	{
 		*parser.current = scanToken();
+        printToken(parser.current);
 		if(parser.current->type != TOKEN_ERR)
 			break;
 
@@ -532,7 +533,7 @@ void freeParser()
 
 void parse(VM* vm)
 {
-	advance();
+    advance();
 
 	while(!check(TOKEN_EOF))
 	{

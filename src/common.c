@@ -1105,7 +1105,7 @@ FILE* createFile(const char* path)
 
 void stringToLowercase(char* s)
 {
-	for(int32_t i = 0; i < s[i] != '\0'; i++)
+	for(int32_t i = 0; s[i] != '\0'; i++)
 	{
 		s[i] = tolower(s[i]);
 	}

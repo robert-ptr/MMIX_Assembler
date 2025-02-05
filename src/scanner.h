@@ -34,7 +34,8 @@ typedef struct
 	int32_t line;
 } Token;
 
-void initScanner(char* source);
+void initScanner(const char* source);
+void printToken(Token* token);
 void freeScanner();
 Token scanToken();
 
