@@ -147,6 +147,24 @@ static TokenType identifierType()
     return checkKeyword();
 }
 
+void errorAt(Token* token, const char* message)
+{
+	fprintf(stderr, "[line %d char %d] Error", token->line, token->offset);
+	if (token->type == TOKEN_EOF) 
+	{
+		fprintf(stderr, " at end");
+	} 
+	else if (token->type == TOKEN_ERR) 
+	{
+	    fprintf(stderr, "Unknown token.");	
+	} 
+	else 
+	{
+		fprintf(stderr, " at '%.*s'", token->length, token->start);
+	}
+	fprintf(stderr, ": %s\n", message);
+}
+
 void initScanner(const char* source)
 {
 	scanner.start = source;
@@ -469,4 +487,6 @@ void printToken(Token* token)
             }
             printf("\n");
         }
+
+    fflush(stdout);
 }

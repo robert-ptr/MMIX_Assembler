@@ -72,12 +72,12 @@ int32_t main(int32_t argc, const char* argv[])
     VM* vm;
 
 	initScanner(source);
-	initParser();
+	initParser("output");
 	initVM(vm);
  
-    //debugScanner();
-    debugParser(vm);
-    
+    debugScanner();
+    //debugParser(vm);
+    //debugTable();
     //parse(vm);
 
     freeVM(vm);

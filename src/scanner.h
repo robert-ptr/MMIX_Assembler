@@ -1,5 +1,5 @@
-#ifndef MMIX_PROJ_SCANNER
-#define MMIX_PROJ_SCANNER
+#ifndef MMIX_SCANNER
+#define MMIX_SCANNER
 
 #include "trie.h"
 #include "common.h"
@@ -38,5 +38,7 @@ void initScanner(const char* source);
 void printToken(Token* token);
 void freeScanner();
 Token scanToken();
+
+void errorAt(Token* token, const char* message);
 
 #endif

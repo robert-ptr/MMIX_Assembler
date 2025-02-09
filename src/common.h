@@ -1,5 +1,5 @@
-#ifndef MMIX_PROJ_COMMON
-#define MMIX_PROJ_COMMON
+#ifndef MMIX_COMMON
+#define MMIX_COMMON
 
 #include <stdio.h>
 #include <stdint.h>

@@ -1,5 +1,5 @@
-#ifndef MMIX_PROJ_DEBUGGER
-#define MMIX_PROJ_DEBUGGER
+#ifndef MMIX_DEBUGGER
+#define MMIX_DEBUGGER
 
 #include "vm.h"
 #include "scanner.h"
@@ -39,7 +39,7 @@ void debugScanner();
 #endif
 
 #ifdef ASM_DEBUG_PARSER
-void debugParser(VM* vm);
+void debugParser();
 #endif
 
 #ifdef ASM_DEBUG_TABLE

@@ -1,5 +1,5 @@
-#ifndef MMIX_PROJ_TRIE
-#define MMIX_PROJ_TRIE
+#ifndef MMIX_TRIE
+#define MMIX_TRIE
 
 #include <stdbool.h>
 #include <stdint.h>

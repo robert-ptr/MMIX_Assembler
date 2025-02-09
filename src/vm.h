@@ -1,5 +1,5 @@
-#ifndef MMIX_PROJ_VM
-#define MMIX_PROJ_VM
+#ifndef MMIX_VM
+#define MMIX_VM
 
 #include <stddef.h>
 #include <stdint.h>

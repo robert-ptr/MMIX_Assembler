@@ -20,22 +20,9 @@ void debugScanner()
 #endif
 
 #ifdef ASM_DEBUG_PARSER
-static void dumpBinary(VM* vm)
+void debugParser()
 {
-    for(int i = 0; i < vm->byte_set->count; i++)
-    {
-        printf("%s ", intToBinaryString(vm->byte_set->bytes[i], 8));
-        if((i + 1) % 4 == 0)
-        {
-            printf("\n");
-        }
-    }
-}
-
-void debugParser(VM* vm)
-{
-    parse(vm);
-    dumpBinary(vm);
+    parse();
 }
 #endif
 
@@ -82,7 +69,7 @@ void debugTable()
         printf("Added uint64_t value:351 to table, key: 'uint64_t'\n");
     }
 
-    if(addToTable_string(&test_table, "string", 6, "string_value"))
+    if(addToTable_string(&test_table, "string", 6, "string1223443245"))
     {
         printf("Added string value:string_value to table, key:'string'\n");
     }
