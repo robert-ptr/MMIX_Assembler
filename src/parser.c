@@ -27,19 +27,41 @@ static void triggerPanicMode() // something wrong happened, trigger panic mode, 
     }
 }
 
+static void errorAt(Token* token, const char* message)
+{
+    // Debug: Print token details
+    fprintf(stderr, "[line %d char %d] Error", token->line, token->offset);
+    
+    if (token->type == TOKEN_EOF) 
+    {
+        fprintf(stderr, " at end");
+    }
+    else if (token->type == TOKEN_ERR) 
+    {
+        fprintf(stderr, "Unknown token.");	
+    }
+    else
+    {
+        fprintf(stderr, " at '%.*s'", token->length, token->start);
+    }
+    fprintf(stderr, ": %s\n", message);
+
+    triggerPanicMode();
+}
+
 static void errorAtCurrent(const char* message)
 {
-	errorAt(parser.current, message);	
+	errorAt(&parser.current, message);	
 }
 
 static void error(const char* message)
 {
-	errorAt(parser.previous, message);
+	errorAt(&parser.previous, message);
 }
 
 static bool check(TokenType type)
 {
-	return parser.current->type == type;
+	return parser.current.type == type;
 }
 
 static void advance()
@@ -49,9 +71,9 @@ static void advance()
     for (;;)
 	{
         Token new_token = scanToken();
-		parser.current = &new_token;
-        printToken(parser.current);
-		if(parser.current->type != TOKEN_ERR)
+		parser.current = new_token;
+        //printToken(parser.current);
+		if(parser.current.type != TOKEN_ERR)
 			break;
 
 		errorAtCurrent("Unknown expression");
@@ -60,7 +82,7 @@ static void advance()
 
 static void consume(TokenType type, const char* message)
 {
-	if (parser.current->type == type)
+	if (parser.current.type == type)
 	{
 		advance();
 		return;
@@ -135,11 +157,11 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
 
 static int32_t symbol()
 {
-	char* symbol = getTokenString(parser.current);
+	char* symbol = getTokenString(&parser.current);
     stringToLowercase(symbol);
 
 	EntryValue value;
-	if(parser.table->size != 0 && findInTable(parser.table, symbol, parser.current->length, &value))
+	if(parser.symbols->size != 0 && findInTable(parser.symbols, symbol, parser.current.length, &value))
     {
         if(value.type == TYPE_INT)
             return value.int_value;
@@ -151,12 +173,12 @@ static int32_t symbol()
 
 static int32_t number()
 {
-	return parseNumber(getTokenString(parser.current));
+	return parseNumber(getTokenString(&parser.current));
 }
 
 static int32_t location()
 {
-    return parseNumber(getTokenString(parser.current));
+    return parseNumber(getTokenString(&parser.current));
 }
 
 static int32_t term(bool* isImmediate)
@@ -166,7 +188,7 @@ static int32_t term(bool* isImmediate)
 	int a;
 	if(isUnary())
 	{
-		TokenType token_type = parser.current->type;
+		TokenType token_type = parser.current.type;
 		advance();
 		a = term(isImmediate);
 
@@ -207,29 +229,29 @@ static int32_t term(bool* isImmediate)
                 return -1;
 		}
 	}
-	else if(parser.current->type == TOKEN_LPAREN)
+	else if(parser.current.type == TOKEN_LPAREN)
 	{
 		advance(); // skip the '('
 		a = expression();
 		advance(); // skip the ')'
 	}
-	else if(parser.current->type == TOKEN_AROUND)
+	else if(parser.current.type == TOKEN_AROUND)
 	{
         *isImmediate = false;
 		a = location();
 	}
-	else if(parser.current->type == TOKEN_CONSTANT)
+	else if(parser.current.type == TOKEN_CONSTANT)
 	{
-        char* hexa = getTokenString(parser.current);
+        char* hexa = getTokenString(&parser.current);
         hexa[0] = '0';
 		a = parseHexNumber(hexa);
         free(hexa);
 	}
-	else if(parser.current->type == TOKEN_LABEL)
+	else if(parser.current.type == TOKEN_LABEL)
 	{
 		a = symbol();
 	}
-	else if(parser.current->type == TOKEN_IMMEDIATE)
+	else if(parser.current.type == TOKEN_IMMEDIATE)
 	{
 		a = number();
 	}
@@ -256,7 +278,7 @@ static int32_t strongOperators(bool* isImmediate)
 	while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !isEndOfInstr())
 	{
         *isImmediate = true;
-        switch(parser.current->type)
+        switch(parser.current.type)
         {
             case TOKEN_STAR:
                 b = term(&bIsImmediate);
@@ -338,15 +360,16 @@ static int32_t expression(bool* isImmediate)
 	// weak binary operators: +,-,|,^
     bool aIsImmediate = false;
 	int a = strongOperators(&aIsImmediate);
-
+    
     if (parser.panic_mode)
         return -1;
 
+    //advance();
     bool bIsImmediate = false;
 	int b;
 	while(!isAtEnd() && !isRightParen() && !check(TOKEN_COMMA) && !isEndOfInstr())
 	{
-        switch(parser.current->type)
+        switch(parser.current.type)
         {
             case TOKEN_PLUS:
                 b = strongOperators(&bIsImmediate);
@@ -456,9 +479,14 @@ static uint32_t commaStatement()
     return operand1 + (operand2 << 8) + (operand3 << 16);
 }
 
-static void instructionStatement()
+static void instructionStatement(char* label, uint64_t label_length)
 {
-    char* instruction = getTokenString(parser.current);
+    if (label != NULL)
+    {
+
+    }
+
+    char* instruction = getTokenString(&parser.current);
     EntryValue emitValue;
 
     uint8_t bytes[4];
@@ -472,7 +500,7 @@ static void instructionStatement()
         errorAtCurrent("Unknown instruction.");
     }
 
-    advance();
+    advance(); // consume TOKEN_INSTRUCTION
     uint32_t temp = commaStatement();
     bytes[1] = temp & 0xFF;
     bytes[2] = temp >> 8 & 0xFF;
@@ -488,96 +516,177 @@ static void instructionStatement()
         emitByte(bytes[i]);
     }
 
-    advance();
+    advance(); // consume TOKEN_ENDLINE
 
     free(instruction);
 }
 
-static void isStatement()
+static void isStatement(char* label, uint64_t label_length)
 {
+    advance(); // consume TOKEN_IS 
+
+    if (label != NULL)
+    {
+        uint64_t labelLocation = scanner.start - scanner.source;
+        addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+    }
+
+    while(!check(TOKEN_ENDLINE) && !check(TOKEN_EOF))
+    {
+        advance();
+    }
+
+    if (check(TOKEN_ENDLINE))
+        advance();
 }
 
-static void gregStatement()
+static void gregStatement(char* label, uint64_t label_length)
 {
+    advance(); // consume TOKEN_GREG
+
+    if (label != NULL)
+    {
+    }
 }
 
-static void locStatement()
+static void locStatement(char* label, uint64_t label_length)
 {
+    advance(); // consume TOKEN_LOC
+
+    if (label != NULL)
+    {
+    }
 }
 
-static void byteStatement()
+static void byteStatement(char* label, uint64_t label_length)
 {
+    advance(); // consume TOKEN_BYTE
+
+    if (label != NULL)
+    {
+    }
 }
 
-static void wydeStatement()
+static void wydeStatement(char* label, uint64_t label_length)
 {
+    advance(); // consume TOKEN_WYDE
+
+    if (label != NULL)
+    {
+    }
 }
 
-static void tetraStatement()
+static void tetraStatement(char* label,  uint64_t label_length)
 {
+    advance(); // consume TOKEN_TETRA
+
+    if (label != NULL)
+    {
+    }
 }
 
-static void octaStatement()
+static void octaStatement(char* label, uint64_t label_length)
 {
+    advance(); // consume TOKEN_OCTA
+
+    if (label != NULL)
+    {
+    }
 }
 
-static void prefixStatement()
+static void prefixStatement(char* label, uint64_t label_length) // I'll implement these when everything else works :)
 {
+    advance(); // consume TOKEN_PREFIX
+
+    if (label != NULL)
+    {
+    }
 }
 
 static void labelStatement()
 {
     if(check(TOKEN_LABEL))
     {
-        advance();
-        
-        switch (parser.current->type)
+        char* label = (char*)malloc(parser.previous.length * sizeof(char));
+        strncpy(parser.previous.start, label, parser.previous.length);
+
+        switch (parser.current.type)
         {
             case TOKEN_IS:
-                isStatement();
+                isStatement(label, parser.current.length);
                 break;
             case TOKEN_GREG:
-                gregStatement();
+                gregStatement(label, parser.current.length);
                 break;
             case TOKEN_LOC:
-                locStatement();
+                locStatement(label, parser.current.length);
                 break;
             case TOKEN_BYTE:
-                byteStatement();
+                byteStatement(label, parser.current.length);
                 break;
             case TOKEN_WYDE:
-                wydeStatement();
+                wydeStatement(label, parser.current.length);
                 break;
             case TOKEN_TETRA:
-                tetraStatement();
+                tetraStatement(label, parser.current.length);
                 break;
             case TOKEN_OCTA:
-                octaStatement();
+                octaStatement(label, parser.current.length);
                 break;
             case TOKEN_PREFIX:
-                prefixStatement();
+                prefixStatement(label, parser.current.length);
                 break;
             case TOKEN_INSTRUCTION:
-                instructionStatement();
+                instructionStatement(label, parser.current.length);
                 break;
             default:
                 errorAtCurrent("Invalid token type.");
         }
     }
-    else if (check(TOKEN_INSTRUCTION))
-    {
-        instructionStatement();
-    }
     else 
     {
-        errorAtCurrent("Invalid token type.");
+        switch (parser.current.type)
+        {
+            case TOKEN_IS:
+                isStatement(NULL, 0);
+                break;
+            case TOKEN_GREG:
+                gregStatement(NULL, 0);
+                break;
+            case TOKEN_LOC:
+                locStatement(NULL, 0);
+                break;
+            case TOKEN_BYTE:
+                byteStatement(NULL, 0);
+                break;
+            case TOKEN_WYDE:
+                wydeStatement(NULL, 0);
+                break;
+            case TOKEN_TETRA:
+                tetraStatement(NULL, 0);
+                break;
+            case TOKEN_OCTA:
+                octaStatement(NULL, 0);
+                break;
+            case TOKEN_PREFIX:
+                prefixStatement(NULL, 0);
+                break;
+            case TOKEN_INSTRUCTION:
+                instructionStatement(NULL, 0);
+                break;
+            default:
+                errorAtCurrent("Invalid token type.");
+                break;
+        }
     }
 }
 
 static void semicolonStatement() // if you write macros/instructions on the same line
 {
     parser.panic_mode = false;
-	
+
+    labelStatement();
+
 	while(check(TOKEN_SEMICOLON))
 	{
 		advance(); // consume semicolon
@@ -589,9 +698,9 @@ void initParser(char* output_file)
 {
     parser.fp = fopen(output_file, "wb");
     parser.panic_mode = false;
-    parser.table = (Table*)malloc(sizeof(Table));
+    parser.symbols = (Table*)malloc(sizeof(Table));
     initTable(&instr_indices);
-    initTable(parser.table);
+    initTable(parser.symbols);
      
     for(int i = 0; i < 256; i++)
     {
@@ -602,15 +711,15 @@ void initParser(char* output_file)
 void freeParser()
 {
     freeTable(&instr_indices);
-    free(parser.table);
+    free(parser.symbols);
     fclose(parser.fp);
 }
 
 void parse()
 {
     advance();
-
-	while(!check(TOKEN_EOF))
+	
+    while(!check(TOKEN_EOF))
 	{
 		semicolonStatement();
 	}

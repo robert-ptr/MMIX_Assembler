@@ -69,18 +69,18 @@ int32_t main(int32_t argc, const char* argv[])
 		exit(64);
 	}
 
-    VM* vm;
+    VM vm;
 
 	initScanner(source);
 	initParser("output");
-	initVM(vm);
+	initVM(&vm);
  
-    debugScanner();
-    //debugParser(vm);
+    //debugScanner();
+    debugParser();
     //debugTable();
     //parse(vm);
 
-    freeVM(vm);
+    freeVM(&vm);
 	freeParser();
 	freeScanner();
 

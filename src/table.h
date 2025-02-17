@@ -21,6 +21,12 @@ typedef enum {
     TYPE_DOUBLE,
 } EntryType;
 
+typedef enum {
+    TYPE_REGISTER,
+    TYPE_IMMEDIATE,
+    TYPE_LOCATION,
+} MMIXEntryType;
+
 typedef struct {
     EntryType type;
     union {

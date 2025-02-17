@@ -110,62 +110,15 @@ static void multiplication64bit(uint64_t a, uint64_t b, uint64_t* result1, uint6
 	}
 }
 
-static void initByteSet(ByteSet* byte_set)
-{
-	byte_set->count = 0;
-	byte_set->capacity = 0;
-	byte_set->bytes = NULL;
-}
-
-static void growByteSet(ByteSet* byte_set)
-{
-	int32_t capacity = GROW_SET(byte_set->capacity);
-	Byte* new_list = (Byte*)malloc(capacity * sizeof(Byte)); 
-
-	for(int32_t i = 0; i < byte_set->count; i++)
-	{
-		new_list[i] = byte_set->bytes[i];
-	}
-
-	byte_set->capacity = capacity;
-	byte_set->bytes = new_list;
-}
-
-void addByte(ByteSet* byte_set, Byte byte)
-{
-	if(byte_set->count + 1 > byte_set->capacity)
-	{
-		growByteSet(byte_set);		
-	}
-	byte_set->bytes[byte_set->count++] = byte;
-}
-
-static void freeByteSet(ByteSet* byte_set)
-{
-	free(byte_set->bytes);
-	initByteSet(byte_set);
-}
-
-static void initMemory(Table* memory)
-{
-	initTable(memory);
-}
-
-static void freeMemory(Table* memory)
-{
-	freeTable(memory);
-}
-
 void initVM(VM* vm)
 {
-	initByteSet(vm->byte_set);
-	initMemory(&vm->memory);
+    vm->memory = (Table*)malloc(sizeof(Table));
+	initTable(vm->memory);
 }
 
 void freeVM(VM* vm)
 {
-	freeByteSet(vm->byte_set);
-	freeMemory(&vm->memory);
+	freeTable(vm->memory);
 }
 
 static bool isAtEnd(VM* vm)
@@ -213,10 +166,10 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
 
     size_t n = strlen(key);
 
-	findInTable(&vm->memory, key, n, &value);
+	findInTable(vm->memory, key, n, &value);
 	value.int_value = value.int_value | (0xFF << (8 * offset)) & byte << (8 * offset);
 
-	addToTable_uint64_t(&vm->memory, key, n, value.int_value);
+	addToTable_uint64_t(vm->memory, key, n, value.int_value);
 }
 
 static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
@@ -230,10 +183,10 @@ static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
 
     size_t n = strlen(key);
 
-	findInTable(&vm->memory, key, n, &value);
+	findInTable(vm->memory, key, n, &value);
 	value.int_value = value.int_value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
 
-	addToTable_uint64_t(&vm->memory, key, n, value.int_value);
+	addToTable_uint64_t(vm->memory, key, n, value.int_value);
 }
 
 static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
@@ -248,17 +201,17 @@ static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
 
     size_t n = strlen(key);
 
-	findInTable(&vm->memory, key, n, &value);
+	findInTable(vm->memory, key, n, &value);
 	value.int_value = value.int_value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
 
-	addToTable_uint64_t(&vm->memory, key, n, value.int_value);
+	addToTable_uint64_t(vm->memory, key, n, value.int_value);
 }
 
 static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
 {
 	char* key = intToHexString(address, 64);
 
-	addToTable_uint64_t(&vm->memory, key, strlen(key), octa);
+	addToTable_uint64_t(vm->memory, key, strlen(key), octa);
 }
 
 static Byte getByteFromMem(VM* vm, uint64_t address)
@@ -270,7 +223,7 @@ static Byte getByteFromMem(VM* vm, uint64_t address)
 	address -= offset;
 	char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, strlen(key), &value))
+	if(findInTable(vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value << (8 * (7 - offset)) >> 56;
 	}
@@ -287,7 +240,7 @@ static Wyde getWydeFromMem(VM* vm, uint64_t address)
 	address -= offset;
 	char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, strlen(key), &value))
+	if(findInTable(vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value << (16 * (3 - offset)) >> 48;
 	}
@@ -304,7 +257,7 @@ static Tetra getTetraFromMem(VM* vm, uint64_t address)
 	address -= offset;
 	char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, strlen(key), &value))
+	if(findInTable(vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value << (32 * (1 - offset)) >> 32;
 	}
@@ -319,7 +272,7 @@ static Octa getOctaFromMem(VM* vm, uint64_t address)
 
     char* key = intToHexString(address, 64);
 
-	if(findInTable(&vm->memory, key, strlen(key), &value))
+	if(findInTable(vm->memory, key, strlen(key), &value))
 	{
 		return value.int_value;
 	}

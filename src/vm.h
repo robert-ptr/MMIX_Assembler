@@ -104,24 +104,15 @@ typedef uint64_t MMIX_Register;
 
 typedef struct
 {
-	int32_t count;
-	int32_t capacity;
-	Byte* bytes;
-} ByteSet;
-
-typedef struct
-{
-	ByteSet* byte_set;
 	Byte* ip;
 	MMIX_Register general_registers[256];
 	MMIX_Register special_registers[32];
 	MMIX_Register* register_stack; // TO DO
-	Table memory;
+	Table* memory;
 } VM;
 
 void initVM(VM* vm);
 void freeVM(VM* vm);
 void execute(VM* vm);
-void addByte(ByteSet* byte_set, Byte byte);
 
 #endif
