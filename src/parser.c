@@ -51,69 +51,69 @@ static void errorAt(Token* token, const char* message)
 
 static void errorAtCurrent(const char* message)
 {
-	errorAt(&parser.current, message);	
+    errorAt(&parser.current, message);	
 }
 
 static void error(const char* message)
 {
-	errorAt(&parser.previous, message);
+    errorAt(&parser.previous, message);
 }
 
 static bool check(TokenType type)
 {
-	return parser.current.type == type;
+    return parser.current.type == type;
 }
 
 static void advance()
 {
-	parser.previous = parser.current;
+    parser.previous = parser.current;
 
     for (;;)
-	{
+    {
         Token new_token = scanToken();
-		parser.current = new_token;
+        parser.current = new_token;
         //printToken(parser.current);
-		if(parser.current.type != TOKEN_ERR)
-			break;
+        if(parser.current.type != TOKEN_ERR)
+            break;
 
-		errorAtCurrent("Unknown expression");
-	}
+        errorAtCurrent("Unknown expression");
+    }
 }
 
 static void consume(TokenType type, const char* message)
 {
-	if (parser.current.type == type)
-	{
-		advance();
-		return;
-	}
+    if (parser.current.type == type)
+    {
+        advance();
+        return;
+    }
 
-	errorAtCurrent(message);
+    errorAtCurrent(message);
 }
 
 static bool isStrongOperator()
 {
-	return check(TOKEN_STAR) || check(TOKEN_MOD) || check(TOKEN_AND) || check(TOKEN_SLASH) || check(TOKEN_LSHIFT) || check(TOKEN_RSHIFT);
+    return check(TOKEN_STAR) || check(TOKEN_MOD) || check(TOKEN_AND) || check(TOKEN_SLASH) || check(TOKEN_LSHIFT) || check(TOKEN_RSHIFT);
 }
 
 static bool isWeakOperator()
 {
-	return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_OR) || check(TOKEN_XOR);
+    return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_OR) || check(TOKEN_XOR);
 }
 
 static bool isAtEnd()
 {
-	return check(TOKEN_EOF);
+    return check(TOKEN_EOF);
 }
 
 static bool isUnary()
 {
-	return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_COMPLEMENT) || check(TOKEN_GENERAL_REGISTER);
+    return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_COMPLEMENT) || check(TOKEN_GENERAL_REGISTER);
 }
 
 static bool isRightParen()
 {
-	return check(TOKEN_RPAREN);
+    return check(TOKEN_RPAREN);
 }
 
 static bool isEndOfInstr()
@@ -138,10 +138,10 @@ static void emitByte(uint8_t byte)
 
 static bool match(char* instruction, int32_t start, char* pattern, int32_t length)
 {
-	if(memcmp(instruction + start, pattern, length) == 0)
-		return true;
-	
-	return false;
+    if(memcmp(instruction + start, pattern, length) == 0)
+        return true;
+
+    return false;
 }
 
 static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
@@ -157,11 +157,11 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
 
 static int32_t symbol()
 {
-	char* symbol = getTokenString(&parser.current);
+    char* symbol = getTokenString(&parser.current);
     stringToLowercase(symbol);
 
-	EntryValue value;
-	if(parser.symbols->size != 0 && findInTable(parser.symbols, symbol, parser.current.length, &value))
+    EntryValue value;
+    if(parser.symbols->size != 0 && findInTable(parser.symbols, symbol, parser.current.length, &value))
     {
         if(value.type == TYPE_INT)
             return value.int_value;
@@ -173,7 +173,7 @@ static int32_t symbol()
 
 static int32_t number()
 {
-	return parseNumber(getTokenString(&parser.current));
+    return parseNumber(getTokenString(&parser.current));
 }
 
 static int32_t location()
@@ -183,100 +183,100 @@ static int32_t location()
 
 static int32_t term(bool* isImmediate)
 {
-	// possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
-	// unary operators: +, -, ~, $
-	int a;
-	if(isUnary())
-	{
-		TokenType token_type = parser.current.type;
-		advance();
-		a = term(isImmediate);
+    // possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
+    // unary operators: +, -, ~, $
+    int a;
+    if(isUnary())
+    {
+        TokenType token_type = parser.current.type;
+        advance();
+        a = term(isImmediate);
 
         if(parser.panic_mode) // something went wrong in term()
             return -1;
 
-		switch(token_type)
-		{
-			case TOKEN_PLUS:
+        switch(token_type)
+        {
+            case TOKEN_PLUS:
                 if (!isImmediate)
                 {
                     errorAtCurrent("Can only apply '+' unary operator to immediate value.");
                     return -1;
                 }
-				break;
-			case TOKEN_MINUS:
+                break;
+            case TOKEN_MINUS:
                 if (!isImmediate)
                 {
                     errorAtCurrent("Can only apply '-' unary operator to immediate value.");
                     return -1;
                 }
-				a = -a;
-				break;
-			case TOKEN_COMPLEMENT:
+                a = -a;
+                break;
+            case TOKEN_COMPLEMENT:
                 if (!isImmediate)
                 {
                     errorAtCurrent("Can only apply '~' unary operator to immediate value.");
                     return -1;
                 }
-				a = ~a;
-				break;
-			case TOKEN_GENERAL_REGISTER:
+                a = ~a;
+                break;
+            case TOKEN_GENERAL_REGISTER:
                 *isImmediate = false;
-				a = number();
-				break;
+                a = number();
+                break;
             default:
                 errorAtCurrent("Unknown term!");
                 return -1;
-		}
-	}
-	else if(parser.current.type == TOKEN_LPAREN)
-	{
-		advance(); // skip the '('
-		a = expression();
-		advance(); // skip the ')'
-	}
-	else if(parser.current.type == TOKEN_AROUND)
-	{
+        }
+    }
+    else if(parser.current.type == TOKEN_LPAREN)
+    {
+        advance(); // skip the '('
+        a = expression();
+        advance(); // skip the ')'
+    }
+    else if(parser.current.type == TOKEN_AROUND)
+    {
         *isImmediate = false;
-		a = location();
-	}
-	else if(parser.current.type == TOKEN_CONSTANT)
-	{
+        a = location();
+    }
+    else if(parser.current.type == TOKEN_CONSTANT)
+    {
         char* hexa = getTokenString(&parser.current);
         hexa[0] = '0';
-		a = parseHexNumber(hexa);
+        a = parseHexNumber(hexa);
         free(hexa);
-	}
-	else if(parser.current.type == TOKEN_LABEL)
-	{
-		a = symbol();
-	}
-	else if(parser.current.type == TOKEN_IMMEDIATE)
-	{
-		a = number();
-	}
-	else
-	{
-		// Report an error
-		errorAtCurrent("Unknown term!\n");
-		return -1;
-	}
-	return a;
+    }
+    else if(parser.current.type == TOKEN_LABEL)
+    {
+        a = symbol();
+    }
+    else if(parser.current.type == TOKEN_IMMEDIATE)
+    {
+        a = number();
+    }
+    else
+    {
+        // Report an error
+        errorAtCurrent("Unknown term!\n");
+        return -1;
+    }
+    return a;
 }
 
 static int32_t strongOperators(bool* isImmediate)
 {
-	// strong binary operators: *,/,//,%,<<,>>,&
-	int32_t a = term(isImmediate);
+    // strong binary operators: *,/,//,%,<<,>>,&
+    int32_t a = term(isImmediate);
 
     if(parser.panic_mode) // something went wrong in term
         return -1;
 
     advance();
     bool bIsImmediate = false;
-	int32_t b;
-	while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !isEndOfInstr())
-	{
+    int32_t b;
+    while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !isEndOfInstr())
+    {
         *isImmediate = true;
         switch(parser.current.type)
         {
@@ -347,28 +347,28 @@ static int32_t strongOperators(bool* isImmediate)
                 errorAtCurrent("Unknown strong operator!");
                 return -1;
         }
-	}
+    }
 
     if (parser.panic_mode) // something went wrong when calling term() for b 
         return -1;
 
-	return a;
+    return a;
 }
 
 static int32_t expression(bool* isImmediate)
 {
-	// weak binary operators: +,-,|,^
+    // weak binary operators: +,-,|,^
     bool aIsImmediate = false;
-	int a = strongOperators(&aIsImmediate);
+    int a = strongOperators(&aIsImmediate);
     
     if (parser.panic_mode)
         return -1;
 
     //advance();
     bool bIsImmediate = false;
-	int b;
-	while(!isAtEnd() && !isRightParen() && !check(TOKEN_COMMA) && !isEndOfInstr())
-	{
+    int b;
+    while(!isAtEnd() && !isRightParen() && !check(TOKEN_COMMA) && !isEndOfInstr())
+    {
         switch(parser.current.type)
         {
             case TOKEN_PLUS:
@@ -415,40 +415,40 @@ static int32_t expression(bool* isImmediate)
                 errorAtCurrent("Unknown operator!");
                 return -1; 
         }
-	}
+    }
 
     if (parser.panic_mode)
         return -1;
 
-	return a;
+    return a;
 }
 
 static uint32_t commaStatement()
 {
     bool isImmediate = false;
-	uint32_t operand1 = expression(&isImmediate);
+    uint32_t operand1 = expression(&isImmediate);
 
     if (parser.panic_mode)
         return 0;
 
-	uint32_t operand2 = 0;
-	uint32_t operand3 = 0;
+    uint32_t operand2 = 0;
+    uint32_t operand3 = 0;
     uint8_t arity = 1;
 
-	if(check(TOKEN_COMMA)) // 2 arguments
-	{
-		advance();
-		operand2 = expression(&isImmediate);
+    if(check(TOKEN_COMMA)) // 2 arguments
+    {
+        advance();
+        operand2 = expression(&isImmediate);
 
         if (parser.panic_mode)
             return 0;
 
         arity++;
-	}
+    }
     if(check(TOKEN_COMMA)) // 3 arguments
-	{
-		advance();
-		operand3 = expression(&isImmediate);
+    {
+        advance();
+        operand3 = expression(&isImmediate);
         
         if (parser.panic_mode)
             return 0;
@@ -643,7 +643,7 @@ static void labelStatement()
                 errorAtCurrent("Invalid token type.");
         }
     }
-    else 
+    else
     {
         switch (parser.current.type)
         {
@@ -687,11 +687,11 @@ static void semicolonStatement() // if you write macros/instructions on the same
 
     labelStatement();
 
-	while(check(TOKEN_SEMICOLON))
-	{
-		advance(); // consume semicolon
-		labelStatement();
-	}
+    while(check(TOKEN_SEMICOLON))
+    {
+        advance(); // consume semicolon
+        labelStatement();
+    }
 }
 
 void initParser(char* output_file)
@@ -718,9 +718,9 @@ void freeParser()
 void parse()
 {
     advance();
-	
+
     while(!check(TOKEN_EOF))
-	{
-		semicolonStatement();
-	}
+    {
+        semicolonStatement();
+    }
 }

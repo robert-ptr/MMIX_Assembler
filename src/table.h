@@ -40,17 +40,17 @@ typedef struct {
 
 typedef struct
 {
-	uint8_t* key;
-	uint64_t hash;
-	uint64_t key_length;
+    uint8_t* key;
+    uint64_t hash;
+    uint64_t key_length;
     EntryValue value;
 } Entry;
 
 typedef struct
 {
-	uint64_t size;
-	uint64_t count;
-	Entry* entries;
+    uint64_t size;
+    uint64_t count;
+    Entry* entries;
 } Table;
 
 void initTable(Table* table);

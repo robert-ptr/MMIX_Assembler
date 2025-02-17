@@ -7,10 +7,10 @@
 
 typedef struct
 {
-	char* name;
-	uint8_t arity[3]; // maximum 3 possible values
-	bool has_alt_ver;
-	uint8_t is_constant[3][3];
+    char* name;
+    uint8_t arity[3]; // maximum 3 possible values
+    bool has_alt_ver;
+    uint8_t is_constant[3][3];
 } Instruction;
 
 extern Instruction instructions[256]; 

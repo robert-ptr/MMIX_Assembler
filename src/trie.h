@@ -12,8 +12,8 @@ typedef struct TrieNode TrieNode;
 struct TrieNode
 {
     uint8_t index;
-	TrieNode* nodes[ALPHABET_SIZE];
-	TrieNode* parent;
+    TrieNode* nodes[ALPHABET_SIZE];
+    TrieNode* parent;
     bool isWord;
 };
 

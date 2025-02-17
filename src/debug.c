@@ -101,7 +101,7 @@ void debugTable()
     if(findInTable(&test_table, &double_key, sizeof(double), &value))
     {
         printf("double: %lf\n", value.double_value);
-    }   
+    }
 
     if(findInTable(&test_table, &int_key, sizeof(uint64_t), &value))
     {
@@ -236,18 +236,18 @@ static void dumpSpecialRegister(Debugger* debugger, uint8_t index)
 
 static void dumpGeneralRegisters(Debugger* debugger)
 {
-	for(int i = 0; i < 256; i++)
-	{
-		dumpGeneralRegister(debugger, i);
-	}
+    for(int i = 0; i < 256; i++)
+    {
+        dumpGeneralRegister(debugger, i);
+    }
 }
 
 static void dumpSpecialRegisters(Debugger* debugger)
 {
-	for(int i = 0; i < 32; i++)
-	{
-		dumpSpecialRegister(debugger, i);
-	}
+    for(int i = 0; i < 32; i++)
+    {
+        dumpSpecialRegister(debugger, i);
+    }
 }
 
 static void dumpMemory(Debugger* debugger)
@@ -268,50 +268,48 @@ static void dumpStack(Debugger* debugger)
 
 void debug(Debugger* debugger)
 {
-	// TO DO: think of features to add
-	// step by step debugging
-	// thinking of doing an interactive one and one that just dumps the state
-	if(debugger->flags & FLAG_GREGS)
-	{
-		dumpGeneralRegisters(debugger);
-	}
+    // TO DO: think of features to add
+    // step by step debugging
+    // thinking of doing an interactive one and one that just dumps the state
+    if(debugger->flags & FLAG_GREGS)
+    {
+        dumpGeneralRegisters(debugger);
+    }
 
-	if(debugger->flags & FLAG_SPREGS)
-	{
-		dumpSpecialRegisters(debugger);
-	}
+    if(debugger->flags & FLAG_SPREGS)
+    {
+        dumpSpecialRegisters(debugger);
+    }
 
-	if(debugger->flags & FLAG_REGSTACK)
-	{
-		dumpRegisterStack(debugger);
-	}
+    if(debugger->flags & FLAG_REGSTACK)
+    {
+        dumpRegisterStack(debugger);
+    }
 
-	if(debugger->flags & FLAG_INSTRSTACK)
-	{
-		dumpStack(debugger);
-	}
+    if(debugger->flags & FLAG_INSTRSTACK)
+    {
+        dumpStack(debugger);
+    }
 
-	if(debugger->flags & FLAG_STACKTOP)
-	{
-		dumpStackTop(debugger);
-	}
+    if(debugger->flags & FLAG_STACKTOP)
+    {
+        dumpStackTop(debugger);
+    }
 
-	if(debugger->flags & FLAG_MEM)
-	{
-		dumpMemory(debugger);
-	}
+    if(debugger->flags & FLAG_MEM)
+    {
+        dumpMemory(debugger);
+    }
 
-	if(debugger->flags & FLAG_REG)
-	{
-		if(debugger->flags & FLAG_SPREG)
-		{
-			dumpSpecialRegister(debugger, debugger->flags & 0xFF00 >> 8);
-		}
-		else
-		{
-			dumpGeneralRegister(debugger, debugger->flags & 0xFF00 >> 8);
-		}
-	}
+    if(debugger->flags & FLAG_REG)
+    {
+        if(debugger->flags & FLAG_SPREG)
+        {
+            dumpSpecialRegister(debugger, debugger->flags & 0xFF00 >> 8);
+        }
+        else
+        {
+            dumpGeneralRegister(debugger, debugger->flags & 0xFF00 >> 8);
+        }
+    }
 }
-
-

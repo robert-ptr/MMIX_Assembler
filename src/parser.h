@@ -8,8 +8,8 @@
 
 typedef struct
 {
-	Token current;
-	Token previous;
+    Token current;
+    Token previous;
     bool panic_mode;
     Table* symbols;
     FILE* fp;

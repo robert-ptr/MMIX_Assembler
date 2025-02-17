@@ -22,9 +22,9 @@
 
 typedef struct
 {
-	VM* vm;
-	uint16_t flags;
-	uint8_t format;
+    VM* vm;
+    uint16_t flags;
+    uint8_t format;
 } Debugger;
 
 void debug(Debugger* debugger); // for the VM basically
