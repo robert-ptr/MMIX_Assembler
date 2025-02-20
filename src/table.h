@@ -30,11 +30,11 @@ typedef enum {
 typedef struct {
     EntryType type;
     union {
-        uint64_t int_value;
-        char* str_value;
-        bool bool_value;
-        float float_value;
-        double double_value;
+        uint64_t as_int;
+        char* as_str;
+        bool as_bool;
+        float as_float;
+        double as_double;
     };
 } EntryValue;
 

@@ -167,9 +167,9 @@ static void addByteToMem(VM* vm, uint64_t address, Byte byte)
     size_t n = strlen(key);
 
     findInTable(vm->memory, key, n, &value);
-    value.int_value = value.int_value | (0xFF << (8 * offset)) & byte << (8 * offset);
+    value.as_int = value.as_int | (0xFF << (8 * offset)) & byte << (8 * offset);
 
-    addToTable_uint64_t(vm->memory, key, n, value.int_value);
+    addToTable_uint64_t(vm->memory, key, n, value.as_int);
 }
 
 static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
@@ -184,9 +184,9 @@ static void addWydeToMem(VM* vm, uint64_t address, Wyde wyde)
     size_t n = strlen(key);
 
     findInTable(vm->memory, key, n, &value);
-    value.int_value = value.int_value | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
+    value.as_int = value.as_int | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
 
-    addToTable_uint64_t(vm->memory, key, n, value.int_value);
+    addToTable_uint64_t(vm->memory, key, n, value.as_int);
 }
 
 static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
@@ -202,9 +202,9 @@ static void addTetraToMem(VM* vm, uint64_t address, Tetra tetra)
     size_t n = strlen(key);
 
     findInTable(vm->memory, key, n, &value);
-    value.int_value = value.int_value | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
+    value.as_int = value.as_int | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
 
-    addToTable_uint64_t(vm->memory, key, n, value.int_value);
+    addToTable_uint64_t(vm->memory, key, n, value.as_int);
 }
 
 static void addOctaToMem(VM* vm, uint64_t address, Octa octa)
@@ -225,7 +225,7 @@ static Byte getByteFromMem(VM* vm, uint64_t address)
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
-        return value.int_value << (8 * (7 - offset)) >> 56;
+        return value.as_int << (8 * (7 - offset)) >> 56;
     }
     
     return 0;
@@ -242,7 +242,7 @@ static Wyde getWydeFromMem(VM* vm, uint64_t address)
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
-        return value.int_value << (16 * (3 - offset)) >> 48;
+        return value.as_int << (16 * (3 - offset)) >> 48;
     }
     
     return 0;
@@ -259,7 +259,7 @@ static Tetra getTetraFromMem(VM* vm, uint64_t address)
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
-        return value.int_value << (32 * (1 - offset)) >> 32;
+        return value.as_int << (32 * (1 - offset)) >> 32;
     }
     
     return 0;
@@ -274,7 +274,7 @@ static Octa getOctaFromMem(VM* vm, uint64_t address)
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
-        return value.int_value;
+        return value.as_int;
     }
     
     return 0;

@@ -73,11 +73,11 @@ static void adjustSize(Table* table, uint64_t capacity)
     for(uint64_t i = 0; i < capacity; i++)
     {
         entries[i].key = NULL;
-        entries[i].value.int_value = 0;
-        entries[i].value.str_value = NULL;
-        entries[i].value.bool_value = false;
-        entries[i].value.float_value = 0.0f;
-        entries[i].value.double_value = 0.0;
+        entries[i].value.as_int = 0;
+        entries[i].value.as_str = NULL;
+        entries[i].value.as_bool = false;
+        entries[i].value.as_float = 0.0f;
+        entries[i].value.as_double = 0.0;
     }
 
     for(uint64_t i = 0; i < table->size; i++)
@@ -99,34 +99,34 @@ static void adjustSize(Table* table, uint64_t capacity)
 
 static void setEntry_uint64_t(EntryValue* entry, int64_t value)
 {
-    entry->int_value = value;
+    entry->as_int = value;
     entry->type = TYPE_INT;
 }
 
 static void setEntry_bool(EntryValue* entry, bool value)
 {
-    entry->bool_value = value;
+    entry->as_bool = value;
     entry->type = TYPE_BOOL;
 }
 
 static void setEntry_float(EntryValue* entry, float value)
 {
-    entry->float_value = value;
+    entry->as_float = value;
     entry->type = TYPE_FLOAT;
 }
 
 static void setEntry_double(EntryValue* entry, double value)
 {
-    entry->double_value = value;
+    entry->as_double = value;
     entry->type = TYPE_DOUBLE;
 }
 
 static void setEntry_string(EntryValue* entry, char* str)
 {
     size_t len = strlen(str);
-    entry->str_value = malloc(len + 1);
-    strcpy(entry->str_value, str);
-    entry->str_value[len] = '\0';
+    entry->as_str = malloc(len + 1);
+    strcpy(entry->as_str, str);
+    entry->as_str[len] = '\0';
     entry->type = TYPE_STR;
 }
 

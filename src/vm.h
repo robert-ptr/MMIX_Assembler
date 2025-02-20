@@ -109,6 +109,7 @@ typedef struct
 	MMIX_Register special_registers[32];
 	MMIX_Register* register_stack; // TO DO
 	Table* memory;
+    bool dynamic_length_encoding;
 } VM;
 
 void initVM(VM* vm);

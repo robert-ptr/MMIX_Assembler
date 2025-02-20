@@ -72,7 +72,7 @@ static void advance()
     {
         Token new_token = scanToken();
         parser.current = new_token;
-        //printToken(parser.current);
+        printToken(&parser.current);
         if(parser.current.type != TOKEN_ERR)
             break;
 
@@ -116,11 +116,6 @@ static bool isRightParen()
     return check(TOKEN_RPAREN);
 }
 
-static bool isEndOfInstr()
-{
-    return check(TOKEN_ENDLINE) || check(TOKEN_SEMICOLON);
-}
-
 static char* getTokenString(Token* token)
 {
     int word_length = token->length + 1; // +1 for '\0' 
@@ -160,11 +155,18 @@ static int32_t symbol()
     char* symbol = getTokenString(&parser.current);
     stringToLowercase(symbol);
 
-    EntryValue value;
-    if(parser.symbols->size != 0 && findInTable(parser.symbols, symbol, parser.current.length, &value))
+    EntryValue togo;
+    if(parser.symbols->size != 0 && findInTable(parser.symbols, symbol, parser.current.length, &togo))
     {
-        if(value.type == TYPE_INT)
-            return value.int_value;
+        if(togo.type == TYPE_INT)
+            return togo.as_int;
+
+        parser.current.start -= togo.as_int;
+
+        int32_t val = expression();
+
+        parser.current.start += togo.as_int;
+        return val;
     }
 
     printf("Unknown symbol.\n");
@@ -275,7 +277,7 @@ static int32_t strongOperators(bool* isImmediate)
     advance();
     bool bIsImmediate = false;
     int32_t b;
-    while(!isAtEnd() && !isRightParen() && !isWeakOperator() && !check(TOKEN_COMMA) && !isEndOfInstr())
+    if(isStrongOperator())
     {
         *isImmediate = true;
         switch(parser.current.type)
@@ -367,7 +369,7 @@ static int32_t expression(bool* isImmediate)
     //advance();
     bool bIsImmediate = false;
     int b;
-    while(!isAtEnd() && !isRightParen() && !check(TOKEN_COMMA) && !isEndOfInstr())
+    while(isWeakOperator())
     {
         switch(parser.current.type)
         {
@@ -423,7 +425,7 @@ static int32_t expression(bool* isImmediate)
     return a;
 }
 
-static uint32_t commaStatement()
+static uint32_t commaStatement(int index)
 {
     bool isImmediate = false;
     uint32_t operand1 = expression(&isImmediate);
@@ -455,7 +457,15 @@ static uint32_t commaStatement()
 
         arity++;
     }
-    
+  
+    for (int i = 0; i < 3; i++)
+    {
+        if(instructions[index].arity[i] == 0)
+            errorAtCurrent("Wrong number of arguments!");
+        else if(instructions[index].arity[i] == arity)
+            break;
+    }
+
     if(check(TOKEN_COMMA)) // wrong number of arguments
     {
         errorAtCurrent("Wrong number of arguments! Maximum 3.");
@@ -475,7 +485,12 @@ static uint32_t commaStatement()
     }
 
     checkOperandSizes(operand1, operand2, operand3);
-    
+
+    while (!check(TOKEN_ENDLINE) && !check(TOKEN_EOF) && !check(TOKEN_SEMICOLON)) // there can be comments right after the instruction
+    {
+        advance();
+    }
+
     return operand1 + (operand2 << 8) + (operand3 << 16);
 }
 
@@ -493,15 +508,17 @@ static void instructionStatement(char* label, uint64_t label_length)
     
     if(findInTable(&instr_indices, instruction, strlen(instruction), &emitValue) != false)
     {
-        bytes[0] = (uint8_t)emitValue.int_value;
+        bytes[0] = (uint8_t)emitValue.as_int;
     }
     else
     {
         errorAtCurrent("Unknown instruction.");
     }
 
+    EntryValue index;
+    findInTable(&instr_indices,  instruction, strlen(instruction), &index);
     advance(); // consume TOKEN_INSTRUCTION
-    uint32_t temp = commaStatement();
+    uint32_t temp = commaStatement(index.as_int);
     bytes[1] = temp & 0xFF;
     bytes[2] = temp >> 8 & 0xFF;
     bytes[3] = temp >> 16;
@@ -609,6 +626,7 @@ static void labelStatement()
     {
         char* label = (char*)malloc(parser.previous.length * sizeof(char));
         strncpy(parser.previous.start, label, parser.previous.length);
+        advance();
 
         switch (parser.current.type)
         {

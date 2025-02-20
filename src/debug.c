@@ -90,47 +90,47 @@ void debugTable()
 
     if(findInTable(&test_table, &bool_key, sizeof(bool), &value))
     {
-        printf("bool: %d\n", value.bool_value);
+        printf("bool: %d\n", value.as_bool);
     }
 
     if(findInTable(&test_table, &float_key, sizeof(float), &value))
     {
-        printf("float: %f\n", value.float_value);
+        printf("float: %f\n", value.as_float);
     }
 
     if(findInTable(&test_table, &double_key, sizeof(double), &value))
     {
-        printf("double: %lf\n", value.double_value);
+        printf("double: %lf\n", value.as_double);
     }
 
     if(findInTable(&test_table, &int_key, sizeof(uint64_t), &value))
     {
-        printf("%d\n", value.int_value);
+        printf("%d\n", value.as_int);
     }
 
     if(findInTable(&test_table, "bool", 4, &value))
     {
-        printf("'bool': %d\n", value.bool_value);
+        printf("'bool': %d\n", value.as_bool);
     }
 
     if(findInTable(&test_table, "uint64_t", 7, &value))
     {
-        printf("'uint64_t': %u\n", value.int_value);
+        printf("'uint64_t': %u\n", value.as_int);
     }
 
     if(findInTable(&test_table, "string", 6, &value))
     {
-        printf("'string': %s\n", value.str_value);
+        printf("'string': %s\n", value.as_str);
     }
 
     if(findInTable(&test_table, "float", 5, &value))
     {
-        printf("'float': %f\n", value.float_value);
+        printf("'float': %f\n", value.as_float);
     }
 
     if(findInTable(&test_table, "double", 6, &value))
     {
-        printf("'double': %lf\n", value.double_value);
+        printf("'double': %lf\n", value.as_double);
     }
 
     freeTable(&test_table);
