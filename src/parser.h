@@ -13,6 +13,7 @@ typedef struct
     bool panic_mode;
     Table* symbols;
     FILE* fp;
+    uint8_t general_reg;
 } Parser;
 
 extern Parser parser;
