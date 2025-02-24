@@ -164,9 +164,18 @@ static int32_t symbol()
         parser.current.start -= togo.as_int;
 
         int32_t val = expression();
+        if (val < 0) 
+        {
+            errorAtCurrent("MMIXAL IS Statement accepts only unsigned values.");
+        }
 
         parser.current.start += togo.as_int;
         return val;
+    }
+
+    if(parser.registers->size != 0 && findInTable(parser.registers, symbol, parser.current.length, &togo)) // We'll just reuse togo to get the register index
+    {
+        return togo.as_int;
     }
 
     printf("Unknown symbol.\n");
@@ -576,19 +585,26 @@ static void gregStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     { 
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        if(!findInTable(parser.symbols, label, label_length, NULL) && !findInTable(parser.registers, label, label_length, NULL))
         {
-            uint64_t labelLocation = scanner.start - scanner.source;
             uint8_t greg = parser.general_reg;
 
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
-            addToTable_uint64_t(parser.symbols, &greg, 1, labelLocation); 
+            addToTable_uint64_t(parser.registers, label, label_length, parser.general_reg); 
+            parser.register_values[parser.general_reg] = expression(NULL);
+            
             parser.general_reg++;
         }
         else 
         {
             errorAtCurrent("Symbol redefinition!");
         }
+    }
+    else 
+    {
+        uint8_t greg = parser.general_reg;
+        parser.register_values[parser.general_reg] = expression(NULL); 
+        
+        parser.general_reg++;
     }
 }
 
@@ -797,10 +813,12 @@ void initParser(char* output_file)
     parser.fp = fopen(output_file, "wb");
     parser.panic_mode = false;
     parser.symbols = (Table*)malloc(sizeof(Table));
+    parser.registers = (Table*)malloc(sizeof(Table));
     parser.general_reg = 1;
     initTable(&instr_indices);
     initTable(parser.symbols);
-     
+    initTable(parser.registers);
+
     for(int i = 0; i < 256; i++)
     {
         addToTable_uint64_t(&instr_indices, instructions[i].name, strlen(instructions[i].name), i);
@@ -810,7 +828,12 @@ void initParser(char* output_file)
 void freeParser()
 {
     freeTable(&instr_indices);
+    freeTable(parser.registers);
+    freeTable(parser.symbols);
+    
+    free(parser.registers);
     free(parser.symbols);
+
     fclose(parser.fp);
 }
 

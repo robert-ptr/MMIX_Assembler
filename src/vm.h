@@ -100,7 +100,12 @@ typedef uint16_t Wyde;
 typedef uint32_t Tetra;
 typedef uint32_t InstructionType;
 typedef uint64_t Octa;
-typedef uint64_t MMIX_Register;
+
+typedef struct 
+{
+    uint64_t value;
+    bool constant;
+} MMIX_Register;
 
 typedef struct
 {

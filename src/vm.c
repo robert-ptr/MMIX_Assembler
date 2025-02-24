@@ -293,9 +293,9 @@ void execute(VM* vm)
         Y = getByte(vm);
         Z = getByte(vm);
         
-        MMIX_Register* reg_X = getReg(vm, X);
-        MMIX_Register* reg_Y = getReg(vm, Y);
-        MMIX_Register* reg_Z = getReg(vm, Z);
+        uint64_t reg_X = getReg(vm, X);
+        uint64_t reg_Y = getReg(vm, Y);
+        uint64_t reg_Z = getReg(vm, Z);
         Octa A;
         Octa result1;
         Octa result2;

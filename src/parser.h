@@ -12,6 +12,8 @@ typedef struct
     Token previous;
     bool panic_mode;
     Table* symbols;
+    Table* registers;
+    uint64_t register_values[16];
     FILE* fp;
     uint8_t general_reg;
 } Parser;
