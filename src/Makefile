@@ -7,7 +7,7 @@ CPPFLAGS =
 TARGET = mmix-assembler
 
 # Source files
-SRCS = main.c vm.c parser.c scanner.c table.c trie.c common.c
+SRCS = main.c debug.c parser.c scanner.c table.c trie.c common.c
 
 # Object files and dependency files
 OBJS = $(SRCS:.c=.o)
