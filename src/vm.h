@@ -95,21 +95,17 @@ typedef struct
 extern uint8_t branch_time; // a global variable, TREMBLE IN FEAR
 											 // used for branch prediction time
 extern RunningTime times[256];
-typedef uint8_t Byte;
-typedef uint16_t Wyde;
-typedef uint32_t Tetra;
-typedef uint32_t InstructionType;
 typedef uint64_t Octa;
 
 typedef struct 
 {
-    uint64_t value;
+    uint64_t val;
     bool constant;
 } MMIX_Register;
 
 typedef struct
 {
-	Byte* ip;
+	uint8_t* ip;
 	MMIX_Register general_registers[256];
 	MMIX_Register special_registers[32];
 	MMIX_Register* register_stack; // TO DO

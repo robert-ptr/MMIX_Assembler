@@ -13,7 +13,7 @@ typedef struct
     uint8_t is_constant[3][3];
 } Instruction;
 
-extern Instruction instructions[256]; 
+extern Instruction instructions[258]; 
 char* getString(char* buffer, int32_t length, int32_t buf_index);
 char* readFile(const char* path);
 FILE* createFile(const char* path);
