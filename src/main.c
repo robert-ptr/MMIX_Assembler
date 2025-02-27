@@ -65,7 +65,7 @@ int32_t main(int32_t argc, const char* argv[])
 	}
 	else
 	{
-		fprintf(stderr, "Usage: mmix [-options] [input file path] [output file path(default: out.mmix)]\n");
+		fprintf(stderr, "Usage: mmix [-options] [input file path] [output file path(default is './output')]\n");
 		exit(64);
 	}
 
@@ -78,7 +78,7 @@ int32_t main(int32_t argc, const char* argv[])
     //debugScanner();
     //debugParser();
     //debugTable();
-    //parse(vm);
+    parse();
 
     //freeVM(&vm);
 	freeParser();

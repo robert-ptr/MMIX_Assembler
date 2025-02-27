@@ -253,10 +253,7 @@ static int32_t term(bool* isImmediate)
     }
     else if(parser.current.type == TOKEN_CONSTANT)
     {
-        char* hexa = getTokenString(&parser.current);
-        hexa[0] = '0';
-        a = parseHexNumber(hexa);
-        free(hexa);
+        a = parseHexNumber(getTokenString(&parser.current));
     }
     else if(parser.current.type == TOKEN_LABEL)
     {

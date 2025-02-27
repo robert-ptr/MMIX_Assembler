@@ -135,12 +135,32 @@ static int64_t mul64s(int64_t u, int64_t v, int64_t* overflow) // adapted from '
 void initVM(VM* vm)
 {
     vm->memory = (Table*)malloc(sizeof(Table));
+
+    for (int i = 0; i < 256; i++)
+    {
+        vm->general_registers[i].val = 0;
+    }
+
+    for (int i = 0; i < 32; i++)
+    {
+        vm->special_registers[i].val = 0;
+    }
+
     initTable(vm->memory);
 }
 
 void freeVM(VM* vm)
 {
     freeTable(vm->memory);
+}
+
+static void updateLocal(VM* vm, uint8_t X) // checks if the destination operand is marginal, if so, set rL to X + 1
+{
+    if (X > vm->special_registers[20].val)
+        vm->special_registers[20].val = X + 1;
+
+    if (vm->special_registers[20].val >= vm->special_registers[19].val)
+        vm->special_registers[19].val = vm->special_registers[20].val + 1; // rG > rL always
 }
 
 static bool isAtEnd(VM* vm)
@@ -302,7 +322,8 @@ void execute(VM* vm)
         X = getByte(vm);
         Y = getByte(vm);
         Z = getByte(vm);
-        
+       
+        updateLocal(vm, X);
         switch(opcode)
         {
                     case OP_TRAP:   // this command is analogous to TRIP, but it forces a trap to the operating system.
@@ -1295,12 +1316,29 @@ void execute(VM* vm)
 
                     case OP_GETA:   // get address: u($X)<-RA
                                                     // 1 oops
+                        vm->general_registers[X].val = (vm->ip - vm->start) + ((Y << 8) + Z); 
                         break;
                     case OP_GETAB:
+                        vm->general_registers[X].val = (vm->ip - vm->start) - ((Y << 8) + Z);
                         break;
 
                     case OP_PUT:        // put into special register: u(g[X])<-u($Z), where 0 <= X < 32
                                                     // 1 oops
+                        if (X > 32)
+                        {
+                            // report and error 
+                        } else if (X == 19 && (vm->general_registers[Z].val > 255 || vm->general_registers[Z].val < 32 || vm->general_registers[Z].val <= vm->special_registers[20].val))
+                        {
+                            // report an error
+                        } else if (X >= 8 && X <= 18)
+                        {
+                            // error
+                        } else if (X == 21 && vm->general_registers[Z].val > 0x3ffff)
+                        {
+                        }
+
+                        if(X != 20)
+                            vm->special_registers[X].val = vm->general_registers[Z].val;
                         break;
                     case OP_PUTI:
                         break;
@@ -1325,10 +1363,20 @@ void execute(VM* vm)
                         break;
                     case OP_GET:        // get from special register: u($X)<-u(g[Z]), where 0 <= Z < 32
                                                     // 1 oops
+                        if(Z < 32)
+                            vm->general_registers[X].val = vm->special_registers[Z].val;
+                        else 
+                        {
+                            // report an error
+                        }
                         break;
                     case OP_TRIP:   //this command forces a trip to the handler at location #00
                                                     // 5 oops
                         break;
         }
     }
+}
+
+int main(int argc, char* argv[])
+{
 }

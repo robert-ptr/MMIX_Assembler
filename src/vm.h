@@ -103,14 +103,22 @@ typedef struct
     bool constant;
 } MMIX_Register;
 
+typedef struct 
+{
+} VMSettings;
+
 typedef struct
 {
+    uint8_t* start;
 	uint8_t* ip;
 	MMIX_Register general_registers[256];
 	MMIX_Register special_registers[32];
 	MMIX_Register* register_stack; // TO DO
-	Table* memory;
-    bool dynamic_length_encoding;
+	Table* memory; // I am using a hash table to represent memory, why?
+                   // because the machine described by Donald Knuth has 2^64 bytes of memory.
+                   // I don't have 2^64 bytes of memory and I believe nobody has, so this is 
+                   // the only way to let a programmer address such a large space(theoretically)
+    bool dynamic_length_encoding; // WIP
 } VM;
 
 void initVM(VM* vm);

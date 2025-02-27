@@ -206,6 +206,7 @@ static Token specialRegister()
 static Token constant()
 {
     advance();
+    scanner.start++;
     while(isHexadecimal())
     {
         advance();
