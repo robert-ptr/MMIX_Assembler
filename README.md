@@ -16,7 +16,16 @@ This project is currently **unfinished** and is a **work in progress**. While th
 - **Documentation**: The codebase requires better documentation and comments.
 - **Simulator**: The current version of the simulator implements the minimum of features needed to execute the binary code. I'm planning to develop the simulator into a proper virtual machine in the future.
 
-### Roadmap
+### Roadmap (in no particular order)
+- [ ] Extensive testing on the assembler
+- [ ] Review the code and rewrite where necessary
+- [ ] Properly report VM state, add flags so the user can choose among options
+- [ ] Pipelining
+- [ ] Branch prediction
+- [ ] Create a cache
+- [ ] Add a scheduler
+- [ ] Multithreading
+- [ ] Implement all MMIX instructions in the VM
 
 ## Features
 
