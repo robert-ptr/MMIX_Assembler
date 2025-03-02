@@ -13,7 +13,7 @@ This project is currently **unfinished** and is a **work in progress**. While th
 
 ### What’s Left to Do
 - **Testing**: The project needs more rigorous testing.
-- **Documentation**: The codebase requires better documentation and comments for clarity.
+- **Documentation**: The codebase requires better documentation and comments.
 - **Simulator**: The current version of the simulator implements the minimum of features needed to execute the binary code. I'm planning to develop the simulator into a proper virtual machine in the future.
 
 ### Roadmap
