@@ -204,6 +204,27 @@ static Token constant()
     return makeToken(TOKEN_CONSTANT);
 }
 
+static Token string()
+{
+        advance();
+        while(peek() != '"' && !isAtEnd())
+        {
+            if(isAtEnd() || peek() == '\n')
+                return errorToken("Unterminated string.");
+            advance();
+        }
+
+        advance();
+
+        Token token;
+        token.start = scanner.start + 1;
+        token.length = scanner.current - scanner.start - 2;
+        token.type = TOKEN_STRING;
+        token.line = scanner.line;
+
+        return token;
+}
+
 static Token skipToEndOfLine()
 {
     while(peek() != '\0' && peek() != '\n')
@@ -295,24 +316,8 @@ Token scanToken()
             else
                 return errorToken("'>' operator is not defined, did you mean '>>'?");
         case '@': return makeToken(TOKEN_AROUND);
-        case '"':
-            advance();
-            while(peek() != '"' && !isAtEnd())
-            {
-                if(isAtEnd() || peek() == '\n')
-                    return errorToken("Unterminated string.");
-                advance();
-            }
-
-            advance();
-
-            Token token;
-            token.start = scanner.start + 1;
-            token.length = scanner.current - scanner.start - 2;
-            token.type = TOKEN_STRING;
-            token.line = scanner.line;
-            
-            return token;
+        case '"': 
+            return string();
         case 'g':
             return makeToken(TOKEN_GREG);
         case 'l':

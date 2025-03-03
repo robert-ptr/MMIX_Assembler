@@ -9,7 +9,7 @@ Parser parser;
 Table instr_indices;
 
 static void advance();
-static int32_t expression(bool* isImmediate);
+static int64_t expression(bool* isImmediate);
 static bool isAtEnd();
 static bool check(TokenType type);
 
@@ -73,7 +73,7 @@ static void advance()
         Token new_token = scanToken();
         parser.current = new_token;
         printToken(&parser.current);
-        if(parser.current.type != TOKEN_ERR)
+        if(!check(TOKEN_ERR))
             break;
 
         errorAtCurrent("Unknown expression");
@@ -82,7 +82,7 @@ static void advance()
 
 static void consume(TokenType type, const char* message)
 {
-    if (parser.current.type == type)
+    if (check(type))
     {
         advance();
         return;
@@ -150,7 +150,7 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
     return true;
 }
 
-static int32_t symbol(bool* isImmediate)
+static int64_t symbol(bool* isImmediate)
 {
     char* symbol = getTokenString(&parser.current);
     stringToLowercase(symbol);
@@ -177,12 +177,12 @@ static int32_t symbol(bool* isImmediate)
     return -1;
 }
 
-static int32_t number()
+static int64_t number()
 {
     return parseNumber(getTokenString(&parser.current));
 }
 
-static int32_t term(bool* isImmediate)
+static int64_t term(bool* isImmediate)
 {
     // possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
     // unary operators: +, -, ~, $
@@ -230,26 +230,26 @@ static int32_t term(bool* isImmediate)
                 return -1;
         }
     }
-    else if(parser.current.type == TOKEN_LPAREN)
+    else if(check(TOKEN_LPAREN))
     {
         advance(); // skip the '('
         a = expression(isImmediate);
         advance(); // skip the ')'
     }
-    else if(parser.current.type == TOKEN_AROUND)
+    else if(check(TOKEN_AROUND))
     {
         *isImmediate = false;
         a = parser.current_location;
     }
-    else if(parser.current.type == TOKEN_CONSTANT)
+    else if(check(TOKEN_CONSTANT))
     {
         a = parseHexNumber(getTokenString(&parser.current));
     }
-    else if(parser.current.type == TOKEN_LABEL)
+    else if(check(TOKEN_LABEL))
     {
         a = symbol(isImmediate);
     }
-    else if(parser.current.type == TOKEN_IMMEDIATE)
+    else if(check(TOKEN_IMMEDIATE))
     {
         a = number();
     }
@@ -262,7 +262,7 @@ static int32_t term(bool* isImmediate)
     return a;
 }
 
-static int32_t strongOperators(bool* isImmediate)
+static int64_t strongOperators(bool* isImmediate)
 {
     // strong binary operators: *,/,//,%,<<,>>,&
     int32_t a = term(isImmediate);
@@ -353,7 +353,7 @@ static int32_t strongOperators(bool* isImmediate)
     return a;
 }
 
-static int32_t expression(bool* isImmediate)
+static int64_t expression(bool* isImmediate)
 {
     // weak binary operators: +,-,|,^
     bool aIsImmediate = false;
@@ -622,7 +622,7 @@ static void byteStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        if(!findInTable(parser.locations, label, label_length, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
             addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
@@ -631,6 +631,35 @@ static void byteStatement(char* label, uint64_t label_length)
             free(label);
             errorAtCurrent("Symbol redefinition!");
         }
+    }
+
+    while(!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
+    {
+        if(check(TOKEN_STRING))
+        {
+            if (parser.current.length == 0)
+            {
+                errorAtCurrent("Can't create an empty string!");
+                return;
+            }
+            for(int i = 0; i < parser.current.length; i++)
+            {
+                emitByte((uint8_t)parser.current.start[i]); 
+                parser.current_location++;
+            }
+        }
+        else
+        {
+            int64_t temp = expression(NULL);
+            if (temp > 255 || temp < 0)
+            {
+                errorAtCurrent("Expression can't fit in one byte!");
+            }
+            
+            emitByte((uint8_t)(temp & 0xFF));
+            parser.current_location++;
+        }
+        advance();
     }
 }
 
@@ -649,6 +678,39 @@ static void wydeStatement(char* label, uint64_t label_length)
             free(label);
             errorAtCurrent("Symbol redefinition!");
         }
+    }
+
+    if (parser.current_location % 2)
+        parser.current_location++;
+    
+    while (!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
+    {
+        if (check(TOKEN_STRING))
+        {
+            if (parser.current.length == 0)
+            {
+                errorAtCurrent("Can't create an empty string!");
+                return;
+            }
+            for (int i = 0; i < parser.current.length; i++)
+            {
+                emitByte((uint8_t)parser.current.start[i]); 
+                parser.current_location++;
+            }
+        }
+        else
+        {
+            int64_t temp = expression(NULL);
+            if (temp > 65535 || temp < 0)
+            {
+                errorAtCurrent("Expression can't fit in two bytes!");
+            }
+            
+            emitByte((uint8_t)(temp >> 8 & 0xFF));
+            emitByte((uint8_t)(temp >> 16 & 0xFF));
+            parser.current_location++;
+        }
+        advance();
     }
 }
 
@@ -669,6 +731,41 @@ static void tetraStatement(char* label, uint64_t label_length)
             errorAtCurrent("Symbol redefinition!");
         }
     }
+    
+    while (parser.current_location % 4)
+        parser.current_location++;
+
+    while(!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
+    {
+        if(check(TOKEN_STRING))
+        {
+            if (parser.current.length == 0)
+            {
+                errorAtCurrent("Can't create an empty string!");
+                return;
+            }
+            for(int i = 0; i < parser.current.length; i++)
+            {
+                emitByte((uint8_t)parser.current.start[i]); 
+                parser.current_location++;
+            }
+        }
+        else
+        {
+            int64_t temp = expression(NULL);
+            if ((temp >> 32) > 0 || temp < 0)
+            {
+                errorAtCurrent("Expression can't fit in four byte!");
+            }
+            
+            emitByte((uint8_t)(temp >> 24 & 0xFF));
+            emitByte((uint8_t)(temp >> 16 & 0xFF));
+            emitByte((uint8_t)(temp >> 8 & 0xFF));
+            emitByte((uint8_t)(temp & 0xFF));
+            parser.current_location++;
+        }
+        advance();
+    }
 }
 
 static void octaStatement(char* label, uint64_t label_length)
@@ -687,6 +784,42 @@ static void octaStatement(char* label, uint64_t label_length)
             free(label);
             errorAtCurrent("Symbol redefinition!");
         }
+    }
+    
+    while (parser.current_location % 7)
+        parser.current_location++;
+
+    while(!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
+    {
+        if(check(TOKEN_STRING))
+        {
+            if (parser.current.length == 0)
+            {
+                errorAtCurrent("Can't create an empty string!");
+                return;
+            }
+            for(int i = 0; i < parser.current.length; i++)
+            {
+                emitByte((uint8_t)parser.current.start[i]); 
+                parser.current_location++;
+            }
+        }
+        else
+        {
+            int64_t temp = expression(NULL); // I'm not ok with, it should be an unsigned value 
+                                             // but I need to change some things first
+            
+            emitByte((uint8_t)(temp >> 56 & 0xFF));
+            emitByte((uint8_t)(temp >> 48 & 0xFF));
+            emitByte((uint8_t)(temp >> 40 & 0xFF));
+            emitByte((uint8_t)(temp >> 32 & 0xFF));
+            emitByte((uint8_t)(temp >> 24 & 0xFF));
+            emitByte((uint8_t)(temp >> 16 & 0xFF));
+            emitByte((uint8_t)(temp >> 8 & 0xFF));
+            emitByte((uint8_t)(temp & 0xFF));
+            parser.current_location++;
+        }
+        advance();
     }
 }
 
