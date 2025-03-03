@@ -18,6 +18,11 @@ void initTable(Table* table)
 
 void freeTable(Table* table)
 {
+    for(int i = 0; i < table->count; i++)
+    {
+        free(table->entries->key);
+    }
+
     free(table->entries);
     initTable(table);
 }
@@ -154,9 +159,6 @@ static void setEntry_string(EntryValue* entry, char* str)
                                                                                 \
         return isNewEntry;                                                      \
     }
-
-    // entry->key just points to the string, it doesn't own it so you can't just free it 
-    // should i copy it?
 
 GENERIC_INSERT_FUNC_DEF(string)
 GENERIC_INSERT_FUNC_DEF(uint64_t)

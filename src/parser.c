@@ -9,7 +9,7 @@ Parser parser;
 Table instr_indices;
 
 static void advance();
-static int32_t expression();
+static int32_t expression(bool* isImmediate);
 static bool isAtEnd();
 static bool check(TokenType type);
 
@@ -150,20 +150,20 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
     return true;
 }
 
-static int32_t symbol()
+static int32_t symbol(bool* isImmediate)
 {
     char* symbol = getTokenString(&parser.current);
     stringToLowercase(symbol);
 
     EntryValue togo;
-    if(parser.symbols->size != 0 && findInTable(parser.symbols, symbol, parser.current.length, &togo))
+    if(parser.aliases->size != 0 && findInTable(parser.aliases, symbol, parser.current.length, &togo))
     {
         if(togo.type == TYPE_INT)
             return togo.as_int;
 
         parser.current.start -= togo.as_int;
 
-        int32_t val = expression();
+        int32_t val = expression(isImmediate);
         if (val < 0) 
         {
             errorAtCurrent("MMIXAL IS Statement accepts only unsigned values.");
@@ -173,21 +173,11 @@ static int32_t symbol()
         return val;
     }
 
-    if(parser.registers->size != 0 && findInTable(parser.registers, symbol, parser.current.length, &togo)) // We'll just reuse togo to get the register index
-    {
-        return togo.as_int;
-    }
-
     printf("Unknown symbol.\n");
     return -1;
 }
 
 static int32_t number()
-{
-    return parseNumber(getTokenString(&parser.current));
-}
-
-static int32_t location()
 {
     return parseNumber(getTokenString(&parser.current));
 }
@@ -243,13 +233,13 @@ static int32_t term(bool* isImmediate)
     else if(parser.current.type == TOKEN_LPAREN)
     {
         advance(); // skip the '('
-        a = expression();
+        a = expression(isImmediate);
         advance(); // skip the ')'
     }
     else if(parser.current.type == TOKEN_AROUND)
     {
         *isImmediate = false;
-        a = location();
+        a = parser.current_location;
     }
     else if(parser.current.type == TOKEN_CONSTANT)
     {
@@ -257,7 +247,7 @@ static int32_t term(bool* isImmediate)
     }
     else if(parser.current.type == TOKEN_LABEL)
     {
-        a = symbol();
+        a = symbol(isImmediate);
     }
     else if(parser.current.type == TOKEN_IMMEDIATE)
     {
@@ -551,12 +541,14 @@ static void isStatement(char* label, uint64_t label_length)
     if (label != NULL)
     {
         uint64_t labelLocation = scanner.start - scanner.source;
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        
+        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+            addToTable_uint64_t(parser.aliases, label, label_length, labelLocation); 
         }
         else 
         {
+            free(label);
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -582,17 +574,16 @@ static void gregStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     { 
-        if(!findInTable(parser.symbols, label, label_length, NULL) && !findInTable(parser.registers, label, label_length, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
-            uint8_t greg = parser.general_reg;
-
-            addToTable_uint64_t(parser.registers, label, label_length, parser.general_reg); 
+            addToTable_uint64_t(parser.aliases, label, label_length, parser.general_reg); 
             parser.register_values[parser.general_reg] = expression(NULL);
             
             parser.general_reg++;
         }
         else 
         {
+            free(label);
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -609,15 +600,17 @@ static void locStatement(char* label, uint64_t label_length)
 {
     advance(); // consume TOKEN_LOC
 
+    uint64_t loc = expression(NULL);
+
     if (label != NULL)
     {
-        uint64_t labelLocation = scanner.start - scanner.source;
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+            addToTable_uint64_t(parser.locations, label, label_length, loc); 
         }
         else 
         {
+            free(label);
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -629,13 +622,13 @@ static void byteStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        uint64_t labelLocation = scanner.start - scanner.source;
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
+            free(label);
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -647,31 +640,32 @@ static void wydeStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        uint64_t labelLocation = scanner.start - scanner.source;
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
+            free(label);
             errorAtCurrent("Symbol redefinition!");
         }
     }
 }
 
-static void tetraStatement(char* label,  uint64_t label_length)
+static void tetraStatement(char* label, uint64_t label_length)
 {
     advance(); // consume TOKEN_TETRA
 
     if (label != NULL)
     {
-        uint64_t labelLocation = scanner.start - scanner.source;
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        uint64_t labelLocation = parser.current_location;
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
+            free(label);
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -683,13 +677,14 @@ static void octaStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        uint64_t labelLocation = scanner.start - scanner.source;
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        uint64_t labelLocation = parser.current_location;
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
+            free(label);
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -698,16 +693,18 @@ static void octaStatement(char* label, uint64_t label_length)
 static void prefixStatement(char* label, uint64_t label_length) // I'll implement these when everything else works :)
 {
     advance(); // consume TOKEN_PREFIX
+    parser.prefix_length = parser.previous.length; 
+    strncpy(parser.current_prefix, parser.previous.start, parser.prefix_length); // change the prefix
 
-    if (label != NULL)
+    if (label != NULL) // WIP
     {
-        uint64_t labelLocation = scanner.start - scanner.source;
-        if(!findInTable(parser.symbols, label, label_length, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.symbols, label, label_length, labelLocation); 
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
+            free(label); // if the label weren't taken we would have freed it when we call freeTable()
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -717,8 +714,9 @@ static void labelStatement()
 {
     if(check(TOKEN_LABEL))
     {
-        char* label = (char*)malloc(parser.previous.length * sizeof(char));
-        strncpy(parser.previous.start, label, parser.previous.length);
+        char* label = (char*)malloc((parser.previous.length + parser.prefix_length) * sizeof(char));
+        strncpy(parser.current_prefix, label, parser.prefix_length);
+        strncpy(parser.previous.start, label + parser.prefix_length, parser.previous.length);
         advance();
 
         switch (parser.current.type)
@@ -809,12 +807,15 @@ void initParser(char* output_file)
 {
     parser.fp = fopen(output_file, "wb");
     parser.panic_mode = false;
-    parser.symbols = (Table*)malloc(sizeof(Table));
-    parser.registers = (Table*)malloc(sizeof(Table));
+    parser.locations = (Table*)malloc(sizeof(Table));
+    parser.aliases = (Table*)malloc(sizeof(Table));
     parser.general_reg = 1;
+    parser.prefix_length = 1;
+    parser.current_prefix[0] = ':';
+
     initTable(&instr_indices);
-    initTable(parser.symbols);
-    initTable(parser.registers);
+    initTable(parser.locations);
+    initTable(parser.aliases);
 
     for(int i = 0; i < 256; i++)
     {
@@ -825,11 +826,11 @@ void initParser(char* output_file)
 void freeParser()
 {
     freeTable(&instr_indices);
-    freeTable(parser.registers);
-    freeTable(parser.symbols);
-    
-    free(parser.registers);
-    free(parser.symbols);
+    freeTable(parser.aliases);
+    freeTable(parser.locations);
+   
+    free(parser.aliases);
+    free(parser.locations);
 
     fclose(parser.fp);
 }

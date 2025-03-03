@@ -15,33 +15,22 @@ static bool isAtEnd()
 
 static TokenType checkKeyword()
 {
-    for(int i = 0; i < 7; i++) // check if it's a keyword used by the preprocessor
-    {
-        switch(i)
-        {
-            case 0:
-                if (scanner.current - scanner.start == 2 && memcmp(scanner.start, "IS", 2) == 0)
-                    return TOKEN_IS;
-            case 1:
-                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "GREG", 4) == 0)
-                    return TOKEN_GREG;
-            case 2:
-                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "BYTE", 4) == 0)
-                    return TOKEN_BYTE;
-            case 3:
-                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "WYDE", 4) == 0)
-                    return TOKEN_WYDE;
-            case 4:
-                if (scanner.current - scanner.start == 5 && memcmp(scanner.start, "TETRA", 5) == 0)
-                    return TOKEN_TETRA;
-            case 5:
-                if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "OCTA", 4) == 0)
-                    return TOKEN_OCTA;
-            case 6:
-                if (scanner.current - scanner.start == 6 && memcmp(scanner.start, "PREFIX", 6) == 0)
-                    return TOKEN_PREFIX;
-        }
-    }
+    if (scanner.current - scanner.start == 2 && memcmp(scanner.start, "IS", 2) == 0)
+        return TOKEN_IS;
+    if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "GREG", 4) == 0)
+        return TOKEN_GREG;
+    if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "BYTE", 4) == 0)
+        return TOKEN_BYTE;
+    if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "WYDE", 4) == 0)
+        return TOKEN_WYDE;
+    if (scanner.current - scanner.start == 5 && memcmp(scanner.start, "TETRA", 5) == 0)
+        return TOKEN_TETRA;
+    if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "OCTA", 4) == 0)
+        return TOKEN_OCTA;
+    if (scanner.current - scanner.start == 6 && memcmp(scanner.start, "PREFIX", 6) == 0)
+        return TOKEN_PREFIX;
+    if (scanner.current - scanner.start == 5 && memcmp(scanner.start, "LOCAL", 5) == 0)
+        return TOKEN_LOCAL;
 
     return TOKEN_LABEL;
 }
@@ -352,6 +341,9 @@ void printToken(Token* token)
 {
     switch(token->type)
     {
+        case TOKEN_LOCAL:
+            printf("TOKEN_LOCAL: ");
+            break;
         case TOKEN_INSTRUCTION:
             printf("TOKEN_INSTRUCTION: ");
             break;
