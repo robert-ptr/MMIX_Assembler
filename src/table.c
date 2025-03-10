@@ -20,11 +20,9 @@ void freeTable(Table* table)
 {
     for(int i = 0; i < table->count; i++)
     {
-        free(table->entries->key);
     }
 
     free(table->entries);
-    initTable(table);
 }
 
 static uint64_t hashFunc(void* value, size_t n)
@@ -102,66 +100,48 @@ static void adjustSize(Table* table, uint64_t capacity)
     table->entries = entries;
 }
 
-static void setEntry_uint64_t(EntryValue* entry, int64_t value)
+bool addToTable(Table* table, void* s, uint64_t n, void* value, EntryType type)
 {
-    entry->as_int = value;
-    entry->type = TYPE_INT;
-}
-
-static void setEntry_bool(EntryValue* entry, bool value)
-{
-    entry->as_bool = value;
-    entry->type = TYPE_BOOL;
-}
-
-static void setEntry_float(EntryValue* entry, float value)
-{
-    entry->as_float = value;
-    entry->type = TYPE_FLOAT;
-}
-
-static void setEntry_double(EntryValue* entry, double value)
-{
-    entry->as_double = value;
-    entry->type = TYPE_DOUBLE;
-}
-
-static void setEntry_string(EntryValue* entry, char* str)
-{
-    size_t len = strlen(str);
-    entry->as_str = malloc(len + 1);
-    strcpy(entry->as_str, str);
-    entry->as_str[len] = '\0';
-    entry->type = TYPE_STR;
-}
-
-#define GENERIC_INSERT_FUNC_DEF(type)                                           \
-    bool addToTable_##type(Table* table, void* s, uint64_t n, type value)       \
-    {                                                                           \
-        if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)                  \ 
-        {                                                                       \
-            uint64_t capacity = GROW_LIST(table->size);                         \
-            adjustSize(table, capacity);                                        \
-        }                                                                       \
-                                                                                \
-        uint64_t hash;                                                          \
-        hash = hashFunc(s, n);                                                  \
-                                                                                \
-        Entry* entry = findEntry(table->entries, table->size, s, n, hash);      \
-                                                                                \
-        bool isNewEntry = (entry->key == NULL);                                 \
-        if (isNewEntry) table->count++;                                         \
-                                                                                \
-        entry->key = s;                                                         \
-        entry->hash = hash;                                                     \
-        setEntry_##type(&entry->value, value);                                  \
-        entry->key_length = n;                                                  \
-                                                                                \
-        return isNewEntry;                                                      \
+    if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
+    {
+        uint64_t capacity = GROW_LIST(table->size);
+        adjustSize(table, capacity);
     }
 
-GENERIC_INSERT_FUNC_DEF(string)
-GENERIC_INSERT_FUNC_DEF(uint64_t)
-GENERIC_INSERT_FUNC_DEF(bool)
-GENERIC_INSERT_FUNC_DEF(float)
-GENERIC_INSERT_FUNC_DEF(double)
+    uint64_t hash;
+    hash = hashFunc(s, n);
+
+    Entry* entry = findEntry(table->entries, table->size, s, n, hash);
+
+    bool isNewEntry = (entry->key == NULL);
+    if (isNewEntry) table->count++;
+
+    entry->key = s;
+    entry->hash = hash;
+    entry->value.type = type;
+
+    switch(type)
+    {
+        case TYPE_STR:
+            entry->value.as_str = value;
+            break;
+        case TYPE_INT:
+            entry->value.as_int = *(int*)value;
+            break;
+        case TYPE_FLOAT:
+            entry->value.as_float = *(float*)value;
+            break;
+        case TYPE_DOUBLE:
+            entry->value.as_double = *(double*)value;
+            break;
+        case TYPE_BOOL:
+            entry->value.as_bool = *(bool*)value;
+            break;
+        default:
+           fprintf(stderr, "Invalid entry type!"); 
+    }
+
+    entry->key_length = n;
+
+    return isNewEntry;
+}

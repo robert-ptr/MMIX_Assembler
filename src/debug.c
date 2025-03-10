@@ -39,47 +39,52 @@ void debugTable()
     double double_key = 2.718;
     uint64_t int_key = 74;
 
-    if(addToTable_bool(&test_table, &bool_key, sizeof(bool), true))
+    bool bool_value = true;
+    float float_value = -3.156f;
+    double double_value = -2.718;
+    uint64_t int_value = 351;
+
+    if(addToTable(&test_table, &bool_key, sizeof(bool), &bool_value, TYPE_BOOL))
     {
         printf("Added bool value:true to table, key: false\n");
     }
     
-    if(addToTable_float(&test_table, &float_key, sizeof(float), -3.156f))
+    if(addToTable(&test_table, &float_key, sizeof(float), &float_value, TYPE_FLOAT))
     {
         printf("Added float value:-3.156 to table, key:3.156\n");
     }
 
-    if(addToTable_double(&test_table, &double_key, sizeof(double), -2.718))
+    if(addToTable(&test_table, &double_key, sizeof(double), &double_value, TYPE_DOUBLE))
     {
         printf("Added float value:-2.718 to table, key:2.718\n");
     }
 
-    if(addToTable_uint64_t(&test_table, &int_key, sizeof(uint64_t), 5))
+    if(addToTable(&test_table, &int_key, sizeof(uint64_t), &int_value, TYPE_INT))
     {
         printf("Added int value:5 to table, key: 74\n");
     }
 
-    if(addToTable_bool(&test_table, "bool", 4, true))
+    if(addToTable(&test_table, "bool", 4, &bool_value, TYPE_BOOL))
     {
         printf("Added bool value:true to table, key: 'bool'\n");
     }
     
-    if(addToTable_uint64_t(&test_table, "uint64_t", 7, 351))
+    if(addToTable(&test_table, "uint64_t", 7, &int_value, TYPE_INT))
     {
         printf("Added uint64_t value:351 to table, key: 'uint64_t'\n");
     }
 
-    if(addToTable_string(&test_table, "string", 6, "string1223443245"))
+    if(addToTable(&test_table, "string", 6, "string1223443245", TYPE_STR))
     {
         printf("Added string value:string_value to table, key:'string'\n");
     }
 
-    if(addToTable_float(&test_table, "float", 5, 3.14f))
+    if(addToTable(&test_table, "float", 5, &float_value, TYPE_FLOAT))
     {
         printf("Added float value:3.14 to table, key:'float'\n");
     }
 
-    if(addToTable_double(&test_table, "double", 6, 3.14159265))
+    if(addToTable(&test_table, "double", 6, &double_value, TYPE_DOUBLE))
     {
         printf("Added double value:3.14159265 to table, key:'double'\n");
     }

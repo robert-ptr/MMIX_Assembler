@@ -1,6 +1,7 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -g -MMD
+CFLAGS = -Wall -g -fsanitize=address -Wextra -MMD
+LDFLAGS = -fsanitize=address
 CPPFLAGS =
 
 # Target executable
@@ -18,7 +19,7 @@ all: $(TARGET)
 
 # Linking step: create the executable from object files
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET)
+	$(CC) $(LDFLAGS) $(OBJS) -o $(TARGET)
 
 # Compilation step: create object files and generate dependencies
 %.o: %.c

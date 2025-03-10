@@ -8,17 +8,13 @@
 #define TABLE_MIN_SIZE 8
 #define TABLE_LOAD_FACTOR 0.75
 
-#define GENERIC_INSERT_FUNC(type)                                               \
-    bool addToTable_##type(Table* table, void* s, uint64_t n, type value);
-
-typedef char* string;
-
 typedef enum {
     TYPE_INT,
     TYPE_STR,
     TYPE_BOOL,
     TYPE_FLOAT,
     TYPE_DOUBLE,
+    TYPE_UNASSIGNED,
 } EntryType;
 
 typedef enum {
@@ -54,14 +50,7 @@ typedef struct
 } Table;
 
 void initTable(Table* table);
-
 bool findInTable(Table* table, void* s, uint64_t n, EntryValue* value);
-
-GENERIC_INSERT_FUNC(string)
-GENERIC_INSERT_FUNC(uint64_t)
-GENERIC_INSERT_FUNC(bool)
-GENERIC_INSERT_FUNC(float)
-GENERIC_INSERT_FUNC(double)
-
+bool addToTable(Table* table, void* s, uint64_t n, void* value, EntryType type);
 void freeTable(Table* table);
 #endif

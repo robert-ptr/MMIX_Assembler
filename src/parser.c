@@ -544,7 +544,7 @@ static void isStatement(char* label, uint64_t label_length)
         
         if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.aliases, label, label_length, labelLocation); 
+            addToTable(parser.aliases, label, label_length, &labelLocation, TYPE_INT); 
         }
         else 
         {
@@ -576,7 +576,7 @@ static void gregStatement(char* label, uint64_t label_length)
     { 
         if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.aliases, label, label_length, parser.general_reg); 
+            addToTable(parser.aliases, label, label_length, &parser.general_reg, TYPE_INT); 
             parser.register_values[parser.general_reg] = expression(NULL);
             
             parser.general_reg++;
@@ -606,7 +606,7 @@ static void locStatement(char* label, uint64_t label_length)
     {
         if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.locations, label, label_length, loc); 
+            addToTable(parser.locations, label, label_length, &loc, TYPE_INT); 
         }
         else 
         {
@@ -624,7 +624,7 @@ static void byteStatement(char* label, uint64_t label_length)
     {
         if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
+            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
         }
         else 
         {
@@ -671,7 +671,7 @@ static void wydeStatement(char* label, uint64_t label_length)
     {
         if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
+            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
         }
         else 
         {
@@ -723,7 +723,7 @@ static void tetraStatement(char* label, uint64_t label_length)
         uint64_t labelLocation = parser.current_location;
         if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
+            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
         }
         else 
         {
@@ -777,7 +777,7 @@ static void octaStatement(char* label, uint64_t label_length)
         uint64_t labelLocation = parser.current_location;
         if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
+            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
         }
         else 
         {
@@ -833,7 +833,7 @@ static void prefixStatement(char* label, uint64_t label_length) // I'll implemen
     {
         if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
+            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
         }
         else 
         {
@@ -952,7 +952,7 @@ void initParser(char* output_file)
 
     for(int i = 0; i < 256; i++)
     {
-        addToTable_uint64_t(&instr_indices, instructions[i].name, strlen(instructions[i].name), i);
+        addToTable(&instr_indices, instructions[i].name, strlen(instructions[i].name), &i, TYPE_INT);
     }
 }
 
