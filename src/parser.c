@@ -551,8 +551,7 @@ static void isStatement(char* label, uint64_t label_length)
         uint64_t labelLocation = scanner.start - scanner.source;
        
         TableData key;
-        key.as_str.lexeme = (char*)malloc(label_length * sizeof(char));
-        strncpy(key.as_str.lexeme, label, label_length);
+        key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
@@ -564,6 +563,8 @@ static void isStatement(char* label, uint64_t label_length)
             value.type = TYPE_INT;
 
             addToTable(parser.aliases, &key, &value); 
+
+            free(label); // add to table performs hard copy
         }
         else 
         {
@@ -594,7 +595,7 @@ static void gregStatement(char* label, uint64_t label_length)
     if (label != NULL)
     { 
         TableData key, value;
-        key.as_str.lexeme = strdup(label);
+        key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
@@ -605,8 +606,9 @@ static void gregStatement(char* label, uint64_t label_length)
 
             addToTable(parser.aliases, &key, &value); 
 
-            parser.register_values[parser.general_reg] = expression(NULL);
-            
+            free(label); // add to table performs hard copy
+
+            parser.register_values[parser.general_reg] = expression(NULL);           
             parser.general_reg++;
         }
         else 
@@ -633,7 +635,7 @@ static void locStatement(char* label, uint64_t label_length)
     if (label != NULL)
     {
         TableData key, value;
-        key.as_str.lexeme = strdup(label);
+        key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
@@ -642,7 +644,9 @@ static void locStatement(char* label, uint64_t label_length)
             value.as_int = loc;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value); 
+            addToTable(parser.locations, &key, &value);
+
+            free(label); // add to table performs hard copy
         }
         else 
         {
@@ -659,7 +663,7 @@ static void byteStatement(char* label, uint64_t label_length)
     if (label != NULL)
     {
         TableData key, value;
-        key.as_str.lexeme = strdup(label);
+        key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
@@ -669,6 +673,8 @@ static void byteStatement(char* label, uint64_t label_length)
             value.type = TYPE_INT;
 
             addToTable(parser.locations, &key, &value); 
+
+            free(label); // add to table performs hard copy
         }
         else 
         {
@@ -714,7 +720,7 @@ static void wydeStatement(char* label, uint64_t label_length)
     if (label != NULL)
     {
         TableData key, value;
-        key.as_str.lexeme = strdup(label);
+        key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
@@ -724,7 +730,9 @@ static void wydeStatement(char* label, uint64_t label_length)
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value); 
+            addToTable(parser.locations, &key, &value);
+
+            free(label); // add to table performs hard copy
         }
         else 
         {
@@ -774,7 +782,7 @@ static void tetraStatement(char* label, uint64_t label_length)
     if (label != NULL)
     {
         TableData key, value;
-        key.as_str.lexeme = strdup(label);
+        key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
@@ -785,7 +793,9 @@ static void tetraStatement(char* label, uint64_t label_length)
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value); 
+            addToTable(parser.locations, &key, &value);
+
+            free(label); // add to table performs hard copy
         }
         else 
         {
@@ -854,6 +864,8 @@ static void octaStatement(char* label, uint64_t label_length)
             value.type = TYPE_INT;
 
             addToTable(parser.locations, &key, &value); 
+
+            free(label); // add to table performs hard copy
         }
         else 
         {
@@ -923,11 +935,13 @@ static void prefixStatement(char* label, uint64_t label_length) // I'll implemen
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value); 
+            addToTable(parser.locations, &key, &value);
+
+            free(label); // add to table performs hard copy
         }
         else 
         {
-            free(label); // if the label weren't taken we would have freed it when we call freeTable()
+            free(label); 
             errorAtCurrent("Symbol redefinition!");
         }
     }

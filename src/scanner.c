@@ -122,17 +122,16 @@ static TokenType identifierType()
     int32_t length = scanner.current - scanner.start;
     char* word = (char*)malloc((length + 1) * sizeof(char));
     word[length] = '\0';
-    for(int32_t i = 0; i < length; i++)
-    {
-        word[i] = scanner.start[i];
-    }
+    strncpy(word, scanner.start, length);
     stringToLowercase(word);
 
     if(findWord(scanner.instruction_trie, word))
     {
+        free(word);
         return TOKEN_INSTRUCTION;
     }
     
+    free(word);
     return checkKeyword();
 }
 
