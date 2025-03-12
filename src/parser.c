@@ -175,16 +175,21 @@ static int64_t symbol(bool* isImmediate)
         }
 
         parser.current.start += togo.as_int;
+        free(symbol);
         return val;
     }
 
+    free(symbol);
     printf("Unknown symbol.\n");
     return -1;
 }
 
 static int64_t number()
 {
-    return parseNumber(getTokenString(&parser.current));
+    char* str = getTokenString(&parser.current);
+    int64_t n = parseNumber(str);
+    free(str);
+    return n;
 }
 
 static int64_t term(bool* isImmediate)
@@ -503,6 +508,7 @@ static void instructionStatement(char* label, uint64_t label_length)
     }
 
     char* instruction = getTokenString(&parser.current);
+    stringToLowercase(instruction);
     TableData emitValue, key;
     key.as_str.lexeme = instruction;
     key.as_str.n = strlen(instruction);
@@ -510,7 +516,7 @@ static void instructionStatement(char* label, uint64_t label_length)
 
     uint8_t bytes[4];
     
-    if(findInTable(&instr_indices, &key, &emitValue) != false)
+    if(findInTable(&instr_indices, &key, &emitValue))
     {
         bytes[0] = (uint8_t)emitValue.as_int;
     }
@@ -519,7 +525,6 @@ static void instructionStatement(char* label, uint64_t label_length)
         errorAtCurrent("Unknown instruction.");
     }
 
-    // findInTable(&instr_indices, key, &index); // doesn't this do a similiar thing to the findInTable above?
     advance(); // consume TOKEN_INSTRUCTION
     
     uint32_t temp = commaStatement(bytes[0]);
@@ -1057,16 +1062,19 @@ void initParser(char* output_file)
     for(int i = 0; i < 256; i++)
     {
         TableData key, value;
+        
+        if (instructions[i].name == NULL) {
+            fprintf(stderr, "Error: instructions[%d].name is NULL\n", i);
+            exit(EXIT_FAILURE);
+        }
+
         key.as_str.lexeme = strdup(instructions[i].name);
 
         if (key.as_str.lexeme == NULL) {
             fprintf(stderr, "Error: Failed to allocate memory for string key\n");
             exit(EXIT_FAILURE);
         }
-        if (instructions[i].name == NULL) {
-            fprintf(stderr, "Error: instructions[%d].name is NULL\n", i);
-            exit(EXIT_FAILURE);
-        }
+        
         key.as_str.n = strlen(instructions[i].name);
         key.type = TYPE_STR;
        

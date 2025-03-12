@@ -50,7 +50,7 @@ static uint64_t hashFunc(TableData* s)
     switch(s->type)
     {
         case TYPE_STR:
-            hash = hashHelper(&s->as_str.lexeme, s->as_str.n);
+            hash = hashHelper(s->as_str.lexeme, s->as_str.n);
             break;
         case TYPE_INT:
             hash = hashHelper(&s->as_int, 8);
@@ -73,8 +73,6 @@ static uint64_t hashFunc(TableData* s)
 
 static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t hash)
 {
-    if(size == 0)
-        return NULL;
     uint64_t index = hash % size;
     for (;;)
     {
@@ -88,16 +86,10 @@ static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t 
             switch(key->type)
             {
                 case TYPE_STR:
-                    printf("Comparing strings:\n");
-                    printf("  key.as_str.lexeme = %p\n", key->as_str.lexeme);
-                    printf("  entry->key.as_str.lexeme = %p\n", entry->key.as_str.lexeme);
-                    printf("  key.as_str.n = %lu\n", entry->key.as_str.n);
-
                     if (key->as_str.lexeme == NULL || entry->key.as_str.lexeme == NULL) {
                         fprintf(stderr, "Error: Null pointer in string key\n");
                         return NULL;
                     }
-                    fflush(stdout);
                     
                     if (key->as_str.n == entry->key.as_str.n && memcmp(key->as_str.lexeme, entry->key.as_str.lexeme, key->as_str.n) == 0)
                         return entry;
@@ -129,12 +121,15 @@ static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t 
 
 bool findInTable(Table* table, TableData* s, TableData* val)
 {
+    if(table->size == 0 || table->count == 0)
+        return false;
+
     uint64_t hash = hashFunc(s);
     Entry* entry;
  
     entry = findEntry(table->entries, table->size, s, hash);
 
-    if(entry == NULL || entry->key.type == TYPE_UNASSIGNED)
+    if(entry->key.type == TYPE_UNASSIGNED)
         return false;
 
     if(val != NULL)
@@ -159,9 +154,27 @@ static void adjustSize(Table* table, uint64_t capacity)
         if (entry->key.type == TYPE_UNASSIGNED) continue;
 
         Entry* dest = findEntry(entries, capacity, &entry->key, entry->hash);
-        dest->key = entry->key;
+        dest->key.type = entry->key.type;
+        if (dest->key.type == TYPE_STR)
+        {
+            dest->key.as_str.n = entry->key.as_str.n;
+            dest->key.as_str.lexeme = (char*)malloc(dest->key.as_str.n * sizeof(char));
+            strncpy(dest->key.as_str.lexeme, entry->key.as_str.lexeme, dest->key.as_str.n);
+            free(entry->key.as_str.lexeme);
+        }
+        else 
+            dest->key = entry->key;
         dest->hash = entry->hash;
-        dest->value = entry->value;
+        dest->value.type = entry->value.type;
+        if (dest->value.type == TYPE_STR)
+        {
+            dest->value.as_str.n = entry->value.as_str.n;
+            dest->value.as_str.lexeme = (char*)malloc(dest->value.as_str.n * sizeof(char));
+            strncpy(dest->value.as_str.lexeme, entry->value.as_str.lexeme, dest->value.as_str.n);
+            free(entry->value.as_str.lexeme);
+        }
+        else 
+            dest->value = entry->value;
     }
 
     free(table->entries);
@@ -190,12 +203,9 @@ bool addToTable(Table* table, TableData* s, TableData* value)
     bool isNewEntry = (entry->key.type == TYPE_UNASSIGNED);
     if (isNewEntry) table->count++;
 
+    entry->key.type = s->type;
     if (s->type == TYPE_STR)
     {
-        if (entry->key.type == TYPE_STR && entry->key.as_str.lexeme != NULL) {
-            free(entry->key.as_str.lexeme);
-        }
-        entry->key.type = s->type;
         entry->key.as_str.n = s->as_str.n;
         entry->key.as_str.lexeme = (char*)malloc(s->as_str.n * sizeof(char));
         strncpy(entry->key.as_str.lexeme, s->as_str.lexeme, s->as_str.n);
@@ -204,12 +214,9 @@ bool addToTable(Table* table, TableData* s, TableData* value)
         entry->key = *s;
     entry->hash = hash;
 
+    entry->value.type = value->type;
     if (value->type == TYPE_STR)
     {
-        if (entry->value.type == TYPE_STR && entry->value.as_str.lexeme != NULL) {
-            free(entry->value.as_str.lexeme);
-        }
-        entry->value.type = value->type;
         entry->value.as_str.n = value->as_str.n;
         entry->value.as_str.lexeme = (char*)malloc(value->as_str.n * sizeof(char));
         strncpy(entry->value.as_str.lexeme, value->as_str.lexeme, value->as_str.n);
