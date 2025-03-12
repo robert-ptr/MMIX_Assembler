@@ -551,15 +551,14 @@ static void isStatement(char* label, uint64_t label_length)
         uint64_t labelLocation = scanner.start - scanner.source;
        
         TableData key;
-        key.as_str.lexeme = label;
+        key.as_str.lexeme = (char*)malloc(label_length * sizeof(char));
+        strncpy(key.as_str.lexeme, label, label_length);
         key.as_str.n = label_length;
+        key.type = TYPE_STR;
 
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
+            TableData value;
 
             value.as_int = labelLocation;
             value.type = TYPE_INT;
@@ -594,18 +593,13 @@ static void gregStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     { 
-        TableData key;
-        key.as_str.lexeme = label;
+        TableData key, value;
+        key.as_str.lexeme = strdup(label);
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
             value.as_int = parser.general_reg;
             value.type = TYPE_INT;
 
@@ -638,18 +632,13 @@ static void locStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key;
-        key.as_str.lexeme = label;
+        TableData key, value;
+        key.as_str.lexeme = strdup(label);
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
             value.as_int = loc;
             value.type = TYPE_INT;
 
@@ -669,18 +658,13 @@ static void byteStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key;
-        key.as_str.lexeme = label;
+        TableData key, value;
+        key.as_str.lexeme = strdup(label);
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
@@ -729,19 +713,14 @@ static void wydeStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key;
-        key.as_str.lexeme = label;
+        TableData key, value;
+        key.as_str.lexeme = strdup(label);
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
 
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
@@ -794,8 +773,8 @@ static void tetraStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key;
-        key.as_str.lexeme = label;
+        TableData key, value;
+        key.as_str.lexeme = strdup(label);
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
@@ -803,11 +782,6 @@ static void tetraStatement(char* label, uint64_t label_length)
         uint64_t labelLocation = parser.current_location;
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
@@ -963,9 +937,9 @@ static void labelStatement()
 {
     if(check(TOKEN_LABEL))
     {
-        char* label = (char*)malloc((parser.previous.length + parser.prefix_length) * sizeof(char));
-        strncpy(parser.current_prefix, label, parser.prefix_length);
-        strncpy(parser.previous.start, label + parser.prefix_length, parser.previous.length);
+        char* label = (char*)malloc((parser.current.length + parser.prefix_length) * sizeof(char));
+        strncpy(label, parser.current_prefix, parser.prefix_length);
+        strncpy(label + parser.prefix_length, parser.current.start, parser.current.length);
         advance();
 
         switch (parser.current.type)

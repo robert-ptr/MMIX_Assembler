@@ -73,6 +73,8 @@ static uint64_t hashFunc(TableData* s)
 
 static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t hash)
 {
+    if(size == 0)
+        return NULL;
     uint64_t index = hash % size;
     for (;;)
     {
@@ -132,7 +134,7 @@ bool findInTable(Table* table, TableData* s, TableData* val)
  
     entry = findEntry(table->entries, table->size, s, hash);
 
-    if(entry->key.type == TYPE_UNASSIGNED)
+    if(entry == NULL || entry->key.type == TYPE_UNASSIGNED)
         return false;
 
     if(val != NULL)
