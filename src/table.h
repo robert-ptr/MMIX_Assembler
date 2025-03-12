@@ -15,31 +15,27 @@ typedef enum {
     TYPE_FLOAT,
     TYPE_DOUBLE,
     TYPE_UNASSIGNED,
-} EntryType;
-
-typedef enum {
-    TYPE_REGISTER,
-    TYPE_IMMEDIATE,
-    TYPE_LOCATION,
-} MMIXEntryType;
+} DataType;
 
 typedef struct {
-    EntryType type;
+    DataType type;
     union {
         uint64_t as_int;
-        char* as_str;
+        struct {
+            char* lexeme;
+            uint64_t n;
+        } as_str;
         bool as_bool;
         float as_float;
         double as_double;
     };
-} EntryValue;
+} TableData;
 
 typedef struct
 {
-    uint8_t* key;
+    TableData key;
     uint64_t hash;
-    uint64_t key_length;
-    EntryValue value;
+    TableData value;
 } Entry;
 
 typedef struct
@@ -50,7 +46,7 @@ typedef struct
 } Table;
 
 void initTable(Table* table);
-bool findInTable(Table* table, void* s, uint64_t n, EntryValue* value);
-bool addToTable(Table* table, void* s, uint64_t n, void* value, EntryType type);
+bool findInTable(Table* table, TableData* s, TableData* value);
+bool addToTable(Table* table, TableData* s, TableData* value);
 void freeTable(Table* table);
 #endif

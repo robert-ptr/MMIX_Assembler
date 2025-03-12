@@ -18,14 +18,19 @@ void initTable(Table* table)
 
 void freeTable(Table* table)
 {
-    for(int i = 0; i < table->count; i++)
+    for(int i = 0; i < table->size; i++)
     {
+        if(table->entries[i].key.type == TYPE_STR)
+            free(table->entries[i].key.as_str.lexeme);
+        if(table->entries[i].value.type == TYPE_STR)
+            free(table->entries[i].value.as_str.lexeme);
+
     }
 
     free(table->entries);
 }
 
-static uint64_t hashFunc(void* value, size_t n)
+static uint64_t hashHelper(void* value, size_t n)
 {
     uint64_t hash = 2166136261u;
     uint8_t* bytes = (uint8_t*)value;
@@ -38,35 +43,101 @@ static uint64_t hashFunc(void* value, size_t n)
     return hash;
 }
 
-Entry* findEntry(Entry* entries, uint64_t size, uint8_t* s, uint64_t n, uint64_t hash)
+static uint64_t hashFunc(TableData* s)
+{
+    uint64_t hash;
+
+    switch(s->type)
+    {
+        case TYPE_STR:
+            hash = hashHelper(&s->as_str.lexeme, s->as_str.n);
+            break;
+        case TYPE_INT:
+            hash = hashHelper(&s->as_int, 8);
+            break;
+        case TYPE_FLOAT:
+            hash = hashHelper(&s->as_float, 4);
+            break;
+        case TYPE_DOUBLE:
+            hash = hashHelper(&s->as_double, 8);
+            break;
+        case TYPE_BOOL:
+            hash = hashHelper(&s->as_bool, 1);
+            break;
+        default:
+            fprintf(stderr, "Unknown key type!");
+    }
+
+    return hash;
+}
+
+static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t hash)
 {
     uint64_t index = hash % size;
     for (;;)
     {
         Entry* entry = &entries[index];
-        if (entry->key == NULL)
+        if (entry->key.type == TYPE_UNASSIGNED)
         {
             return entry;
         }
-        else if(entry->key_length == n && entry->hash == hash && memcmp(entry->key, s, n) == 0)
-            return entry;
+        else if(entry->hash == hash && entry->key.type == key->type)
+        {
+            switch(key->type)
+            {
+                case TYPE_STR:
+                    printf("Comparing strings:\n");
+                    printf("  key.as_str.lexeme = %p\n", key->as_str.lexeme);
+                    printf("  entry->key.as_str.lexeme = %p\n", entry->key.as_str.lexeme);
+                    printf("  key.as_str.n = %lu\n", entry->key.as_str.n);
+
+                    if (key->as_str.lexeme == NULL || entry->key.as_str.lexeme == NULL) {
+                        fprintf(stderr, "Error: Null pointer in string key\n");
+                        return NULL;
+                    }
+                    fflush(stdout);
+                    
+                    if (key->as_str.n == entry->key.as_str.n && memcmp(key->as_str.lexeme, entry->key.as_str.lexeme, key->as_str.n) == 0)
+                        return entry;
+                    break;
+                case TYPE_INT:
+                    if (key->as_int == entry->key.as_int)
+                        return entry;
+                    break;
+                case TYPE_FLOAT:
+                    if (key->as_float == entry->key.as_float)
+                        return entry;
+                    break;
+                case TYPE_DOUBLE:
+                    if (key->as_double == entry->key.as_double)
+                        return entry;
+                    break;
+                case TYPE_BOOL:
+                    if (key->as_bool == entry->key.as_bool)
+                        return entry;
+                    break;
+                default:
+                    fprintf(stderr, "Unknown key type!");
+            }
+        }
 
         index = (index + 1) % size;
     }
 }
 
-bool findInTable(Table* table, void* s, uint64_t n, EntryValue* val)
+bool findInTable(Table* table, TableData* s, TableData* val)
 {
-    uint64_t hash;
+    uint64_t hash = hashFunc(s);
     Entry* entry;
+ 
+    entry = findEntry(table->entries, table->size, s, hash);
 
-    hash = hashFunc(s, n);
-    entry = findEntry(table->entries, table->size, s, n, hash);
-
-    if(entry->key == NULL)
+    if(entry->key.type == TYPE_UNASSIGNED)
         return false;
 
-    *val = entry->value;
+    if(val != NULL)
+        *val = entry->value;
+    
     return true;
 }
 
@@ -75,22 +146,18 @@ static void adjustSize(Table* table, uint64_t capacity)
     Entry* entries = (Entry*)malloc(capacity * sizeof(Entry));
     for(uint64_t i = 0; i < capacity; i++)
     {
-        entries[i].key = NULL;
-        entries[i].value.as_int = 0;
-        entries[i].value.as_str = NULL;
-        entries[i].value.as_bool = false;
-        entries[i].value.as_float = 0.0f;
-        entries[i].value.as_double = 0.0;
+        entries[i].value.as_str.lexeme = NULL;
+        entries[i].value.as_str.n = 0;
+        entries[i].key.type = TYPE_UNASSIGNED;
     }
 
     for(uint64_t i = 0; i < table->size; i++)
     {
         Entry* entry = &table->entries[i];
-        if (entry->key == NULL) continue;
+        if (entry->key.type == TYPE_UNASSIGNED) continue;
 
-        Entry* dest = findEntry(entries, capacity, entry->key, entry->key_length, entry->hash);
+        Entry* dest = findEntry(entries, capacity, &entry->key, entry->hash);
         dest->key = entry->key;
-        dest->key_length = entry->key_length;
         dest->hash = entry->hash;
         dest->value = entry->value;
     }
@@ -100,8 +167,13 @@ static void adjustSize(Table* table, uint64_t capacity)
     table->entries = entries;
 }
 
-bool addToTable(Table* table, void* s, uint64_t n, void* value, EntryType type)
+bool addToTable(Table* table, TableData* s, TableData* value)
 {
+    if (s->type == TYPE_UNASSIGNED || value->type == TYPE_UNASSIGNED) {
+        fprintf(stderr, "Error: Uninitialized TableData passed to addToTable\n");
+        return false;
+    }
+
     if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
     {
         uint64_t capacity = GROW_LIST(table->size);
@@ -109,39 +181,39 @@ bool addToTable(Table* table, void* s, uint64_t n, void* value, EntryType type)
     }
 
     uint64_t hash;
-    hash = hashFunc(s, n);
+    hash = hashFunc(s);
 
-    Entry* entry = findEntry(table->entries, table->size, s, n, hash);
+    Entry* entry = findEntry(table->entries, table->size, s, hash);
 
-    bool isNewEntry = (entry->key == NULL);
+    bool isNewEntry = (entry->key.type == TYPE_UNASSIGNED);
     if (isNewEntry) table->count++;
 
-    entry->key = s;
-    entry->hash = hash;
-    entry->value.type = type;
-
-    switch(type)
+    if (s->type == TYPE_STR)
     {
-        case TYPE_STR:
-            entry->value.as_str = value;
-            break;
-        case TYPE_INT:
-            entry->value.as_int = *(int*)value;
-            break;
-        case TYPE_FLOAT:
-            entry->value.as_float = *(float*)value;
-            break;
-        case TYPE_DOUBLE:
-            entry->value.as_double = *(double*)value;
-            break;
-        case TYPE_BOOL:
-            entry->value.as_bool = *(bool*)value;
-            break;
-        default:
-           fprintf(stderr, "Invalid entry type!"); 
+        if (entry->key.type == TYPE_STR && entry->key.as_str.lexeme != NULL) {
+            free(entry->key.as_str.lexeme);
+        }
+        entry->key.type = s->type;
+        entry->key.as_str.n = s->as_str.n;
+        entry->key.as_str.lexeme = (char*)malloc(s->as_str.n * sizeof(char));
+        strncpy(entry->key.as_str.lexeme, s->as_str.lexeme, s->as_str.n);
     }
+    else 
+        entry->key = *s;
+    entry->hash = hash;
 
-    entry->key_length = n;
+    if (value->type == TYPE_STR)
+    {
+        if (entry->value.type == TYPE_STR && entry->value.as_str.lexeme != NULL) {
+            free(entry->value.as_str.lexeme);
+        }
+        entry->value.type = value->type;
+        entry->value.as_str.n = value->as_str.n;
+        entry->value.as_str.lexeme = (char*)malloc(value->as_str.n * sizeof(char));
+        strncpy(entry->value.as_str.lexeme, value->as_str.lexeme, value->as_str.n);
+    }
+    else 
+        entry->value = *value;
 
     return isNewEntry;
 }

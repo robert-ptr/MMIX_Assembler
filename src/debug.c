@@ -34,108 +34,185 @@ void debugTable()
 
     Table test_table;
     initTable(&test_table);
-    bool bool_key = false;
-    float float_key = 3.156f;
-    double double_key = 2.718;
-    uint64_t int_key = 74;
 
-    bool bool_value = true;
-    float float_value = -3.156f;
-    double double_value = -2.718;
-    uint64_t int_value = 351;
+    TableData bool_key;
+    bool_key.as_bool = false;
+    bool_key.type = TYPE_BOOL;
 
-    if(addToTable(&test_table, &bool_key, sizeof(bool), &bool_value, TYPE_BOOL))
-    {
-        printf("Added bool value:true to table, key: false\n");
-    }
-    
-    if(addToTable(&test_table, &float_key, sizeof(float), &float_value, TYPE_FLOAT))
-    {
-        printf("Added float value:-3.156 to table, key:3.156\n");
-    }
+    TableData float_key;
+    float_key.as_float = 3.156f;
+    float_key.type = TYPE_FLOAT;
 
-    if(addToTable(&test_table, &double_key, sizeof(double), &double_value, TYPE_DOUBLE))
-    {
-        printf("Added float value:-2.718 to table, key:2.718\n");
-    }
+    TableData double_key;
+    double_key.as_double = 2.718;
+    double_key.type = TYPE_DOUBLE;
 
-    if(addToTable(&test_table, &int_key, sizeof(uint64_t), &int_value, TYPE_INT))
-    {
-        printf("Added int value:5 to table, key: 74\n");
-    }
+    TableData int_key;
+    int_key.as_int = 74;
+    int_key.type = TYPE_INT;
 
-    if(addToTable(&test_table, "bool", 4, &bool_value, TYPE_BOOL))
+    TableData bool_value;
+    bool_value.as_bool = true;
+    bool_value.type = TYPE_BOOL;
+
+    TableData float_value;
+    float_value.as_float = -3.156f;
+    float_value.type = TYPE_FLOAT;
+
+    TableData double_value;
+    double_value.as_double = -2.718;
+    double_value.type = TYPE_DOUBLE;
+
+    TableData int_value;
+    int_value.as_int = 351;
+    int_value.type = TYPE_INT;
+
+    if(addToTable(&test_table, &bool_key, &bool_value))
     {
-        printf("Added bool value:true to table, key: 'bool'\n");
-    }
-    
-    if(addToTable(&test_table, "uint64_t", 7, &int_value, TYPE_INT))
-    {
-        printf("Added uint64_t value:351 to table, key: 'uint64_t'\n");
+        printf("Added bool value:%d to table, key: %d\n", bool_value.as_bool, bool_key.as_bool);
     }
 
-    if(addToTable(&test_table, "string", 6, "string1223443245", TYPE_STR))
+    for (int i = 0; i < test_table.size; i++)
     {
-        printf("Added string value:string_value to table, key:'string'\n");
+        printf("%d: ", i);
+        switch(test_table.entries[i].key.type)
+        {
+            case TYPE_UNASSIGNED:
+                printf("TYPE_UNASSIGNED\n");
+                break;
+            case TYPE_INT:
+                printf("TYPE_INT\n");
+                break;
+            case TYPE_STR:
+                printf("TYPE_STR\n");
+                break;
+            case TYPE_FLOAT:
+                printf("TYPE_FLOAT\n");
+                break;
+            case TYPE_DOUBLE:
+                printf("TYPE_DOUBLE\n");
+                break;
+            case TYPE_BOOL:
+                printf("TYPE_BOOL\n");
+                break;
+        }
     }
 
-    if(addToTable(&test_table, "float", 5, &float_value, TYPE_FLOAT))
+    if(addToTable(&test_table, &float_key, &float_value))
     {
-        printf("Added float value:3.14 to table, key:'float'\n");
+        printf("Added float value:%f to table, key:%f\n", float_value.as_float, float_key.as_float);
     }
 
-    if(addToTable(&test_table, "double", 6, &double_value, TYPE_DOUBLE))
+    for (int i = 0; i < test_table.size; i++)
     {
-        printf("Added double value:3.14159265 to table, key:'double'\n");
+        printf("%d: ", i);
+        switch(test_table.entries[i].key.type)
+        {
+            case TYPE_UNASSIGNED:
+                printf("TYPE_UNASSIGNED\n");
+                break;
+            case TYPE_INT:
+                printf("TYPE_INT\n");
+                break;
+            case TYPE_STR:
+                printf("TYPE_STR\n");
+                break;
+            case TYPE_FLOAT:
+                printf("TYPE_FLOAT\n");
+                break;
+            case TYPE_DOUBLE:
+                printf("TYPE_DOUBLE\n");
+                break;
+            case TYPE_BOOL:
+                printf("TYPE_BOOL\n");
+                break;
+        }
+    }
+
+    if(addToTable(&test_table, &double_key, &double_value))
+    {
+        printf("Added float value:%lf to table, key:%lf\n", double_value.as_double, double_key.as_double);
+    }
+
+    for (int i = 0; i < test_table.size; i++)
+    {
+        printf("%d: ", i);
+        switch(test_table.entries[i].key.type)
+        {
+            case TYPE_UNASSIGNED:
+                printf("TYPE_UNASSIGNED\n");
+                break;
+            case TYPE_INT:
+                printf("TYPE_INT\n");
+                break;
+            case TYPE_STR:
+                printf("TYPE_STR\n");
+                break;
+            case TYPE_FLOAT:
+                printf("TYPE_FLOAT\n");
+                break;
+            case TYPE_DOUBLE:
+                printf("TYPE_DOUBLE\n");
+                break;
+            case TYPE_BOOL:
+                printf("TYPE_BOOL\n");
+                break;
+        }
+    }
+
+    if(addToTable(&test_table, &int_key, &int_value))
+    {
+        printf("Added int value:%d to table, key: %d\n", int_value.as_int, int_key.as_int);
     }
 
     printf("\n\n");
 
-    EntryValue value;
+    for (int i = 0; i < test_table.size; i++)
+    {
+        printf("%d: ", i);
+        switch(test_table.entries[i].key.type)
+        {
+            case TYPE_UNASSIGNED:
+                printf("TYPE_UNASSIGNED\n");
+                break;
+            case TYPE_INT:
+                printf("TYPE_INT\n");
+                break;
+            case TYPE_STR:
+                printf("TYPE_STR\n");
+                break;
+            case TYPE_FLOAT:
+                printf("TYPE_FLOAT\n");
+                break;
+            case TYPE_DOUBLE:
+                printf("TYPE_DOUBLE\n");
+                break;
+            case TYPE_BOOL:
+                printf("TYPE_BOOL\n");
+                break;
+        }
+    }
 
-    if(findInTable(&test_table, &bool_key, sizeof(bool), &value))
+    TableData value;
+
+    if(findInTable(&test_table, &bool_key, &value))
     {
         printf("bool: %d\n", value.as_bool);
     }
 
-    if(findInTable(&test_table, &float_key, sizeof(float), &value))
+    if(findInTable(&test_table, &float_key, &value))
     {
         printf("float: %f\n", value.as_float);
     }
 
-    if(findInTable(&test_table, &double_key, sizeof(double), &value))
+    if(findInTable(&test_table, &double_key, &value))
     {
         printf("double: %lf\n", value.as_double);
     }
 
-    if(findInTable(&test_table, &int_key, sizeof(uint64_t), &value))
+    if(findInTable(&test_table, &int_key, &value))
     {
         printf("%d\n", value.as_int);
-    }
-
-    if(findInTable(&test_table, "bool", 4, &value))
-    {
-        printf("'bool': %d\n", value.as_bool);
-    }
-
-    if(findInTable(&test_table, "uint64_t", 7, &value))
-    {
-        printf("'uint64_t': %u\n", value.as_int);
-    }
-
-    if(findInTable(&test_table, "string", 6, &value))
-    {
-        printf("'string': %s\n", value.as_str);
-    }
-
-    if(findInTable(&test_table, "float", 5, &value))
-    {
-        printf("'float': %f\n", value.as_float);
-    }
-
-    if(findInTable(&test_table, "double", 6, &value))
-    {
-        printf("'double': %lf\n", value.as_double);
     }
 
     freeTable(&test_table);

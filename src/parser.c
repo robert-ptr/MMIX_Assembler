@@ -155,8 +155,13 @@ static int64_t symbol(bool* isImmediate)
     char* symbol = getTokenString(&parser.current);
     stringToLowercase(symbol);
 
-    EntryValue togo;
-    if(parser.aliases->size != 0 && findInTable(parser.aliases, symbol, parser.current.length, &togo))
+    TableData key;
+    key.as_str.lexeme = symbol;
+    key.as_str.n = strlen(symbol);
+    key.type = TYPE_STR;
+
+    TableData togo; // I would have used the name goto, but y'know... goto is taken
+    if(parser.aliases->size != 0 && findInTable(parser.aliases, &key, &togo))
     {
         if(togo.type == TYPE_INT)
             return togo.as_int;
@@ -498,11 +503,14 @@ static void instructionStatement(char* label, uint64_t label_length)
     }
 
     char* instruction = getTokenString(&parser.current);
-    EntryValue emitValue;
+    TableData emitValue, key;
+    key.as_str.lexeme = instruction;
+    key.as_str.n = strlen(instruction);
+    key.type = TYPE_STR;
 
     uint8_t bytes[4];
     
-    if(findInTable(&instr_indices, instruction, strlen(instruction), &emitValue) != false)
+    if(findInTable(&instr_indices, &key, &emitValue) != false)
     {
         bytes[0] = (uint8_t)emitValue.as_int;
     }
@@ -511,10 +519,10 @@ static void instructionStatement(char* label, uint64_t label_length)
         errorAtCurrent("Unknown instruction.");
     }
 
-    EntryValue index;
-    findInTable(&instr_indices,  instruction, strlen(instruction), &index);
+    // findInTable(&instr_indices, key, &index); // doesn't this do a similiar thing to the findInTable above?
     advance(); // consume TOKEN_INSTRUCTION
-    uint32_t temp = commaStatement(index.as_int);
+    
+    uint32_t temp = commaStatement(bytes[0]);
     bytes[1] = temp & 0xFF;
     bytes[2] = temp >> 8 & 0xFF;
     bytes[3] = temp >> 16;
@@ -541,10 +549,22 @@ static void isStatement(char* label, uint64_t label_length)
     if (label != NULL)
     {
         uint64_t labelLocation = scanner.start - scanner.source;
-        
-        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
+       
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.aliases, label, label_length, &labelLocation, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = labelLocation;
+            value.type = TYPE_INT;
+
+            addToTable(parser.aliases, &key, &value); 
         }
         else 
         {
@@ -574,9 +594,23 @@ static void gregStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     { 
-        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
+
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.aliases, label, label_length, &parser.general_reg, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = parser.general_reg;
+            value.type = TYPE_INT;
+
+            addToTable(parser.aliases, &key, &value); 
+
             parser.register_values[parser.general_reg] = expression(NULL);
             
             parser.general_reg++;
@@ -604,9 +638,22 @@ static void locStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        if(!findInTable(parser.locations, label, label_length, NULL))
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
+
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.locations, label, label_length, &loc, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = loc;
+            value.type = TYPE_INT;
+
+            addToTable(parser.locations, &key, &value); 
         }
         else 
         {
@@ -622,9 +669,22 @@ static void byteStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
+
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = parser.current_location;
+            value.type = TYPE_INT;
+
+            addToTable(parser.locations, &key, &value); 
         }
         else 
         {
@@ -669,9 +729,23 @@ static void wydeStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        if(!findInTable(parser.locations, label, label_length, NULL))
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
+
+
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = parser.current_location;
+            value.type = TYPE_INT;
+
+            addToTable(parser.locations, &key, &value); 
         }
         else 
         {
@@ -720,10 +794,24 @@ static void tetraStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
+
+
         uint64_t labelLocation = parser.current_location;
-        if(!findInTable(parser.locations, label, label_length, NULL))
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = parser.current_location;
+            value.type = TYPE_INT;
+
+            addToTable(parser.locations, &key, &value); 
         }
         else 
         {
@@ -774,10 +862,24 @@ static void octaStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
+
+
         uint64_t labelLocation = parser.current_location;
-        if(!findInTable(parser.locations, label, label_length, NULL))
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = parser.current_location;
+            value.type = TYPE_INT;
+
+            addToTable(parser.locations, &key, &value); 
         }
         else 
         {
@@ -831,9 +933,23 @@ static void prefixStatement(char* label, uint64_t label_length) // I'll implemen
 
     if (label != NULL) // WIP
     {
-        if(!findInTable(parser.locations, label, label_length, NULL))
+        TableData key;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
+
+
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
-            addToTable(parser.locations, label, label_length, &parser.current_location, TYPE_INT); 
+            TableData key, value;
+            key.as_str.lexeme = label;
+            key.as_str.n = label_length;
+            key.type = TYPE_STR;
+
+            value.as_int = parser.current_location;
+            value.type = TYPE_INT;
+
+            addToTable(parser.locations, &key, &value); 
         }
         else 
         {
@@ -952,7 +1068,26 @@ void initParser(char* output_file)
 
     for(int i = 0; i < 256; i++)
     {
-        addToTable(&instr_indices, instructions[i].name, strlen(instructions[i].name), &i, TYPE_INT);
+        TableData key, value;
+        key.as_str.lexeme = strdup(instructions[i].name);
+
+        if (key.as_str.lexeme == NULL) {
+            fprintf(stderr, "Error: Failed to allocate memory for string key\n");
+            exit(EXIT_FAILURE);
+        }
+        if (instructions[i].name == NULL) {
+            fprintf(stderr, "Error: instructions[%d].name is NULL\n", i);
+            exit(EXIT_FAILURE);
+        }
+        key.as_str.n = strlen(instructions[i].name);
+        key.type = TYPE_STR;
+       
+        value.as_int = i;
+        value.type = TYPE_INT;
+        
+        addToTable(&instr_indices, &key, &value);
+
+        free(key.as_str.lexeme);
     }
 }
 
