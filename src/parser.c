@@ -160,7 +160,7 @@ static int64_t symbol(bool* isImmediate)
     key.as_str.n = strlen(symbol);
     key.type = TYPE_STR;
 
-    TableData label_value; // I would have used the name goto, but y'know... goto is taken
+    TableData label_value;
 
     if (parser.aliases->size != 0 && findInTable(parser.aliases, &key, &label_value))
     {
@@ -172,6 +172,7 @@ static int64_t symbol(bool* isImmediate)
     }
 
     // for now I'll also accept locations (for JMP) for example, although I'm not sure you can use a location for, say, ADDU 
+    // must check MMIXware
     if (parser.locations->size != 0 && findInTable(parser.locations, &key, &label_value))
     {
         free(symbol);
