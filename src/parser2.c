@@ -9,7 +9,7 @@ Parser parser;
 Table instr_indices;
 
 static void advance();
-static int64_t expression(bool* isImmediate);
+static int32_t expression(bool* isImmediate);
 static bool isAtEnd();
 static bool check(TokenType type);
 
@@ -73,7 +73,7 @@ static void advance()
         Token new_token = scanToken();
         parser.current = new_token;
         printToken(&parser.current);
-        if(!check(TOKEN_ERR))
+        if(parser.current.type != TOKEN_ERR)
             break;
 
         errorAtCurrent("Unknown expression");
@@ -82,7 +82,7 @@ static void advance()
 
 static void consume(TokenType type, const char* message)
 {
-    if (check(type))
+    if (parser.current.type == type)
     {
         advance();
         return;
@@ -150,21 +150,14 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
     return true;
 }
 
-static int64_t symbol(bool* isImmediate)
+static int32_t symbol(bool* isImmediate)
 {
     char* symbol = getTokenString(&parser.current);
     stringToLowercase(symbol);
-    
-    TableData key;
-    key.as_str.lexeme = symbol;
-    key.as_str.n = strlen(symbol);
-    key.type = TYPE_STR;
 
-    TableData label_value; // I would have used the name goto, but y'know... goto is taken
-
-    if (parser.aliases->size != 0 && findInTable(parser.aliases, &key, &label_value))
+    EntryValue label_value;
+    if (parser.aliases->size != 0 && findInTable(parser.aliases, symbol, parser.current.length, &label_value))
     {
-        free(symbol);
         if (label_value.type == TYPE_INT)
             return label_value.as_int;
         else 
@@ -172,30 +165,25 @@ static int64_t symbol(bool* isImmediate)
     }
 
     // for now I'll also accept locations (for JMP) for example, although I'm not sure you can use a location for, say, ADDU 
-    if (parser.locations->size != 0 && findInTable(parser.locations, &key, &label_value))
+    if (parser.locations->size != 0 && findInTable(parser.locations, symbol, parser.current.length, &label_value))
     {
-        free(symbol);
         if (label_value.type == TYPE_INT)
             return label_value.as_int;
         else
             errorAtCurrent("Invalid symbol!");
     }
 
-    free(symbol);
     errorAtCurrent("Unknown symbol!");
 
     return -1;
 }
 
-static int64_t number()
+static int32_t number()
 {
-    char* str = getTokenString(&parser.current);
-    int64_t n = parseNumber(str);
-    free(str);
-    return n;
+    return parseNumber(getTokenString(&parser.current));
 }
 
-static int64_t term(bool* isImmediate)
+static int32_t term(bool* isImmediate)
 {
     // possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
     // unary operators: +, -, ~, $
@@ -243,26 +231,26 @@ static int64_t term(bool* isImmediate)
                 return -1;
         }
     }
-    else if(check(TOKEN_LPAREN))
+    else if(parser.current.type == TOKEN_LPAREN)
     {
         advance(); // skip the '('
         a = expression(isImmediate);
         advance(); // skip the ')'
     }
-    else if(check(TOKEN_AROUND))
+    else if(parser.current.type == TOKEN_AROUND)
     {
         *isImmediate = false;
         a = parser.current_location;
     }
-    else if(check(TOKEN_CONSTANT))
+    else if(parser.current.type == TOKEN_CONSTANT)
     {
         a = parseHexNumber(getTokenString(&parser.current));
     }
-    else if(check(TOKEN_LABEL))
+    else if(parser.current.type == TOKEN_LABEL)
     {
         a = symbol(isImmediate);
     }
-    else if(check(TOKEN_IMMEDIATE))
+    else if(parser.current.type == TOKEN_IMMEDIATE)
     {
         a = number();
     }
@@ -275,7 +263,7 @@ static int64_t term(bool* isImmediate)
     return a;
 }
 
-static int64_t strongOperators(bool* isImmediate)
+static int32_t strongOperators(bool* isImmediate)
 {
     // strong binary operators: *,/,//,%,<<,>>,&
     int32_t a = term(isImmediate);
@@ -366,7 +354,7 @@ static int64_t strongOperators(bool* isImmediate)
     return a;
 }
 
-static int64_t expression(bool* isImmediate)
+static int32_t expression(bool* isImmediate)
 {
     // weak binary operators: +,-,|,^
     bool aIsImmediate = false;
@@ -511,15 +499,11 @@ static void instructionStatement(char* label, uint64_t label_length)
     }
 
     char* instruction = getTokenString(&parser.current);
-    stringToLowercase(instruction);
-    TableData emitValue, key;
-    key.as_str.lexeme = instruction;
-    key.as_str.n = strlen(instruction);
-    key.type = TYPE_STR;
+    EntryValue emitValue;
 
     uint8_t bytes[4];
     
-    if(findInTable(&instr_indices, &key, &emitValue))
+    if(findInTable(&instr_indices, instruction, strlen(instruction), &emitValue) != false)
     {
         bytes[0] = (uint8_t)emitValue.as_int;
     }
@@ -528,9 +512,10 @@ static void instructionStatement(char* label, uint64_t label_length)
         errorAtCurrent("Unknown instruction.");
     }
 
+    EntryValue index;
+    findInTable(&instr_indices,  instruction, strlen(instruction), &index);
     advance(); // consume TOKEN_INSTRUCTION
-    
-    uint32_t temp = commaStatement(bytes[0]);
+    uint32_t temp = commaStatement(index.as_int);
     bytes[1] = temp & 0xFF;
     bytes[2] = temp >> 8 & 0xFF;
     bytes[3] = temp >> 16;
@@ -556,23 +541,11 @@ static void isStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        uint64_t label_value = expression(NULL);
-       
-        TableData key;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        uint64_t labelValue = expression(NULL);
+        
+        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
-            TableData value;
-
-            value.as_int = label_value;
-            value.type = TYPE_INT;
-
-            addToTable(parser.aliases, &key, &value); 
-
-            free(label); // add to table performs hard copy
+            addToTable_uint64_t(parser.aliases, label, label_length, labelValue); 
         }
         else 
         {
@@ -602,21 +575,11 @@ static void gregStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     { 
-        TableData key, value;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL) && !findInTable(parser.aliases, label, label_length, NULL))
         {
-            value.as_int = parser.general_reg;
-            value.type = TYPE_INT;
-
-            addToTable(parser.aliases, &key, &value); 
-
-            free(label); // add to table performs hard copy
-
-            parser.register_values[parser.general_reg] = expression(NULL);           
+            addToTable_uint64_t(parser.aliases, label, label_length, parser.general_reg); 
+            parser.register_values[parser.general_reg] = expression(NULL);
+            
             parser.general_reg++;
         }
         else 
@@ -642,19 +605,9 @@ static void locStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key, value;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            value.as_int = loc;
-            value.type = TYPE_INT;
-
-            addToTable(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
+            addToTable_uint64_t(parser.locations, label, label_length, loc); 
         }
         else 
         {
@@ -670,54 +623,15 @@ static void byteStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key, value;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            value.as_int = parser.current_location;
-            value.type = TYPE_INT;
-
-            addToTable(parser.locations, &key, &value); 
-
-            free(label); // add to table performs hard copy
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
             free(label);
             errorAtCurrent("Symbol redefinition!");
         }
-    }
-
-    while(!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
-    {
-        if(check(TOKEN_STRING))
-        {
-            if (parser.current.length == 0)
-            {
-                errorAtCurrent("Can't create an empty string!");
-                return;
-            }
-            for(int i = 0; i < parser.current.length; i++)
-            {
-                emitByte((uint8_t)parser.current.start[i]); 
-                parser.current_location++;
-            }
-        }
-        else
-        {
-            int64_t temp = expression(NULL);
-            if (temp > 255 || temp < 0)
-            {
-                errorAtCurrent("Expression can't fit in one byte!");
-            }
-            
-            emitByte((uint8_t)(temp & 0xFF));
-            parser.current_location++;
-        }
-        advance();
     }
 }
 
@@ -727,59 +641,15 @@ static void wydeStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key, value;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            value.as_int = parser.current_location;
-            value.type = TYPE_INT;
-
-            addToTable(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
             free(label);
             errorAtCurrent("Symbol redefinition!");
         }
-    }
-
-    if (parser.current_location % 2)
-        parser.current_location++;
-    
-    while (!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
-    {
-        if (check(TOKEN_STRING))
-        {
-            if (parser.current.length == 0)
-            {
-                errorAtCurrent("Can't create an empty string!");
-                return;
-            }
-            for (int i = 0; i < parser.current.length; i++)
-            {
-                emitByte((uint8_t)parser.current.start[i]); 
-                parser.current_location++;
-            }
-        }
-        else
-        {
-            int64_t temp = expression(NULL);
-            if (temp > 65535 || temp < 0)
-            {
-                errorAtCurrent("Expression can't fit in two bytes!");
-            }
-            
-            emitByte((uint8_t)(temp >> 8 & 0xFF));
-            emitByte((uint8_t)(temp >> 16 & 0xFF));
-            parser.current_location++;
-        }
-        advance();
     }
 }
 
@@ -789,62 +659,16 @@ static void tetraStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key, value;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-
         uint64_t labelLocation = parser.current_location;
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            value.as_int = parser.current_location;
-            value.type = TYPE_INT;
-
-            addToTable(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
             free(label);
             errorAtCurrent("Symbol redefinition!");
         }
-    }
-    
-    while (parser.current_location % 4)
-        parser.current_location++;
-
-    while(!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
-    {
-        if(check(TOKEN_STRING))
-        {
-            if (parser.current.length == 0)
-            {
-                errorAtCurrent("Can't create an empty string!");
-                return;
-            }
-            for(int i = 0; i < parser.current.length; i++)
-            {
-                emitByte((uint8_t)parser.current.start[i]); 
-                parser.current_location++;
-            }
-        }
-        else
-        {
-            int64_t temp = expression(NULL);
-            if ((temp >> 32) > 0 || temp < 0)
-            {
-                errorAtCurrent("Expression can't fit in four byte!");
-            }
-            
-            emitByte((uint8_t)(temp >> 24 & 0xFF));
-            emitByte((uint8_t)(temp >> 16 & 0xFF));
-            emitByte((uint8_t)(temp >> 8 & 0xFF));
-            emitByte((uint8_t)(temp & 0xFF));
-            parser.current_location++;
-        }
-        advance();
     }
 }
 
@@ -854,68 +678,16 @@ static void octaStatement(char* label, uint64_t label_length)
 
     if (label != NULL)
     {
-        TableData key;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-
         uint64_t labelLocation = parser.current_location;
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
-            value.as_int = parser.current_location;
-            value.type = TYPE_INT;
-
-            addToTable(parser.locations, &key, &value); 
-
-            free(label); // add to table performs hard copy
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
             free(label);
             errorAtCurrent("Symbol redefinition!");
         }
-    }
-    
-    while (parser.current_location % 7)
-        parser.current_location++;
-
-    while(!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
-    {
-        if(check(TOKEN_STRING))
-        {
-            if (parser.current.length == 0)
-            {
-                errorAtCurrent("Can't create an empty string!");
-                return;
-            }
-            for(int i = 0; i < parser.current.length; i++)
-            {
-                emitByte((uint8_t)parser.current.start[i]); 
-                parser.current_location++;
-            }
-        }
-        else
-        {
-            int64_t temp = expression(NULL); // I'm not ok with, it should be an unsigned value 
-                                             // but I need to change some things first
-            
-            emitByte((uint8_t)(temp >> 56 & 0xFF));
-            emitByte((uint8_t)(temp >> 48 & 0xFF));
-            emitByte((uint8_t)(temp >> 40 & 0xFF));
-            emitByte((uint8_t)(temp >> 32 & 0xFF));
-            emitByte((uint8_t)(temp >> 24 & 0xFF));
-            emitByte((uint8_t)(temp >> 16 & 0xFF));
-            emitByte((uint8_t)(temp >> 8 & 0xFF));
-            emitByte((uint8_t)(temp & 0xFF));
-            parser.current_location++;
-        }
-        advance();
     }
 }
 
@@ -927,29 +699,13 @@ static void prefixStatement(char* label, uint64_t label_length) // I'll implemen
 
     if (label != NULL) // WIP
     {
-        TableData key;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
-
-
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!findInTable(parser.locations, label, label_length, NULL))
         {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
-            value.as_int = parser.current_location;
-            value.type = TYPE_INT;
-
-            addToTable(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
+            addToTable_uint64_t(parser.locations, label, label_length, parser.current_location); 
         }
         else 
         {
-            free(label); 
+            free(label); // if the label weren't taken we would have freed it when we call freeTable()
             errorAtCurrent("Symbol redefinition!");
         }
     }
@@ -959,9 +715,9 @@ static void labelStatement()
 {
     if(check(TOKEN_LABEL))
     {
-        char* label = (char*)malloc((parser.current.length + parser.prefix_length) * sizeof(char));
-        strncpy(label, parser.current_prefix, parser.prefix_length);
-        strncpy(label + parser.prefix_length, parser.current.start, parser.current.length);
+        char* label = (char*)malloc((parser.previous.length + parser.prefix_length) * sizeof(char));
+        strncpy(parser.current_prefix, label, parser.prefix_length);
+        strncpy(parser.previous.start, label + parser.prefix_length, parser.previous.length);
         advance();
 
         switch (parser.current.type)
@@ -1064,29 +820,7 @@ void initParser(char* output_file)
 
     for(int i = 0; i < 256; i++)
     {
-        TableData key, value;
-        
-        if (instructions[i].name == NULL) {
-            fprintf(stderr, "Error: instructions[%d].name is NULL\n", i);
-            exit(EXIT_FAILURE);
-        }
-
-        key.as_str.lexeme = strdup(instructions[i].name);
-
-        if (key.as_str.lexeme == NULL) {
-            fprintf(stderr, "Error: Failed to allocate memory for string key\n");
-            exit(EXIT_FAILURE);
-        }
-        
-        key.as_str.n = strlen(instructions[i].name);
-        key.type = TYPE_STR;
-       
-        value.as_int = i;
-        value.type = TYPE_INT;
-        
-        addToTable(&instr_indices, &key, &value);
-
-        free(key.as_str.lexeme);
+        addToTable_uint64_t(&instr_indices, instructions[i].name, strlen(instructions[i].name), i);
     }
 }
 
