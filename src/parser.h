@@ -6,6 +6,13 @@
 #include "trie.h"
 #include "table.h"
 
+typedef struct 
+{
+    uint64_t* values;
+    uint64_t size;
+    uint64_t top;
+} Stack;
+
 typedef struct
 {
     Token current;
@@ -13,13 +20,26 @@ typedef struct
     bool panic_mode;
     Table* locations; // you can jump to these
     Table* aliases; // but not to these
-    uint64_t register_values[16];
     FILE* fp;
-    uint8_t general_reg;
-    char current_prefix[256];
+    char current_prefix[1024];
     uint8_t prefix_length;
+    uint8_t general_reg;
+    uint64_t register_values[16];
     uint64_t current_location; // number of bytes
+    
+    // all of these are for labels of the type: *B, *H, *F, where * is a digit from 0 to 9
+    Stack* label0;
+    Stack* label1;
+    Stack* label2;
+    Stack* label3;
+    Stack* label4;
+    Stack* label5;
+    Stack* label6;
+    Stack* label7;
+    Stack* label8;
+    Stack* label9;
 } Parser;
+
 
 extern Parser parser;
 

@@ -8,6 +8,49 @@
 Parser parser;
 Table instr_indices;
 
+static void initStack(Stack* s)
+{
+    s->size = 0;
+    s->top = 0;
+    s->values = NULL;
+}
+
+static void freeStack(Stack* s)
+{
+    free(s->values);
+    initStack(s);
+}
+
+static void addToStack(Stack* s, uint64_t value)
+{
+    if (s->top >= s->size)
+    {
+        uint64_t new_size = (s->size == 0 ? 8 : s->size * 2);
+
+        uint64_t* new_list = (uint64_t*)malloc(new_size * sizeof(uint64_t));
+        for (int i = 0; i < s->size; i++)
+        {
+            new_list[i] = s->values[i];
+        }
+        s->size = new_size;
+
+        free(s->values);
+        s->values = new_list;
+    }
+
+    s->values[s->top++] = value;
+}
+
+static uint64_t popStack(Stack* s)
+{
+    return s->values[(s->top--) - 1];
+}
+
+static uint64_t peekStack(Stack* s)
+{
+    return s->values[s->top - 1];
+}
+
 static void advance();
 static int64_t expression(bool* isImmediate);
 static bool isAtEnd();
@@ -923,36 +966,24 @@ static void octaStatement(char* label, uint64_t label_length)
 static void prefixStatement(char* label, uint64_t label_length) // I'll implement these when everything else works :)
 {
     advance(); // consume TOKEN_PREFIX
-    parser.prefix_length = parser.previous.length; 
-    strncpy(parser.current_prefix, parser.previous.start, parser.prefix_length); // change the prefix
-
-    if (label != NULL) // WIP
+    /*
+    if (parser.previous.start[parser.previous.length - 1] != ':')
     {
-        TableData key;
-        key.as_str.lexeme = label;
-        key.as_str.n = label_length;
-        key.type = TYPE_STR;
+        errorAt(&parser.previous, "Prefix label must end with a ':'!"); // actually not true, but for now this is how it works
+    }
+    */
+   
+    uint64_t previous_prefix_length = parser.prefix_length;
+    parser.prefix_length = parser.previous.length;
 
-
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
-        {
-            TableData key, value;
-            key.as_str.lexeme = label;
-            key.as_str.n = label_length;
-            key.type = TYPE_STR;
-
-            value.as_int = parser.current_location;
-            value.type = TYPE_INT;
-
-            addToTable(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
-        }
-        else 
-        {
-            free(label); 
-            errorAtCurrent("Symbol redefinition!");
-        }
+    if (parser.prefix_length == 1) // then prefix is ':' and the prefix is reset
+    {
+        strncpy(parser.current_prefix, parser.previous.start, parser.prefix_length);
+    }
+    else // it concatenates to the previously active prefix 
+    {
+        strncpy(parser.current_prefix + previous_prefix_length, parser.previous.start, parser.prefix_length); // change the prefix
+        parser.prefix_length = previous_prefix_length + parser.prefix_length;
     }
 }
 
@@ -961,8 +992,50 @@ static void labelStatement()
     if(check(TOKEN_LABEL))
     {
         char* label = (char*)malloc((parser.current.length + parser.prefix_length) * sizeof(char));
-        strncpy(label, parser.current_prefix, parser.prefix_length);
-        strncpy(label + parser.prefix_length, parser.current.start, parser.current.length);
+        if (parser.current.length == 2) // check if it's a label of the form dH, dB, dF 
+                                        // I still don't know if the prefix affects resolution for these kinds of labels 
+                                        // I think so? After all, they are symbols. But I need to verify it.
+        {
+            if (memcmp(parser.current.start, "0", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "1", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "2", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "3", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "4", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "5", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "6", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "7", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "8", 1))
+            {
+            }
+            else if (memcmp(parser.current.start, "9", 1))
+            {
+            }
+        }
+        if (parser.current.start[0] != ':')
+        {
+            strncpy(label, parser.current_prefix, parser.prefix_length);
+            strncpy(label + parser.prefix_length, parser.current.start, parser.current.length);
+        }
+        else 
+        {
+            strncpy(label, parser.current.start, parser.current.length);
+        }
         advance();
 
         switch (parser.current.type)
@@ -989,7 +1062,7 @@ static void labelStatement()
                 octaStatement(label, parser.current.length);
                 break;
             case TOKEN_PREFIX:
-                prefixStatement(label, parser.current.length);
+                errorAtCurrent("Label field should be blank!");
                 break;
             case TOKEN_INSTRUCTION:
                 instructionStatement(label, parser.current.length);
@@ -1063,6 +1136,17 @@ void initParser(char* output_file)
     initTable(parser.locations);
     initTable(parser.aliases);
 
+    initStack(parser.label0);
+    initStack(parser.label1);
+    initStack(parser.label2);
+    initStack(parser.label3);
+    initStack(parser.label4);
+    initStack(parser.label5);
+    initStack(parser.label6);
+    initStack(parser.label7);
+    initStack(parser.label8);
+    initStack(parser.label9);
+
     for(int i = 0; i < 256; i++)
     {
         TableData key, value;
@@ -1099,6 +1183,17 @@ void freeParser()
    
     free(parser.aliases);
     free(parser.locations);
+
+    freeStack(parser.label0);
+    freeStack(parser.label1);
+    freeStack(parser.label2);
+    freeStack(parser.label3);
+    freeStack(parser.label4);
+    freeStack(parser.label5);
+    freeStack(parser.label6);
+    freeStack(parser.label7);
+    freeStack(parser.label8);
+    freeStack(parser.label9);
 
     fclose(parser.fp);
 }
