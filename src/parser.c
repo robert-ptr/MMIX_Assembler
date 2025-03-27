@@ -996,35 +996,18 @@ static void labelStatement()
                                         // I still don't know if the prefix affects resolution for these kinds of labels 
                                         // I think so? After all, they are symbols. But I need to verify it.
         {
-            if (memcmp(parser.current.start, "0", 1))
+            if (parser.current.start[0] >= '0' && parser.current.start[0] <= '9')
             {
-            }
-            else if (memcmp(parser.current.start, "1", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "2", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "3", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "4", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "5", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "6", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "7", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "8", 1))
-            {
-            }
-            else if (memcmp(parser.current.start, "9", 1))
-            {
+                if (parser.current.start[1] == 'h')
+                {
+                    addToStack(parser.local_labels[parser.current.start[0] - '0'], parser.current_location);
+                }
+                else if (parser.current.start[1] == 'b')
+                {
+                }
+                else if (parser.current.start[1] == 'f')
+                {
+                }
             }
         }
         if (parser.current.start[0] != ':')
@@ -1136,16 +1119,8 @@ void initParser(char* output_file)
     initTable(parser.locations);
     initTable(parser.aliases);
 
-    initStack(parser.label0);
-    initStack(parser.label1);
-    initStack(parser.label2);
-    initStack(parser.label3);
-    initStack(parser.label4);
-    initStack(parser.label5);
-    initStack(parser.label6);
-    initStack(parser.label7);
-    initStack(parser.label8);
-    initStack(parser.label9);
+    for (int i = 0; i < 10; i++)
+        initStack(parser.local_labels[i]);
 
     for(int i = 0; i < 256; i++)
     {
@@ -1184,16 +1159,8 @@ void freeParser()
     free(parser.aliases);
     free(parser.locations);
 
-    freeStack(parser.label0);
-    freeStack(parser.label1);
-    freeStack(parser.label2);
-    freeStack(parser.label3);
-    freeStack(parser.label4);
-    freeStack(parser.label5);
-    freeStack(parser.label6);
-    freeStack(parser.label7);
-    freeStack(parser.label8);
-    freeStack(parser.label9);
+    for (int i = 0; i < 10; i++)
+        freeStack(parser.local_labels[i]);
 
     fclose(parser.fp);
 }

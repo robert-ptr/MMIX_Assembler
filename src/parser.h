@@ -28,16 +28,7 @@ typedef struct
     uint64_t current_location; // number of bytes
     
     // all of these are for labels of the type: *B, *H, *F, where * is a digit from 0 to 9
-    Stack* label0;
-    Stack* label1;
-    Stack* label2;
-    Stack* label3;
-    Stack* label4;
-    Stack* label5;
-    Stack* label6;
-    Stack* label7;
-    Stack* label8;
-    Stack* label9;
+    Stack* local_labels[10];
 } Parser;
 
 
