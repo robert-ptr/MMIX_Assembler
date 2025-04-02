@@ -159,16 +159,6 @@ static bool isRightParen()
     return check(TOKEN_RPAREN);
 }
 
-static char* getTokenString(Token* token)
-{
-    int word_length = token->length + 1; // +1 for '\0' 
-    char* word = (char*)malloc(word_length * sizeof(char));
-    strncpy(word, token->start, token->length);
-    word[token->length] = '\0';
-
-    return word;
-}
-
 static void emitByte(uint8_t byte)
 {
     fwrite(&byte, sizeof(uint8_t), 1, parser.fp);
@@ -186,6 +176,9 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
 {
     if((op1 >> 8) + (op2 >> 8) + (op3 >> 8) != 0 )
     {
+#ifdef MMIX_PARSER_DEBUG
+        printf("%d %d %d\n", op1, op2, op3);
+#endif
         error("Arguments of wrong size!");
         return false;
     }
@@ -195,9 +188,12 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
 
 static int64_t symbol(bool* isImmediate)
 {
-    char* symbol = getTokenString(&parser.current);
+    char* symbol = (char*)malloc((parser.current.length + parser.prefix_length + 1) * sizeof(char));
+    strncpy(symbol, parser.current_prefix, parser.prefix_length);
+    strncpy(symbol + parser.prefix_length, parser.current.start, parser.current.length);
+    symbol[parser.current.length + parser.prefix_length] = '\0';
     stringToLowercase(symbol);
-    
+
     TableData key;
     key.as_str.lexeme = symbol;
     key.as_str.n = strlen(symbol);
@@ -233,7 +229,9 @@ static int64_t symbol(bool* isImmediate)
 
 static int64_t number()
 {
-    char* str = getTokenString(&parser.current);
+    char* str = (char*)malloc((parser.current.length + 1) * sizeof(char));
+    strncpy(str, parser.current.start, parser.current.length);
+    str[parser.current.length] = '\0';
     int64_t n = parseNumber(str);
     free(str);
     return n;
@@ -300,7 +298,11 @@ static int64_t term(bool* isImmediate)
     }
     else if(check(TOKEN_CONSTANT))
     {
-        a = parseHexNumber(getTokenString(&parser.current));
+        char* hex = (char*)malloc((parser.current.length + 1) * sizeof(char));
+        hex[parser.current.length] = '\0';
+        strncpy(hex, parser.current.start, parser.current.length);
+        a = parseHexNumber(hex);
+        free(hex);
     }
     else if(check(TOKEN_LABEL))
     {
@@ -554,7 +556,10 @@ static void instructionStatement(char* label, uint64_t label_length)
 
     }
 
-    char* instruction = getTokenString(&parser.current);
+    char* instruction = (char*)malloc((parser.current.length + 1) * sizeof(char));
+    instruction[parser.current.length] = '\0';
+    strncpy(instruction, parser.current.start, parser.current.length);
+
     stringToLowercase(instruction);
     TableData emitValue, key;
     key.as_str.lexeme = instruction;
@@ -606,6 +611,7 @@ static void isStatement(char* label, uint64_t label_length)
         key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
+        printf("HELLO");
 
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
@@ -614,6 +620,7 @@ static void isStatement(char* label, uint64_t label_length)
             value.as_int = label_value;
             value.type = TYPE_INT;
 
+            printf("HELLO");
             addToTable(parser.aliases, &key, &value); 
 
             free(label); // add to table performs hard copy
@@ -1120,7 +1127,10 @@ void initParser(char* output_file)
     initTable(parser.aliases);
 
     for (int i = 0; i < 10; i++)
+    {
+        parser.local_labels[i] = (Stack*)malloc(sizeof(Stack));
         initStack(parser.local_labels[i]);
+    }
 
     for(int i = 0; i < 256; i++)
     {
@@ -1160,7 +1170,10 @@ void freeParser()
     free(parser.locations);
 
     for (int i = 0; i < 10; i++)
+    {
         freeStack(parser.local_labels[i]);
+        free(parser.local_labels[i]);
+    }
 
     fclose(parser.fp);
 }

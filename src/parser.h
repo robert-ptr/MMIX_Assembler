@@ -6,6 +6,8 @@
 #include "trie.h"
 #include "table.h"
 
+#define MMIX_PARSER_DEBUG
+
 typedef struct 
 {
     uint64_t* values;
