@@ -412,7 +412,7 @@ static int64_t strongOperators(bool* isImmediate)
     return a;
 }
 
-static int64_t expression(bool* isImmediate)
+static int64_t expression(bool* isImmediate) // instruction arguments may be expressions that need to be evaluated
 {
     // weak binary operators: +,-,|,^
     bool aIsImmediate = false;
@@ -480,7 +480,7 @@ static int64_t expression(bool* isImmediate)
     return a;
 }
 
-static uint32_t commaStatement(int index)
+static uint32_t commaStatement(int index) // the arguments to an instruction
 {
     bool isImmediate = false;
     uint32_t operand1 = expression(&isImmediate);
@@ -549,7 +549,11 @@ static uint32_t commaStatement(int index)
     return operand1 + (operand2 << 8) + (operand3 << 16);
 }
 
-static void instructionStatement(char* label, uint64_t label_length)
+static void instructionStatement(char* label, uint64_t label_length) // fundamental block of the assembler
+                                                                     // each MMIX program is basically a list of instructions
+                                                                     // and some of them have labels in front
+                                                                     // IS,GREG,PREFIX,BYTE,WYDE,TETRA,OCTA,LOC,LOCAL don't count as instructions 
+                                                                     // they are more like macros
 {
     if (label != NULL)
     {
@@ -599,7 +603,7 @@ static void instructionStatement(char* label, uint64_t label_length)
     free(instruction);
 }
 
-static void isStatement(char* label, uint64_t label_length)
+static void isStatement(char* label, uint64_t label_length) // MMIXAL statement that associates a name with a value
 {
     advance(); // consume TOKEN_IS 
 
@@ -611,7 +615,6 @@ static void isStatement(char* label, uint64_t label_length)
         key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
-        printf("HELLO");
 
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
         {
@@ -620,7 +623,6 @@ static void isStatement(char* label, uint64_t label_length)
             value.as_int = label_value;
             value.type = TYPE_INT;
 
-            printf("HELLO");
             addToTable(parser.aliases, &key, &value); 
 
             free(label); // add to table performs hard copy
@@ -641,7 +643,7 @@ static void isStatement(char* label, uint64_t label_length)
         advance();
 }
 
-static void gregStatement(char* label, uint64_t label_length)
+static void gregStatement(char* label, uint64_t label_length) // MMIXAL statement to make a new general register available
 {
     advance(); // consume TOKEN_GREG
 
@@ -685,7 +687,9 @@ static void gregStatement(char* label, uint64_t label_length)
     }
 }
 
-static void locStatement(char* label, uint64_t label_length)
+static void locStatement(char* label, uint64_t label_length) // MMIXAL statement that changes the value of the current location 
+                                                             // it's not a jump, it's just that the following instructions will have a different
+                                                             // location address
 {
     advance(); // consume TOKEN_LOC
 
@@ -715,7 +719,7 @@ static void locStatement(char* label, uint64_t label_length)
     }
 }
 
-static void byteStatement(char* label, uint64_t label_length)
+static void byteStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 1 byte at a time
 {
     advance(); // consume TOKEN_BYTE
 
@@ -772,7 +776,7 @@ static void byteStatement(char* label, uint64_t label_length)
     }
 }
 
-static void wydeStatement(char* label, uint64_t label_length)
+static void wydeStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 2 bytes at a time
 {
     advance(); // consume TOKEN_WYDE
 
@@ -834,7 +838,7 @@ static void wydeStatement(char* label, uint64_t label_length)
     }
 }
 
-static void tetraStatement(char* label, uint64_t label_length)
+static void tetraStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 4 bytes at a time
 {
     advance(); // consume TOKEN_TETRA
 
@@ -844,7 +848,6 @@ static void tetraStatement(char* label, uint64_t label_length)
         key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
-
 
         uint64_t labelLocation = parser.current_location;
         if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
@@ -899,7 +902,7 @@ static void tetraStatement(char* label, uint64_t label_length)
     }
 }
 
-static void octaStatement(char* label, uint64_t label_length)
+static void octaStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 8 bytes at a time
 {
     advance(); // consume TOKEN_OCTA
 
@@ -953,7 +956,7 @@ static void octaStatement(char* label, uint64_t label_length)
         }
         else
         {
-            int64_t temp = expression(NULL); // I'm not ok with, it should be an unsigned value 
+            int64_t temp = expression(NULL); // I'm not ok with this, it should be an unsigned value 
                                              // but I need to change some things first
             
             emitByte((uint8_t)(temp >> 56 & 0xFF));
@@ -970,7 +973,7 @@ static void octaStatement(char* label, uint64_t label_length)
     }
 }
 
-static void prefixStatement(char* label, uint64_t label_length) // I'll implement these when everything else works :)
+static void prefixStatement(char* label, uint64_t label_length) // used to prevent naming conflicts, as the name says, a prefix is added to the names of labels
 {
     advance(); // consume TOKEN_PREFIX
     /*
@@ -996,7 +999,7 @@ static void prefixStatement(char* label, uint64_t label_length) // I'll implemen
 
 static void labelStatement()
 {
-    if(check(TOKEN_LABEL))
+    if(check(TOKEN_LABEL)) // there is a label on this line
     {
         char* label = (char*)malloc((parser.current.length + parser.prefix_length) * sizeof(char));
         if (parser.current.length == 2) // check if it's a label of the form dH, dB, dF 
@@ -1017,7 +1020,7 @@ static void labelStatement()
                 }
             }
         }
-        if (parser.current.start[0] != ':')
+        if (parser.current.start[0] != ':') // add the prefix to the label
         {
             strncpy(label, parser.current_prefix, parser.prefix_length);
             strncpy(label + parser.prefix_length, parser.current.start, parser.current.length);
@@ -1105,7 +1108,7 @@ static void semicolonStatement() // if you write macros/instructions on the same
 
     labelStatement();
 
-    while(check(TOKEN_SEMICOLON))
+    while(check(TOKEN_SEMICOLON)) // there is another statement on the same line
     {
         advance(); // consume semicolon
         labelStatement();
@@ -1178,11 +1181,11 @@ void freeParser()
     fclose(parser.fp);
 }
 
-void parse()
+void parse() // main parse function
 {
-    advance();
+    advance(); // makes sure parser.current is not NULL
 
-    while(!check(TOKEN_EOF))
+    while(!check(TOKEN_EOF)) // while not at the end of the program, continue
     {
         semicolonStatement();
     }
