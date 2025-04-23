@@ -480,53 +480,126 @@ static int64_t expression(bool* isImmediate) // instruction arguments may be exp
     return a;
 }
 
-static uint32_t commaStatement(int index) // the arguments to an instruction
+static void instructionStatement(char* label, uint64_t label_length) // fundamental block of the assembler
+                                                                     // each MMIX program is basically a list of instructions
+                                                                     // and some of them have labels in front
+                                                                     // IS,GREG,PREFIX,BYTE,WYDE,TETRA,OCTA,LOC,LOCAL don't count as instructions 
+                                                                     // they are more like macros
 {
-    bool isImmediate = false;
-    uint32_t operand1 = expression(&isImmediate);
+    if (label != NULL) // will be used for control flow
+    {
 
-    if (parser.panic_mode)
-        return 0;
+    }
 
-    uint32_t operand2 = 0;
-    uint32_t operand3 = 0;
+    advance(); // consume TOKEN_INSTRUCTION
+    
+    bool op1_immediate = false;
+    bool op2_immediate = false;
+    bool op3_immediate = false;
+
+    Token instr_token = parser.previous;
+
+    uint8_t opcode;
+
+    char* instruction = (char*)malloc((parser.previous.length + 1) * sizeof(char));
+    instruction[parser.previous.length] = '\0';
+    strncpy(instruction, parser.previous.start, parser.previous.length);
+
+    stringToLowercase(instruction);
+    TableData emitValue, key;
+    key.as_str.lexeme = instruction;
+    key.as_str.n = strlen(instruction);
+    key.type = TYPE_STR;
+
+    
+    if(findInTable(&instr_indices, &key, &emitValue))
+    {
+        opcode = (uint8_t)emitValue.as_int;
+    }
+    else
+    {
+        errorAt(&instr_token, "Unknown instruction.");
+        free(instruction);
+        return;
+    }
+
+    int64_t operand1 = expression(&op1_immediate);
+    int64_t operand2 = 0;
+    int64_t operand3 = 0;
     uint8_t arity = 1;
-
+    
+    if (operand1 < 0) // something went wrong;
+    {
+        free(instruction);
+        return;
+    }
+    
     if(check(TOKEN_COMMA)) // 2 arguments
     {
         advance();
-        operand2 = expression(&isImmediate);
+        operand2 = expression(&op2_immediate);
 
-        if (parser.panic_mode)
-            return 0;
+        if (operand2 < 0) // something went wrong
+        {
+            free(instruction);
+            return;
+        }
 
         arity++;
     }
     if(check(TOKEN_COMMA)) // 3 arguments
     {
         advance();
-        operand3 = expression(&isImmediate);
-        
-        if (parser.panic_mode)
-            return 0;
+        operand3 = expression(&op3_immediate);
+
+        if (operand3 < 0) // something went wrong 
+        {
+            free(instruction);
+            return;
+        }
 
         arity++;
     }
-  
-    for (int i = 0; i < 3; i++)
-    {
-        if(instructions[index].arity[i] == 0)
-            errorAtCurrent("Wrong number of arguments!");
-        else if(instructions[index].arity[i] == arity)
-            break;
-    }
 
+    if(arity == 3 && (instructions[opcode].description >> 15) & 0b1) // the instruction accepts 3 arguments
+        ;
+    else if (arity == 2 && (instructions[opcode].description >> 14) & 0b1) // instruction accepts 2 arguments 
+        ;
+    else if (arity == 1)
+    {
+        if (strcmp(instructions[opcode].name, "jmp") &&
+            strcmp(instructions[opcode].name, "trap") &&
+            strcmp(instructions[opcode].name, "trip") && 
+            strcmp(instructions[opcode].name, "resume") &&
+            strcmp(instructions[opcode].name, "unsave") &&
+            strcmp(instructions[opcode].name, "sync"))  // strcmp returns 0 if there is a match  
+        {    
+            errorAt(&instr_token, "Wrong number of arguments for instruction!");
+            free(instruction);
+            return;
+        }
+    }
+    else 
+    {
+        errorAt(&instr_token, "Wrong number of arguments for instruction!");
+        free(instruction);
+        return;
+    }
+    
+    
+    
     if(check(TOKEN_COMMA)) // wrong number of arguments
     {
-        errorAtCurrent("Wrong number of arguments! Maximum 3.");
-        return 0;
+        free(instruction);
+        errorAt(&instr_token, "Wrong number of arguments! Maximum 3.");
+        return;
     }
-
+    
+    if (strncmp(instr_token.start, "set", instr_token.length) == 0 && op2_immediate != true)
+    {
+        opcode = 0xC0;
+    }
+    
     if(arity == 1)
     {
         operand2 = operand1 >> 8 & 0xFF;
@@ -539,68 +612,32 @@ static uint32_t commaStatement(int index) // the arguments to an instruction
         operand2 >>= 8;
     }
 
-    checkOperandSizes(operand1, operand2, operand3);
+    if (!checkOperandSizes(operand1, operand2, operand3))
+    {
+        free(instruction);
+        return;
+    }
 
     while (!check(TOKEN_ENDLINE) && !check(TOKEN_EOF) && !check(TOKEN_SEMICOLON)) // there can be comments right after the instruction
     {
         advance();
     }
 
-    return operand1 + (operand2 << 8) + (operand3 << 16);
-}
-
-static void instructionStatement(char* label, uint64_t label_length) // fundamental block of the assembler
-                                                                     // each MMIX program is basically a list of instructions
-                                                                     // and some of them have labels in front
-                                                                     // IS,GREG,PREFIX,BYTE,WYDE,TETRA,OCTA,LOC,LOCAL don't count as instructions 
-                                                                     // they are more like macros
-{
-    if (label != NULL)
-    {
-
-    }
-
-    char* instruction = (char*)malloc((parser.current.length + 1) * sizeof(char));
-    instruction[parser.current.length] = '\0';
-    strncpy(instruction, parser.current.start, parser.current.length);
-
-    stringToLowercase(instruction);
-    TableData emitValue, key;
-    key.as_str.lexeme = instruction;
-    key.as_str.n = strlen(instruction);
-    key.type = TYPE_STR;
-
-    uint8_t bytes[4];
-    
-    if(findInTable(&instr_indices, &key, &emitValue))
-    {
-        bytes[0] = (uint8_t)emitValue.as_int;
-    }
-    else
-    {
-        errorAtCurrent("Unknown instruction.");
-    }
-
-    advance(); // consume TOKEN_INSTRUCTION
-    
-    uint32_t temp = commaStatement(bytes[0]);
-    bytes[1] = temp & 0xFF;
-    bytes[2] = temp >> 8 & 0xFF;
-    bytes[3] = temp >> 16;
     if (parser.panic_mode)
     {
         free(instruction);
         return;
     }
 
-    for (int i = 0; i < 4; i++)
-    {
-        emitByte(bytes[i]);
-    }
-
-    advance(); // consume TOKEN_ENDLINE
+    if (check(TOKEN_ENDLINE)) // consume endline
+        advance();
 
     free(instruction);
+
+    emitByte(opcode);
+    emitByte(operand1);
+    emitByte(operand2);
+    emitByte(operand3);
 }
 
 static void isStatement(char* label, uint64_t label_length) // MMIXAL statement that associates a name with a value
@@ -1029,7 +1066,7 @@ static void labelStatement()
         {
             strncpy(label, parser.current.start, parser.current.length);
         }
-        advance();
+        advance(); // consume label
 
         switch (parser.current.type)
         {
@@ -1063,6 +1100,8 @@ static void labelStatement()
             default:
                 errorAtCurrent("Invalid token type.");
         }
+
+        free(label);
     }
     else
     {
@@ -1110,7 +1149,6 @@ static void semicolonStatement() // if you write macros/instructions on the same
 
     while(check(TOKEN_SEMICOLON)) // there is another statement on the same line
     {
-        advance(); // consume semicolon
         labelStatement();
     }
 }
@@ -1135,7 +1173,7 @@ void initParser(char* output_file)
         initStack(parser.local_labels[i]);
     }
 
-    for(int i = 0; i < 256; i++)
+    for(int i = 0; i < 150; i++)
     {
         TableData key, value;
         
@@ -1154,7 +1192,7 @@ void initParser(char* output_file)
         key.as_str.n = strlen(instructions[i].name);
         key.type = TYPE_STR;
        
-        value.as_int = i;
+        value.as_int = instructions[i].description & 0xFF;
         value.type = TYPE_INT;
         
         addToTable(&instr_indices, &key, &value);
@@ -1177,7 +1215,7 @@ void freeParser()
         freeStack(parser.local_labels[i]);
         free(parser.local_labels[i]);
     }
-
+   
     fclose(parser.fp);
 }
 

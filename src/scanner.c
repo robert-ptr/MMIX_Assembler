@@ -41,7 +41,7 @@ static Token makeToken(TokenType type)
     token.start = scanner.start;
     token.line = scanner.line;
     token.length = (int32_t)(scanner.current - scanner.start);
-    token.offset = scanned_chars + 1;
+    token.offset = scanned_chars;
     token.type = type;
 
     scanned_chars += token.length;
@@ -143,7 +143,7 @@ void initScanner(const char* source)
     scanner.line = 1;
 
     scanner.instruction_trie = getNode();
-    for(int i = 0; i < 256; i++)
+    for(int i = 0; i < 150; i++)
     {
         insertNode(scanner.instruction_trie, instructions[i].name, true);
     }
@@ -256,6 +256,7 @@ Token scanToken()
     {
         case '\n':
             scanner.line++;
+            scanned_chars = 0;
             return makeToken(TOKEN_ENDLINE);    
         case ',': return makeToken(TOKEN_COMMA);
         case '$': return makeToken(TOKEN_GENERAL_REGISTER);
