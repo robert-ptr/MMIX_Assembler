@@ -242,47 +242,50 @@ static int64_t term(bool* isImmediate)
     // possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
     // unary operators: +, -, ~, $
     int a;
-    if(isUnary())
+    if(isUnary)
     {
-        TokenType token_type = parser.current.type;
-        advance();
-        a = term(isImmediate);
-
-        if(parser.panic_mode) // something went wrong in term()
-            return -1;
-
-        switch(token_type)
+        while(isUnary())
         {
-            case TOKEN_PLUS:
-                if (!isImmediate)
-                {
-                    errorAtCurrent("Can only apply '+' unary operator to immediate value.");
-                    return -1;
-                }
-                break;
-            case TOKEN_MINUS:
-                if (!isImmediate)
-                {
-                    errorAtCurrent("Can only apply '-' unary operator to immediate value.");
-                    return -1;
-                }
-                a = -a;
-                break;
-            case TOKEN_COMPLEMENT:
-                if (!isImmediate)
-                {
-                    errorAtCurrent("Can only apply '~' unary operator to immediate value.");
-                    return -1;
-                }
-                a = ~a;
-                break;
-            case TOKEN_GENERAL_REGISTER:
-                *isImmediate = false;
-                a = number();
-                break;
-            default:
-                errorAtCurrent("Unknown term!");
+            TokenType token_type = parser.current.type;
+            advance();
+            a = term(isImmediate);
+
+            if(parser.panic_mode) // something went wrong in term()
                 return -1;
+
+            switch(token_type)
+            {
+                case TOKEN_PLUS:
+                    if (!isImmediate)
+                    {
+                        errorAtCurrent("Can only apply '+' unary operator to immediate value.");
+                        return -1;
+                    }
+                    break;
+                case TOKEN_MINUS:
+                    if (!isImmediate)
+                    {
+                        errorAtCurrent("Can only apply '-' unary operator to immediate value.");
+                        return -1;
+                    }
+                    a = -a;
+                    break;
+                case TOKEN_COMPLEMENT:
+                    if (!isImmediate)
+                    {
+                        errorAtCurrent("Can only apply '~' unary operator to immediate value.");
+                        return -1;
+                    }
+                    a = ~a;
+                    break;
+                case TOKEN_GENERAL_REGISTER:
+                    *isImmediate = false;
+                    a = number();
+                    break;
+                default:
+                    errorAtCurrent("Unknown term!");
+                    return -1;
+            }
         }
     }
     else if(check(TOKEN_LPAREN))
@@ -332,7 +335,7 @@ static int64_t strongOperators(bool* isImmediate)
     advance();
     bool bIsImmediate = false;
     int32_t b;
-    if(isStrongOperator())
+    while(isStrongOperator())
     {
         *isImmediate = true;
         switch(parser.current.type)
@@ -488,7 +491,26 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
 {
     if (label != NULL) // will be used for control flow
     {
+        TableData key, value;
+        key.as_str.lexeme = label;
+        key.as_str.n = label_length;
+        key.type = TYPE_STR;
 
+
+        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        {
+            value.as_int = parser.current_location;
+            value.type = TYPE_INT;
+
+            addToTable(parser.locations, &key, &value);
+
+            free(label); // add to table performs hard copy
+        }
+        else 
+        {
+            free(label);
+            errorAtCurrent("Symbol redefinition!");
+        }
     }
 
     advance(); // consume TOKEN_INSTRUCTION
@@ -638,6 +660,7 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
     emitByte(operand1);
     emitByte(operand2);
     emitByte(operand3);
+    parser.current_location += 4;
 }
 
 static void isStatement(char* label, uint64_t label_length) // MMIXAL statement that associates a name with a value
@@ -869,7 +892,7 @@ static void wydeStatement(char* label, uint64_t label_length) // MMIXAL statemen
             
             emitByte((uint8_t)(temp >> 8 & 0xFF));
             emitByte((uint8_t)(temp >> 16 & 0xFF));
-            parser.current_location++;
+            parser.current_location += 2;
         }
         advance();
     }
@@ -933,7 +956,7 @@ static void tetraStatement(char* label, uint64_t label_length) // MMIXAL stateme
             emitByte((uint8_t)(temp >> 16 & 0xFF));
             emitByte((uint8_t)(temp >> 8 & 0xFF));
             emitByte((uint8_t)(temp & 0xFF));
-            parser.current_location++;
+            parser.current_location += 4;
         }
         advance();
     }
@@ -1004,7 +1027,7 @@ static void octaStatement(char* label, uint64_t label_length) // MMIXAL statemen
             emitByte((uint8_t)(temp >> 16 & 0xFF));
             emitByte((uint8_t)(temp >> 8 & 0xFF));
             emitByte((uint8_t)(temp & 0xFF));
-            parser.current_location++;
+            parser.current_location += 8;
         }
         advance();
     }
