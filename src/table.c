@@ -115,7 +115,7 @@ static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t 
             }
         }
 
-        index = (index + 1) % size;
+        index = (index + 1) & (size - 1);
     }
 }
 
