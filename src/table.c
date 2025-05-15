@@ -73,7 +73,7 @@ static uint64_t hashFunc(TableData* s)
 
 static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t hash)
 {
-    uint64_t index = hash % size;
+    uint64_t index = hash & (size - 1); // basically hash % size but faster
     for (;;)
     {
         Entry* entry = &entries[index];
