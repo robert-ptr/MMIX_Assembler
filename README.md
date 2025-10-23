@@ -8,9 +8,6 @@ MMIX is a 64-bit RISC architecture designed by Donald Knuth as a replacement for
 1. An **assembler** that translates MMIX assembly code into executable binary format
 2. A **simulator** that executes the assembled MMIX programs
 
-## Project Status 🚧
-This project is currently **unfinished** and is a **work in progress**. While the core functionality is implemented, it requires further development, testing, and refinement.
-
 ### What’s Left to Do
 - **Testing**: The project needs more rigorous testing.
 - **Documentation**: The codebase requires better documentation and comments.
