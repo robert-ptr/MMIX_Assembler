@@ -74,62 +74,64 @@ RunningTime times[256] ={   {.oopsies=5 , .mems=0}, {.oopsies=1 , .mems=0}, {.oo
                             {.oopsies=3 , .mems=0}, {.oopsies=5 , .mems=0}, {.oopsies=1 , .mems=20}, {.oopsies=1 , .mems=20}, // Fx
                             {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0}, {.oopsies=1 , .mems=0 }, {.oopsies=5 , .mems=0 }};// Fx
 
-static uint64_t add64(uint64_t a, uint64_t b) // done to avoid overflow
+static uint64_t add64(uint64_t a, uint64_t b) // fixed to handle carry correctly
 {
-    uint32_t p1 = a >> 32;
-    uint32_t p2 = a & 0xFFFFFFFF;
-    uint32_t p3 = b >> 32;
-    uint32_t p4 = b & 0xFFFFFFFF;
+    uint32_t p1 = a >> 32;          // high a
+    uint32_t p2 = a & 0xFFFFFFFF;    // low a
+    uint32_t p3 = b >> 32;          // high b
+    uint32_t p4 = b & 0xFFFFFFFF;    // low b
 
-    uint64_t _result1 = p1 + p3; // max 33 bits
-    uint64_t _result2 = (p2 + p4 + (_result1 >> 32)) & 0xFFFFFFFF; // max 33 bits
+    uint64_t _result1 = (uint64_t)p2 + p4; 
+    
+    uint64_t _result2 = (uint64_t)p1 + p3 + (_result1 >> 32); 
+
     _result1 &= 0xFFFFFFFF;
     return _result1 | (_result2 << 32);
 }
 
 static uint64_t mul64(uint64_t a, uint64_t b, uint64_t* overflow)
 {
-    uint32_t p1 = a >> 32;
-    uint32_t p2 = a & 0xFFFFFFFF;
-    uint32_t p3 = b >> 32;
-    uint32_t p4 = b & 0xFFFFFFFF;
+    uint32_t p1 = a >> 32;          // a_high
+    uint32_t p2 = a & 0xFFFFFFFF;    // a_low
+    uint32_t p3 = b >> 32;          // b_high
+    uint32_t p4 = b & 0xFFFFFFFF;    // b_low
 
-    uint64_t _result1 = p2 * p4; // smallest, represents a part of the last 64 bits
-    uint64_t _result2 = p2 * p3; // 32-96 both
-    uint64_t _result3 = p2 * p4; // 32-96 both
-    uint64_t _result4 = p1 * p3; // biggest, represents a part of the first 64 bits
-                     
-    if(_result4 >> 32 == 0)
-    {
-        *overflow = 0;
+    uint64_t _result1 = (uint64_t)p2 * p4; // Low-Low
+    uint64_t _result2 = (uint64_t)p2 * p3; // Low-High
+    uint64_t _result3 = (uint64_t)p1 * p4; // High-Low (Fixed typo)
+    uint64_t _result4 = (uint64_t)p1 * p3; // High-High
 
-        return _result1 + _result2 + _result3 + _result4;
-    }
-    else
-    {
-        uint64_t rest = (_result1 >> 32) + _result2 & 0xFFFFFFFF + _result3 & 0xFFFFFFFF;
-        *overflow = _result4 + (_result2 >> 32) + (_result2 >> 32) + (rest >> 32);
+    // The lower 64 bits are composed of:
+    // _result1 + (lower 32 bits of _result2 shifted by 32) + (lower 32 bits of _result3 shifted by 32)
+    
+    uint64_t mid = (_result1 >> 32) + (uint32_t)_result2 + (uint32_t)_result3;
+    
+    uint64_t lower_64 = (_result1 & 0xFFFFFFFF) | (mid << 32);
+    
+    uint64_t upper_64 = _result4 + (_result2 >> 32) + (_result3 >> 32) + (mid >> 32);
 
-        return _result1 + rest & 0xFFFFFFFF;
-    }
+    *overflow = upper_64;
+    return lower_64;
 }
 
-static int64_t mul64s(int64_t u, int64_t v, int64_t* overflow) // adapted from 'Hacker's Delight' by Henry S. Warren Jr
+static int64_t mul64s(int64_t u, int64_t v, int64_t* overflow) // adapted from 'Hacker's Delight' by Henry S. Warren Jr 
 {
     uint64_t u0, v0, w0;
     int64_t u1, v1, w1, w2, t;
 
-    u0 = u & 0xFFFFFFFF; u1 = u >> 32;
-    v0 = v & 0xFFFFFFFF; v1 = v >> 32;
+    u0 = u & 0xFFFFFFFF; u1 = u >> 32; 
+    v0 = v & 0xFFFFFFFF; v1 = v >> 32; 
+    
     w0 = u0 * v0;
-
     t = u1 * v0 + (w0 >> 32);
     w1 = t & 0xFFFFFFFF;
     w2 = t >> 32;
-    w1 = u0 * v1 + w1; 
+    
+    w1 = (int64_t)u0 * v1 + w1; 
 
     *overflow = u1 * v1 + w2 + (w1 >> 32);
-    return w0 & 0xFFFFFFFF;
+
+    return (int64_t)(((uint64_t)w1 << 32) | (w0 & 0xFFFFFFFF));
 }
 
 void initVM(VM* vm)
