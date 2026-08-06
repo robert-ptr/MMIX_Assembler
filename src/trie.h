@@ -14,15 +14,15 @@ struct TrieNode
     uint8_t index;
     TrieNode* nodes[ALPHABET_SIZE];
     TrieNode* parent;
-    bool isWord;
+    bool is_word;
 };
 
-TrieNode* getNode(void);
-void freeTrie(TrieNode* root);
-void insertNode(TrieNode* node, char* word, bool value);
-void createTrie(TrieNode* node, char** words, int32_t n);
-bool findWord(TrieNode* node, char* word);
-uint8_t charToIndex(char c);
-char indexToChar(uint8_t i);
+TrieNode* get_node(void);
+void free_trie(TrieNode* root);
+void insert_node(TrieNode* node, char* word, bool value);
+void create_trie(TrieNode* node, char** words, int32_t n);
+bool find_word(TrieNode* node, char* word);
+uint8_t char_to_index(char c);
+char index_to_char(uint8_t i);
 
 #endif

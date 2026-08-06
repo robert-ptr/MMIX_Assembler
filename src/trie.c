@@ -3,10 +3,10 @@
 #include <string.h>
 #include "trie.h"
 
-TrieNode* getNode(void)
+TrieNode* get_node(void)
 {
     TrieNode* new_node = (TrieNode*)malloc(sizeof(TrieNode));
-    new_node->isWord = false;
+    new_node->is_word = false;
 
     for(int32_t i = 0; i < ALPHABET_SIZE; i++)
         new_node->nodes[i] = NULL;
@@ -16,20 +16,20 @@ TrieNode* getNode(void)
     return new_node;
 }
 
-void freeTrie(TrieNode* root)
+void free_trie(TrieNode* root)
 {
     for(int i = 0; i < ALPHABET_SIZE; i++)
     {
         if(root->nodes[i] != NULL)
         {
-            freeTrie(root->nodes[i]);
+            free_trie(root->nodes[i]);
         }
     }
 
     free(root);
 }
 
-uint8_t charToIndex(const char c) // the alphabet is 'a...z0...9'
+uint8_t char_to_index(const char c) // the alphabet is 'a...z0...9'
 {
     if(c >= '0' && c <= '9')
         return 26 + (c - '0');
@@ -41,11 +41,11 @@ uint8_t charToIndex(const char c) // the alphabet is 'a...z0...9'
         return -1;
 }
 
-char indexToChar(uint8_t i)
+char index_to_char(uint8_t i)
 {
     if(i >= ALPHABET_SIZE)
     {
-        printf("In trie: indexToChar - out of bounds error\n");
+        printf("In trie: index_to_char - out of bounds error\n");
         return '\0';
     }
     if(i >= 26)
@@ -58,45 +58,45 @@ char indexToChar(uint8_t i)
     }
 }
 
-void insertNode(TrieNode* node, char* word, bool value)
+void insert_node(TrieNode* node, char* word, bool value)
 {
         TrieNode* copy = node;
         int32_t n = strlen(word);
         
         for(int32_t i = 0; i < n; i++)
         {
-            if(charToIndex(word[i]) == -1)
+            if(char_to_index(word[i]) == -1)
                 return;
         }
 
         for(int32_t i = 0; i < n; i++)
         {
-            int32_t index = charToIndex(word[i]);
+            int32_t index = char_to_index(word[i]);
             if(copy->nodes[index] == NULL)
             {
-                copy->nodes[index] = getNode();
+                copy->nodes[index] = get_node();
                 copy->nodes[index]->index = index; // too much index for my taste
                 copy->nodes[index]->parent = copy;
             }
             copy = copy->nodes[index];
         }
 
-        copy->isWord = value; 
+        copy->is_word = value; 
 }
 
-void createTrie(TrieNode* node, char** words, int32_t n)
+void create_trie(TrieNode* node, char** words, int32_t n)
 {
     for(int32_t i = 0; i < n; i++)
     {
-        insertNode(node, words[i], true);
+        insert_node(node, words[i], true);
     }
 }
 
-bool findWord(TrieNode* node, char* word)
+bool find_word(TrieNode* node, char* word)
 {
     for(int32_t i = 0; word[i] != '\0'; i++)
     {
-        int32_t index = charToIndex(word[i]);
+        int32_t index = char_to_index(word[i]);
         if(index == -1)
             return false;
         if(node->nodes[index] == NULL)
@@ -104,5 +104,5 @@ bool findWord(TrieNode* node, char* word)
         node = node->nodes[index];
     }
 
-    return node->isWord;
+    return node->is_word;
 }

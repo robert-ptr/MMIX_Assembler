@@ -1,5 +1,5 @@
-#ifndef MMIX_DEBUGGER
-#define MMIX_DEBUGGER
+#ifndef MMIX_TESTGER
+#define MMIX_TESTGER
 
 #include "vm.h"
 #include "scanner.h"
@@ -25,29 +25,29 @@ typedef struct
     VM* vm;
     uint16_t flags;
     uint8_t format;
-} Debugger;
+} Tester;
 
-void debug(Debugger* debugger); // for the VM basically
+void test(Tester* tester); // for the VM basically
 
-#define ASM_DEBUG_SCANNER
-#define ASM_DEBUG_PARSER
-#define ASM_DEBUG_TABLE
-#define ASM_DEBUG_TRIE
+#define ASM_TEST_SCANNER
+#define ASM_TEST_PARSER
+#define ASM_TEST_TABLE
+#define ASM_TEST_TRIE
 
-#ifdef ASM_DEBUG_SCANNER
-void debugScanner();
+#ifdef ASM_TEST_SCANNER
+void test_scanner();
 #endif
 
-#ifdef ASM_DEBUG_PARSER
-void debugParser();
+#ifdef ASM_TEST_PARSER
+void test_parser();
 #endif
 
-#ifdef ASM_DEBUG_TABLE
-void debugTable();
+#ifdef ASM_TEST_TABLE
+void test_table();
 #endif
 
-#ifdef ASM_DEBUG_TRIE
-void debugTrie();
+#ifdef ASM_TEST_TRIE
+void test_trie();
 #endif
 
 #endif

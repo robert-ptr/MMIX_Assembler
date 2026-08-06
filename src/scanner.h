@@ -35,9 +35,9 @@ typedef struct
     int32_t line;
 } Token;
 
-void initScanner(const char* source);
-void printToken(Token* token);
-void freeScanner();
-Token scanToken();
+void init_scanner(const char* source);
+void print_token(Token* token);
+void free_scanner();
+Token scan_token();
 
 #endif

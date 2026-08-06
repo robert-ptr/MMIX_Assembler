@@ -20,14 +20,14 @@ typedef struct
 } Instruction;
 
 extern Instruction instructions[258]; 
-char* getString(char* buffer, int32_t length, int32_t buf_index);
-char* readFile(const char* path);
-FILE* createFile(const char* path);
+char* get_string(char* buffer, int32_t length, int32_t buf_index);
+char* read_file(const char* path);
+FILE* create_file(const char* path);
 
-void stringToLowercase(char* s);
-char* intToHexString(uint64_t n, uint8_t bits);
-char* intToBinaryString(uint64_t n, uint8_t bits);
-int64_t parseHexNumber(const char* str);
-int32_t parseNumber(char* buffer);
+void string_to_lowercase(char* s);
+char* int_to_hex_string(uint64_t n, uint8_t bits);
+char* int_to_binary_string(uint64_t n, uint8_t bits);
+int64_t parse_hex_number(const char* str);
+int32_t parse_number(char* buffer);
 
 #endif

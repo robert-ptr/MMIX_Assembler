@@ -93,7 +93,7 @@ typedef struct
 } RunningTime;
 
 extern uint8_t branch_time; // a global variable, TREMBLE IN FEAR
-											 // used for branch prediction time
+							// used for branch prediction time
 extern RunningTime times[256];
 typedef uint64_t Octa;
 
@@ -117,12 +117,13 @@ typedef struct
 	Table* memory; // I am using a hash table to represent memory, why?
                    // because the machine described by Donald Knuth has 2^64 bytes of memory.
                    // I don't have 2^64 bytes of memory and I believe nobody has, so this is 
-                   // the only way to let a programmer address such a large space(theoretically)
+                   // the only way to let a programmer address such a large space
     bool dynamic_length_encoding; // WIP
 } VM;
 
-void initVM(VM* vm);
-void freeVM(VM* vm);
+void init_vm(VM* vm);
+void free_vm(VM* vm);
+void load_program_in_memory();
 void execute(VM* vm);
 
 #endif

@@ -36,7 +36,7 @@ int32_t main(int32_t argc, const char* argv[])
 	
 	if (argc == 2)
 	{
-		source = readFile(argv[1]);
+		source = read_file(argv[1]);
 	}
 	else if (argc == 3)
 	{
@@ -44,22 +44,22 @@ int32_t main(int32_t argc, const char* argv[])
 		{
 			flags = (char*)malloc(sizeof(argv[1]));
 			strcpy(flags, ++argv[1]);
-			source = readFile(argv[2]);
+			source = read_file(argv[2]);
 
             free(flags);
 		}
 		else
 		{
-			source = readFile(argv[1]);
-			output_fd = createFile(argv[2]);
+			source = read_file(argv[1]);
+			output_fd = create_file(argv[2]);
 		}
 	}	
 	else if (argc == 4)
 	{
 		flags = (char*)malloc(sizeof(argv[1]));
 		strcpy(flags, ++argv[1]);
-		source = readFile(argv[2]);
-		output_fd = createFile(argv[3]);
+		source = read_file(argv[2]);
+		output_fd = create_file(argv[3]);
 
         free(flags);
 	}
@@ -71,18 +71,18 @@ int32_t main(int32_t argc, const char* argv[])
 
     VM vm;
 
-	initScanner(source);
-	initParser("output");
-	//initVM(&vm);
+	init_scanner(source);
+	init_parser("output");
+	//init_vm(&vm);
  
-    //debugScanner();
-    //debugParser();
-    //debugTable();
+    //debug_scanner(/;
+    //debug_parser();
+    //debug_table();
     parse();
 
-    //freeVM(&vm);
-	freeParser();
-	freeScanner();
+    //free_vm(&vm);
+	free_parser();
+	free_scanner();
 
 	return 0;
 }

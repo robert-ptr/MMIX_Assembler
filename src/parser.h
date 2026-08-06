@@ -39,7 +39,7 @@ extern Parser parser;
 extern Table instr_indices;
 
 void parse();
-void initParser(char* output_file);
-void freeParser();
+void init_parser(char* output_file);
+void free_parser();
 
 #endif

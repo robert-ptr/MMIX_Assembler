@@ -1,4 +1,3 @@
-#include <asm-generic/errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,20 +7,20 @@
 Parser parser;
 Table instr_indices;
 
-static void initStack(Stack* s)
+static void init_stack(Stack* s)
 {
     s->size = 0;
     s->top = 0;
     s->values = NULL;
 }
 
-static void freeStack(Stack* s)
+static void free_stack(Stack* s)
 {
     free(s->values);
-    initStack(s);
+    init_stack(s);
 }
 
-static void addToStack(Stack* s, uint64_t value)
+static void add_to_stack(Stack* s, uint64_t value)
 {
     if (s->top >= s->size)
     {
@@ -41,36 +40,36 @@ static void addToStack(Stack* s, uint64_t value)
     s->values[s->top++] = value;
 }
 
-static uint64_t popStack(Stack* s)
+static uint64_t pop_stack(Stack* s)
 {
     return s->values[(s->top--) - 1];
 }
 
-static uint64_t peekStack(Stack* s)
+static uint64_t peek_stack(Stack* s)
 {
     return s->values[s->top - 1];
 }
 
 static void advance();
-static int64_t expression(bool* isImmediate);
-static bool isAtEnd();
+static int64_t expression(bool* is_immediate);
+static bool is_at_end();
 static bool check(TokenType type);
 
-static void triggerPanicMode() // something wrong happened, trigger panic mode, and try to get to the next line
+static void trigger_panic_mode() // something wrong happened, trigger panic mode, and try to get to the next line
 {
     parser.panic_mode = true;
-    while(!isAtEnd() && !check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON)) // find next instruction, if available
+    while(!is_at_end() && !check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON)) // find next instruction, if available
     {
         advance();
     }
 
-    if(!isAtEnd())
+    if(!is_at_end())
     {
         advance();
     }
 }
 
-static void errorAt(Token* token, const char* message)
+static void error_at(Token* token, const char* message)
 {
     // Debug: Print token details
     fprintf(stderr, "[line %d char %d] Error", token->line, token->offset);
@@ -89,17 +88,17 @@ static void errorAt(Token* token, const char* message)
     }
     fprintf(stderr, ": %s\n", message);
 
-    triggerPanicMode();
+    trigger_panic_mode();
 }
 
-static void errorAtCurrent(const char* message)
+static void error_at_current(const char* message)
 {
-    errorAt(&parser.current, message);	
+    error_at(&parser.current, message);
 }
 
 static void error(const char* message)
 {
-    errorAt(&parser.previous, message);
+    error_at(&parser.previous, message);
 }
 
 static bool check(TokenType type)
@@ -113,13 +112,13 @@ static void advance()
 
     for (;;)
     {
-        Token new_token = scanToken();
+        Token new_token = scan_token();
         parser.current = new_token;
-        printToken(&parser.current);
+        print_token(&parser.current);
         if(!check(TOKEN_ERR))
             break;
 
-        errorAtCurrent("Unknown expression");
+        error_at_current("Unknown expression");
     }
 }
 
@@ -131,35 +130,35 @@ static void consume(TokenType type, const char* message)
         return;
     }
 
-    errorAtCurrent(message);
+    error_at_current(message);
 }
 
-static bool isStrongOperator()
+static bool is_strong_operator()
 {
     return check(TOKEN_STAR) || check(TOKEN_MOD) || check(TOKEN_AND) || check(TOKEN_SLASH) || check(TOKEN_LSHIFT) || check(TOKEN_RSHIFT);
 }
 
-static bool isWeakOperator()
+static bool is_weak_operator()
 {
     return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_OR) || check(TOKEN_XOR);
 }
 
-static bool isAtEnd()
+static bool is_at_end()
 {
     return check(TOKEN_EOF);
 }
 
-static bool isUnary()
+static bool is_unary()
 {
     return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_COMPLEMENT) || check(TOKEN_GENERAL_REGISTER);
 }
 
-static bool isRightParen()
+static bool is_right_paren()
 {
     return check(TOKEN_RPAREN);
 }
 
-static void emitByte(uint8_t byte)
+static void emit_byte(uint8_t byte)
 {
     fwrite(&byte, sizeof(uint8_t), 1, parser.fp);
 }
@@ -172,7 +171,7 @@ static bool match(char* instruction, int32_t start, char* pattern, int32_t lengt
     return false;
 }
 
-static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
+static bool check_operand_sizes(uint32_t op1, uint32_t op2, uint32_t op3)
 {
     if((op1 >> 8) + (op2 >> 8) + (op3 >> 8) != 0 )
     {
@@ -186,13 +185,13 @@ static bool checkOperandSizes(uint32_t op1, uint32_t op2, uint32_t op3)
     return true;
 }
 
-static int64_t symbol(bool* isImmediate)
+static int64_t symbol()
 {
     char* symbol = (char*)malloc((parser.current.length + parser.prefix_length + 1) * sizeof(char));
     strncpy(symbol, parser.current_prefix, parser.prefix_length);
     strncpy(symbol + parser.prefix_length, parser.current.start, parser.current.length);
     symbol[parser.current.length + parser.prefix_length] = '\0';
-    stringToLowercase(symbol);
+    string_to_lowercase(symbol);
 
     TableData key;
     key.as_str.lexeme = symbol;
@@ -201,28 +200,28 @@ static int64_t symbol(bool* isImmediate)
 
     TableData label_value;
 
-    if (parser.aliases->size != 0 && findInTable(parser.aliases, &key, &label_value))
-    {
-        free(symbol);
-        if (label_value.type == TYPE_INT)
-            return label_value.as_int;
-        else 
-            errorAtCurrent("Invalid symbol!");
-    }
-
-    // for now I'll also accept locations (for JMP) for example, although I'm not sure you can use a location for, say, ADDU 
-    // must check MMIXware
-    if (parser.locations->size != 0 && findInTable(parser.locations, &key, &label_value))
+    if (parser.aliases->size != 0 && find_in_table(parser.aliases, &key, &label_value))
     {
         free(symbol);
         if (label_value.type == TYPE_INT)
             return label_value.as_int;
         else
-            errorAtCurrent("Invalid symbol!");
+            error_at_current("Invalid symbol!");
+    }
+
+    // for now I'll also accept locations (for JMP) for example, although I'm not sure you can use a location for, say, ADDU
+    // must check MMIXware
+    if (parser.locations->size != 0 && find_in_table(parser.locations, &key, &label_value))
+    {
+        free(symbol);
+        if (label_value.type == TYPE_INT)
+            return label_value.as_int;
+        else
+            error_at_current("Invalid symbol!");
     }
 
     free(symbol);
-    errorAtCurrent("Unknown symbol!");
+    error_at_current("Unknown symbol!");
 
     return -1;
 }
@@ -232,23 +231,23 @@ static int64_t number()
     char* str = (char*)malloc((parser.current.length + 1) * sizeof(char));
     strncpy(str, parser.current.start, parser.current.length);
     str[parser.current.length] = '\0';
-    int64_t n = parseNumber(str);
+    int64_t n = parse_number(str);
     free(str);
     return n;
 }
 
-static int64_t term(bool* isImmediate)
+static int64_t term(bool* is_immediate)
 {
     // possible terms: primaries(a symbol, constant, @, and strongOperators enclosed in parentheses or a unary operator followed by a primary
     // unary operators: +, -, ~, $
     int a;
-    if(isUnary)
+    if(is_unary())
     {
-        while(isUnary())
+        while(is_unary())
         {
             TokenType token_type = parser.current.type;
             advance();
-            a = term(isImmediate);
+            a = term(is_immediate);
 
             if(parser.panic_mode) // something went wrong in term()
                 return -1;
@@ -256,34 +255,34 @@ static int64_t term(bool* isImmediate)
             switch(token_type)
             {
                 case TOKEN_PLUS:
-                    if (!isImmediate)
+                    if (!is_immediate)
                     {
-                        errorAtCurrent("Can only apply '+' unary operator to immediate value.");
+                        error_at_current("Can only apply '+' unary operator to immediate value.");
                         return -1;
                     }
                     break;
                 case TOKEN_MINUS:
-                    if (!isImmediate)
+                    if (!is_immediate)
                     {
-                        errorAtCurrent("Can only apply '-' unary operator to immediate value.");
+                        error_at_current("Can only apply '-' unary operator to immediate value.");
                         return -1;
                     }
                     a = -a;
                     break;
                 case TOKEN_COMPLEMENT:
-                    if (!isImmediate)
+                    if (!is_immediate)
                     {
-                        errorAtCurrent("Can only apply '~' unary operator to immediate value.");
+                        error_at_current("Can only apply '~' unary operator to immediate value.");
                         return -1;
                     }
                     a = ~a;
                     break;
                 case TOKEN_GENERAL_REGISTER:
-                    *isImmediate = false;
+                    *is_immediate = false;
                     a = number();
                     break;
                 default:
-                    errorAtCurrent("Unknown term!");
+                    error_at_current("Unknown term!");
                     return -1;
             }
         }
@@ -291,12 +290,12 @@ static int64_t term(bool* isImmediate)
     else if(check(TOKEN_LPAREN))
     {
         advance(); // skip the '('
-        a = expression(isImmediate);
+        a = expression(is_immediate);
         advance(); // skip the ')'
     }
     else if(check(TOKEN_AROUND))
     {
-        *isImmediate = false;
+        *is_immediate = false;
         a = parser.current_location;
     }
     else if(check(TOKEN_CONSTANT))
@@ -304,12 +303,12 @@ static int64_t term(bool* isImmediate)
         char* hex = (char*)malloc((parser.current.length + 1) * sizeof(char));
         hex[parser.current.length] = '\0';
         strncpy(hex, parser.current.start, parser.current.length);
-        a = parseHexNumber(hex);
+        a = parse_hex_number(hex);
         free(hex);
     }
     else if(check(TOKEN_LABEL))
     {
-        a = symbol(isImmediate);
+        a = symbol(is_immediate);
     }
     else if(check(TOKEN_IMMEDIATE))
     {
@@ -318,162 +317,162 @@ static int64_t term(bool* isImmediate)
     else
     {
         // Report an error
-        errorAtCurrent("Unknown term!\n");
+        error_at_current("Unknown term!\n");
         return -1;
     }
     return a;
 }
 
-static int64_t strongOperators(bool* isImmediate)
+static int64_t strong_operators(bool* is_immediate)
 {
     // strong binary operators: *,/,//,%,<<,>>,&
-    int32_t a = term(isImmediate);
+    int32_t a = term(is_immediate);
 
     if(parser.panic_mode) // something went wrong in term
         return -1;
 
     advance();
-    bool bIsImmediate = false;
+    bool b_is_immediate = false; // TO DO: what exactly is up with this?
     int32_t b;
-    while(isStrongOperator())
+    while(is_strong_operator())
     {
-        *isImmediate = true;
+        *is_immediate = true;
         switch(parser.current.type)
         {
             case TOKEN_STAR:
-                b = term(&bIsImmediate);
-                if(!isImmediate || !bIsImmediate)
+                b = term(&b_is_immediate);
+                if(!is_immediate || !b_is_immediate)
                 {
-                    errorAtCurrent("Can only multiply immediate values in operand.");
+                    error_at_current("Can only multiply immediate values in operand.");
                     return -1;
                 }
                 a *= b;
                 break;
             case TOKEN_AND:
-                b = term(&bIsImmediate);
-                if(!isImmediate || !bIsImmediate)
+                b = term(&b_is_immediate);
+                if(!is_immediate || !b_is_immediate)
                 {
-                    errorAtCurrent("Can apply bitwise AND operation only on immediate values.");
+                    error_at_current("Can apply bitwise AND operation only on immediate values.");
                     return -1;
                 }
                 a &= b;
                 break;
             case TOKEN_MOD:
-                b = term(&bIsImmediate);
-                if(!isImmediate || !bIsImmediate)
+                b = term(&b_is_immediate);
+                if(!is_immediate || !b_is_immediate)
                 {
-                    errorAtCurrent("Can use mod operation only on immediate values.");
+                    error_at_current("Can use mod operation only on immediate values.");
                     return -1;
                 }
                 a %= b;
                 break;
             case TOKEN_DSLASH:
-                b = term(&bIsImmediate);
-                if (!isImmediate || !bIsImmediate)
+                b = term(&b_is_immediate);
+                if (!is_immediate || !b_is_immediate)
                 {
-                    errorAtCurrent("");
+                    error_at_current("");
                     return -1;
                 }
                 // TO DO
                 break;
             case TOKEN_SLASH:
-                b = term(&bIsImmediate);
-                if (!isImmediate || !bIsImmediate)
+                b = term(&b_is_immediate);
+                if (!is_immediate || !b_is_immediate)
                 {
-                    errorAtCurrent("Can apply division only on immediate values.");
+                    error_at_current("Can apply division only on immediate values.");
                     return -1;
                 }
                 a /= b;
                 break;
             case TOKEN_LSHIFT:
-                b = term(&bIsImmediate);
-                if (!isImmediate || !bIsImmediate)
+                b = term(&b_is_immediate);
+                if (!is_immediate || !b_is_immediate)
                 {
-                    errorAtCurrent("Can apply shift operation only on immediate values.");
+                    error_at_current("Can apply shift operation only on immediate values.");
                     return -1;
                 }
                 a <<= b;
                 break;
             case TOKEN_RSHIFT:
-                b = term(&bIsImmediate);
-                if (!isImmediate || !bIsImmediate)
+                b = term(&b_is_immediate);
+                if (!is_immediate || !b_is_immediate)
                 {
-                    errorAtCurrent("Can apply shift operation only on immediate values.");
+                    error_at_current("Can apply shift operation only on immediate values.");
                     return -1;
                 }
                 a >>= b;
                 break;
             default:
-                errorAtCurrent("Unknown strong operator!");
+                error_at_current("Unknown strong operator!");
                 return -1;
         }
     }
 
-    if (parser.panic_mode) // something went wrong when calling term() for b 
+    if (parser.panic_mode) // something went wrong when calling term() for b
         return -1;
 
     return a;
 }
 
-static int64_t expression(bool* isImmediate) // instruction arguments may be expressions that need to be evaluated
+static int64_t expression(bool* is_immediate) // instruction arguments may be expressions that need to be evaluated
 {
     // weak binary operators: +,-,|,^
-    bool aIsImmediate = false;
-    int a = strongOperators(&aIsImmediate);
-    
+    bool a_is_immediate = false;
+    int64_t a = strong_operators(&a_is_immediate);
+
     if (parser.panic_mode)
         return -1;
 
     //advance();
-    bool bIsImmediate = false;
-    int b;
-    while(isWeakOperator())
+    bool b_is_immediate = false;
+    int64_t b;
+    while(is_weak_operator())
     {
         switch(parser.current.type)
         {
             case TOKEN_PLUS:
-                b = strongOperators(&bIsImmediate);
-                if (!aIsImmediate && !bIsImmediate)
+                b = strong_operators(&b_is_immediate);
+                if (!a_is_immediate && !b_is_immediate)
                 {
-                    errorAtCurrent("Can do addition only between immediates, and between a register and an immediate.");
+                    error_at_current("Can do addition only between immediates, and between a register and an immediate.");
                     return -1;
                 }
-                *isImmediate = aIsImmediate && bIsImmediate;
+                *is_immediate = a_is_immediate && b_is_immediate;
                 a += b;
                 break;
             case TOKEN_MINUS:
-                b = strongOperators(&bIsImmediate);
-                if ((!bIsImmediate) ^ (!aIsImmediate))
+                b = strong_operators(&b_is_immediate);
+                if ((!b_is_immediate) ^ (!a_is_immediate))
                 {
-                    errorAtCurrent("Can do subtraction only between immediates, or between registers.");
+                    error_at_current("Can do subtraction only between immediates, or between registers.");
                     return -1;
                 }
-                *isImmediate = true;
+                *is_immediate = true;
                 a -= b;
                 break;
             case TOKEN_OR:
-                b = strongOperators(&bIsImmediate);
-                if (!bIsImmediate || !aIsImmediate)
+                b = strong_operators(&b_is_immediate);
+                if (!b_is_immediate || !a_is_immediate)
                 {
-                    errorAtCurrent("Can apply bitwise OR operation only on immediates.");
+                    error_at_current("Can apply bitwise OR operation only on immediates.");
                     return -1;
                 }
-                *isImmediate = true;
+                *is_immediate = true;
                 a |= b;
                 break;
             case TOKEN_XOR:
-                b = strongOperators(&bIsImmediate);
-                if (!bIsImmediate || !aIsImmediate)
+                b = strong_operators(&b_is_immediate);
+                if (!b_is_immediate || !a_is_immediate)
                 {
-                    errorAtCurrent("Can apply bitwise XOR operation only on immediates.");
+                    error_at_current("Can apply bitwise XOR operation only on immediates.");
                     return -1;
                 }
-                *isImmediate = true;
-                a ^= b; 
+                *is_immediate = true;
+                a ^= b;
                 break;
             default:
-                errorAtCurrent("Unknown operator!");
-                return -1; 
+                error_at_current("Unknown operator!");
+                return -1;
         }
     }
 
@@ -483,10 +482,10 @@ static int64_t expression(bool* isImmediate) // instruction arguments may be exp
     return a;
 }
 
-static void instructionStatement(char* label, uint64_t label_length) // fundamental block of the assembler
+static void instruction_statement(char* label, uint64_t label_length) // fundamental block of the assembler
                                                                      // each MMIX program is basically a list of instructions
                                                                      // and some of them have labels in front
-                                                                     // IS,GREG,PREFIX,BYTE,WYDE,TETRA,OCTA,LOC,LOCAL don't count as instructions 
+                                                                     // IS,GREG,PREFIX,BYTE,WYDE,TETRA,OCTA,LOC,LOCAL don't count as instructions
                                                                      // they are more like macros
 {
     if (label != NULL) // will be used for control flow
@@ -497,24 +496,24 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
         key.type = TYPE_STR;
 
 
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value);
+            add_to_table(parser.locations, &key, &value);
 
             free(label); // add to table performs hard copy
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
 
     advance(); // consume TOKEN_INSTRUCTION
-    
+
     bool op1_immediate = false;
     bool op2_immediate = false;
     bool op3_immediate = false;
@@ -527,20 +526,20 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
     instruction[parser.previous.length] = '\0';
     strncpy(instruction, parser.previous.start, parser.previous.length);
 
-    stringToLowercase(instruction);
+    string_to_lowercase(instruction);
     TableData emitValue, key;
     key.as_str.lexeme = instruction;
     key.as_str.n = strlen(instruction);
     key.type = TYPE_STR;
 
-    
-    if(findInTable(&instr_indices, &key, &emitValue))
+
+    if(find_in_table(&instr_indices, &key, &emitValue))
     {
         opcode = (uint8_t)emitValue.as_int;
     }
     else
     {
-        errorAt(&instr_token, "Unknown instruction.");
+        error_at(&instr_token, "Unknown instruction.");
         free(instruction);
         return;
     }
@@ -549,13 +548,13 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
     int64_t operand2 = 0;
     int64_t operand3 = 0;
     uint8_t arity = 1;
-    
+
     if (operand1 < 0) // something went wrong;
     {
         free(instruction);
         return;
     }
-    
+
     if(check(TOKEN_COMMA)) // 2 arguments
     {
         advance();
@@ -574,7 +573,7 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
         advance();
         operand3 = expression(&op3_immediate);
 
-        if (operand3 < 0) // something went wrong 
+        if (operand3 < 0) // something went wrong
         {
             free(instruction);
             return;
@@ -585,43 +584,43 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
 
     if(arity == 3 && (instructions[opcode].description >> 15) & 0b1) // the instruction accepts 3 arguments
         ;
-    else if (arity == 2 && (instructions[opcode].description >> 14) & 0b1) // instruction accepts 2 arguments 
+    else if (arity == 2 && (instructions[opcode].description >> 14) & 0b1) // instruction accepts 2 arguments
         ;
     else if (arity == 1)
     {
         if (strcmp(instructions[opcode].name, "jmp") &&
             strcmp(instructions[opcode].name, "trap") &&
-            strcmp(instructions[opcode].name, "trip") && 
+            strcmp(instructions[opcode].name, "trip") &&
             strcmp(instructions[opcode].name, "resume") &&
             strcmp(instructions[opcode].name, "unsave") &&
-            strcmp(instructions[opcode].name, "sync"))  // strcmp returns 0 if there is a match  
-        {    
-            errorAt(&instr_token, "Wrong number of arguments for instruction!");
+            strcmp(instructions[opcode].name, "sync"))  // strcmp returns 0 if there is a match
+        {
+            error_at(&instr_token, "Wrong number of arguments for instruction!");
             free(instruction);
             return;
         }
     }
-    else 
+    else
     {
-        errorAt(&instr_token, "Wrong number of arguments for instruction!");
+        error_at(&instr_token, "Wrong number of arguments for instruction!");
         free(instruction);
         return;
     }
-    
-    
-    
+
+
+
     if(check(TOKEN_COMMA)) // wrong number of arguments
     {
         free(instruction);
-        errorAt(&instr_token, "Wrong number of arguments! Maximum 3.");
+        error_at(&instr_token, "Wrong number of arguments! Maximum 3.");
         return;
     }
-    
+
     if (strncmp(instr_token.start, "set", instr_token.length) == 0 && op2_immediate != true)
     {
         opcode = 0xC0;
     }
-    
+
     if(arity == 1)
     {
         operand2 = operand1 >> 8 & 0xFF;
@@ -634,7 +633,7 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
         operand2 >>= 8;
     }
 
-    if (!checkOperandSizes(operand1, operand2, operand3))
+    if (!check_operand_sizes(operand1, operand2, operand3))
     {
         free(instruction);
         return;
@@ -656,41 +655,41 @@ static void instructionStatement(char* label, uint64_t label_length) // fundamen
 
     free(instruction);
 
-    emitByte(opcode);
-    emitByte(operand1);
-    emitByte(operand2);
-    emitByte(operand3);
+    emit_byte(opcode);
+    emit_byte(operand1);
+    emit_byte(operand2);
+    emit_byte(operand3);
     parser.current_location += 4;
 }
 
-static void isStatement(char* label, uint64_t label_length) // MMIXAL statement that associates a name with a value
+static void is_statement(char* label, uint64_t label_length) // MMIXAL statement that associates a name with a value
 {
-    advance(); // consume TOKEN_IS 
+    advance(); // consume TOKEN_IS
 
     if (label != NULL)
     {
         uint64_t label_value = expression(NULL);
-       
+
         TableData key;
         key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             TableData value;
 
             value.as_int = label_value;
             value.type = TYPE_INT;
 
-            addToTable(parser.aliases, &key, &value); 
+            add_to_table(parser.aliases, &key, &value);
 
             free(label); // add to table performs hard copy
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
 
@@ -703,51 +702,51 @@ static void isStatement(char* label, uint64_t label_length) // MMIXAL statement 
         advance();
 }
 
-static void gregStatement(char* label, uint64_t label_length) // MMIXAL statement to make a new general register available
+static void greg_statement(char* label, uint64_t label_length) // MMIXAL statement to make a new general register available
 {
     advance(); // consume TOKEN_GREG
 
     if(parser.general_reg > 16)
     {
-        errorAtCurrent("Can't use GREG for a general register with index over 16!");
+        error_at_current("Can't use GREG for a general register with index over 16!");
         return;
     }
 
     if (label != NULL)
-    { 
+    {
         TableData key, value;
         key.as_str.lexeme = label;
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             value.as_int = parser.general_reg;
             value.type = TYPE_INT;
 
-            addToTable(parser.aliases, &key, &value); 
+            add_to_table(parser.aliases, &key, &value);
 
             free(label); // add to table performs hard copy
 
-            parser.register_values[parser.general_reg] = expression(NULL);           
+            parser.register_values[parser.general_reg] = expression(NULL);
             parser.general_reg++;
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
-    else 
+    else
     {
         uint8_t greg = parser.general_reg;
-        parser.register_values[parser.general_reg] = expression(NULL); 
-        
+        parser.register_values[parser.general_reg] = expression(NULL);
+
         parser.general_reg++;
     }
 }
 
-static void locStatement(char* label, uint64_t label_length) // MMIXAL statement that changes the value of the current location 
+static void loc_statement(char* label, uint64_t label_length) // MMIXAL statement that changes the value of the current location
                                                              // it's not a jump, it's just that the following instructions will have a different
                                                              // location address
 {
@@ -762,24 +761,24 @@ static void locStatement(char* label, uint64_t label_length) // MMIXAL statement
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             value.as_int = loc;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value);
+            add_to_table(parser.locations, &key, &value);
 
             free(label); // add to table performs hard copy
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
 }
 
-static void byteStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 1 byte at a time
+static void byte_statement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 1 byte at a time
 {
     advance(); // consume TOKEN_BYTE
 
@@ -790,19 +789,19 @@ static void byteStatement(char* label, uint64_t label_length) // MMIXAL statemen
         key.as_str.n = label_length;
         key.type = TYPE_STR;
 
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value); 
+            add_to_table(parser.locations, &key, &value);
 
             free(label); // add to table performs hard copy
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
 
@@ -812,12 +811,12 @@ static void byteStatement(char* label, uint64_t label_length) // MMIXAL statemen
         {
             if (parser.current.length == 0)
             {
-                errorAtCurrent("Can't create an empty string!");
+                error_at_current("Can't create an empty string!");
                 return;
             }
             for(int i = 0; i < parser.current.length; i++)
             {
-                emitByte((uint8_t)parser.current.start[i]); 
+                emit_byte((uint8_t)parser.current.start[i]);
                 parser.current_location++;
             }
         }
@@ -826,17 +825,17 @@ static void byteStatement(char* label, uint64_t label_length) // MMIXAL statemen
             int64_t temp = expression(NULL);
             if (temp > 255 || temp < 0)
             {
-                errorAtCurrent("Expression can't fit in one byte!");
+                error_at_current("Expression can't fit in one byte!");
             }
-            
-            emitByte((uint8_t)(temp & 0xFF));
+
+            emit_byte((uint8_t)(temp & 0xFF));
             parser.current_location++;
         }
         advance();
     }
 }
 
-static void wydeStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 2 bytes at a time
+static void wyde_statement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 2 bytes at a time
 {
     advance(); // consume TOKEN_WYDE
 
@@ -848,37 +847,37 @@ static void wydeStatement(char* label, uint64_t label_length) // MMIXAL statemen
         key.type = TYPE_STR;
 
 
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value);
+            add_to_table(parser.locations, &key, &value);
 
             free(label); // add to table performs hard copy
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
 
     if (parser.current_location % 2)
         parser.current_location++;
-    
+
     while (!check(TOKEN_ENDLINE) && !check(TOKEN_SEMICOLON) && !check(TOKEN_EOF))
     {
         if (check(TOKEN_STRING))
         {
             if (parser.current.length == 0)
             {
-                errorAtCurrent("Can't create an empty string!");
+                error_at_current("Can't create an empty string!");
                 return;
             }
             for (int i = 0; i < parser.current.length; i++)
             {
-                emitByte((uint8_t)parser.current.start[i]); 
+                emit_byte((uint8_t)parser.current.start[i]);
                 parser.current_location++;
             }
         }
@@ -887,18 +886,18 @@ static void wydeStatement(char* label, uint64_t label_length) // MMIXAL statemen
             int64_t temp = expression(NULL);
             if (temp > 65535 || temp < 0)
             {
-                errorAtCurrent("Expression can't fit in two bytes!");
+                error_at_current("Expression can't fit in two bytes!");
             }
-            
-            emitByte((uint8_t)(temp >> 8 & 0xFF));
-            emitByte((uint8_t)(temp >> 16 & 0xFF));
+
+            emit_byte((uint8_t)(temp >> 8 & 0xFF));
+            emit_byte((uint8_t)(temp >> 16 & 0xFF));
             parser.current_location += 2;
         }
         advance();
     }
 }
 
-static void tetraStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 4 bytes at a time
+static void tetra_statement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 4 bytes at a time
 {
     advance(); // consume TOKEN_TETRA
 
@@ -910,22 +909,22 @@ static void tetraStatement(char* label, uint64_t label_length) // MMIXAL stateme
         key.type = TYPE_STR;
 
         uint64_t labelLocation = parser.current_location;
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value);
+            add_to_table(parser.locations, &key, &value);
 
             free(label); // add to table performs hard copy
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
-    
+
     while (parser.current_location % 4)
         parser.current_location++;
 
@@ -935,12 +934,12 @@ static void tetraStatement(char* label, uint64_t label_length) // MMIXAL stateme
         {
             if (parser.current.length == 0)
             {
-                errorAtCurrent("Can't create an empty string!");
+                error_at_current("Can't create an empty string!");
                 return;
             }
             for(int i = 0; i < parser.current.length; i++)
             {
-                emitByte((uint8_t)parser.current.start[i]); 
+                emit_byte((uint8_t)parser.current.start[i]);
                 parser.current_location++;
             }
         }
@@ -949,20 +948,20 @@ static void tetraStatement(char* label, uint64_t label_length) // MMIXAL stateme
             int64_t temp = expression(NULL);
             if ((temp >> 32) > 0 || temp < 0)
             {
-                errorAtCurrent("Expression can't fit in four byte!");
+                error_at_current("Expression can't fit in four byte!");
             }
-            
-            emitByte((uint8_t)(temp >> 24 & 0xFF));
-            emitByte((uint8_t)(temp >> 16 & 0xFF));
-            emitByte((uint8_t)(temp >> 8 & 0xFF));
-            emitByte((uint8_t)(temp & 0xFF));
+
+            emit_byte((uint8_t)(temp >> 24 & 0xFF));
+            emit_byte((uint8_t)(temp >> 16 & 0xFF));
+            emit_byte((uint8_t)(temp >> 8 & 0xFF));
+            emit_byte((uint8_t)(temp & 0xFF));
             parser.current_location += 4;
         }
         advance();
     }
 }
 
-static void octaStatement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 8 bytes at a time
+static void octa_statement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 8 bytes at a time
 {
     advance(); // consume TOKEN_OCTA
 
@@ -975,7 +974,7 @@ static void octaStatement(char* label, uint64_t label_length) // MMIXAL statemen
 
 
         uint64_t labelLocation = parser.current_location;
-        if(!findInTable(parser.locations, &key, NULL) && !findInTable(parser.aliases, &key, NULL))
+        if(!find_in_table(parser.locations, &key, NULL) && !find_in_table(parser.aliases, &key, NULL))
         {
             TableData key, value;
             key.as_str.lexeme = label;
@@ -985,17 +984,17 @@ static void octaStatement(char* label, uint64_t label_length) // MMIXAL statemen
             value.as_int = parser.current_location;
             value.type = TYPE_INT;
 
-            addToTable(parser.locations, &key, &value); 
+            add_to_table(parser.locations, &key, &value);
 
             free(label); // add to table performs hard copy
         }
-        else 
+        else
         {
             free(label);
-            errorAtCurrent("Symbol redefinition!");
+            error_at_current("Symbol redefinition!");
         }
     }
-    
+
     while (parser.current_location % 7)
         parser.current_location++;
 
@@ -1005,35 +1004,35 @@ static void octaStatement(char* label, uint64_t label_length) // MMIXAL statemen
         {
             if (parser.current.length == 0)
             {
-                errorAtCurrent("Can't create an empty string!");
+                error_at_current("Can't create an empty string!");
                 return;
             }
             for(int i = 0; i < parser.current.length; i++)
             {
-                emitByte((uint8_t)parser.current.start[i]); 
+                emit_byte((uint8_t)parser.current.start[i]);
                 parser.current_location++;
             }
         }
         else
         {
-            int64_t temp = expression(NULL); // I'm not ok with this, it should be an unsigned value 
+            int64_t temp = expression(NULL); // I'm not ok with this, it should be an unsigned value
                                              // but I need to change some things first
-            
-            emitByte((uint8_t)(temp >> 56 & 0xFF));
-            emitByte((uint8_t)(temp >> 48 & 0xFF));
-            emitByte((uint8_t)(temp >> 40 & 0xFF));
-            emitByte((uint8_t)(temp >> 32 & 0xFF));
-            emitByte((uint8_t)(temp >> 24 & 0xFF));
-            emitByte((uint8_t)(temp >> 16 & 0xFF));
-            emitByte((uint8_t)(temp >> 8 & 0xFF));
-            emitByte((uint8_t)(temp & 0xFF));
+
+            emit_byte((uint8_t)(temp >> 56 & 0xFF));
+            emit_byte((uint8_t)(temp >> 48 & 0xFF));
+            emit_byte((uint8_t)(temp >> 40 & 0xFF));
+            emit_byte((uint8_t)(temp >> 32 & 0xFF));
+            emit_byte((uint8_t)(temp >> 24 & 0xFF));
+            emit_byte((uint8_t)(temp >> 16 & 0xFF));
+            emit_byte((uint8_t)(temp >> 8 & 0xFF));
+            emit_byte((uint8_t)(temp & 0xFF));
             parser.current_location += 8;
         }
         advance();
     }
 }
 
-static void prefixStatement(char* label, uint64_t label_length) // used to prevent naming conflicts, as the name says, a prefix is added to the names of labels
+static void prefix_statement(char* label, uint64_t label_length) // used to prevent naming conflicts, as the name says, a prefix is added to the names of labels
 {
     advance(); // consume TOKEN_PREFIX
     /*
@@ -1042,7 +1041,7 @@ static void prefixStatement(char* label, uint64_t label_length) // used to preve
         errorAt(&parser.previous, "Prefix label must end with a ':'!"); // actually not true, but for now this is how it works
     }
     */
-   
+
     uint64_t previous_prefix_length = parser.prefix_length;
     parser.prefix_length = parser.previous.length;
 
@@ -1050,27 +1049,27 @@ static void prefixStatement(char* label, uint64_t label_length) // used to preve
     {
         strncpy(parser.current_prefix, parser.previous.start, parser.prefix_length);
     }
-    else // it concatenates to the previously active prefix 
+    else // it concatenates to the previously active prefix
     {
         strncpy(parser.current_prefix + previous_prefix_length, parser.previous.start, parser.prefix_length); // change the prefix
         parser.prefix_length = previous_prefix_length + parser.prefix_length;
     }
 }
 
-static void labelStatement()
+static void label_statement()
 {
     if(check(TOKEN_LABEL)) // there is a label on this line
     {
         char* label = (char*)malloc((parser.current.length + parser.prefix_length) * sizeof(char));
-        if (parser.current.length == 2) // check if it's a label of the form dH, dB, dF 
-                                        // I still don't know if the prefix affects resolution for these kinds of labels 
+        if (parser.current.length == 2) // check if it's a label of the form dH, dB, dF
+                                        // I still don't know if the prefix affects resolution for these kinds of labels
                                         // I think so? After all, they are symbols. But I need to verify it.
         {
             if (parser.current.start[0] >= '0' && parser.current.start[0] <= '9')
             {
                 if (parser.current.start[1] == 'h')
                 {
-                    addToStack(parser.local_labels[parser.current.start[0] - '0'], parser.current_location);
+                    add_to_stack(parser.local_labels[parser.current.start[0] - '0'], parser.current_location);
                 }
                 else if (parser.current.start[1] == 'b')
                 {
@@ -1085,7 +1084,7 @@ static void labelStatement()
             strncpy(label, parser.current_prefix, parser.prefix_length);
             strncpy(label + parser.prefix_length, parser.current.start, parser.current.length);
         }
-        else 
+        else
         {
             strncpy(label, parser.current.start, parser.current.length);
         }
@@ -1094,34 +1093,34 @@ static void labelStatement()
         switch (parser.current.type)
         {
             case TOKEN_IS:
-                isStatement(label, parser.current.length);
+                is_statement(label, parser.current.length);
                 break;
             case TOKEN_GREG:
-                gregStatement(label, parser.current.length);
+                greg_statement(label, parser.current.length);
                 break;
             case TOKEN_LOC:
-                locStatement(label, parser.current.length);
+                loc_statement(label, parser.current.length);
                 break;
             case TOKEN_BYTE:
-                byteStatement(label, parser.current.length);
+                byte_statement(label, parser.current.length);
                 break;
             case TOKEN_WYDE:
-                wydeStatement(label, parser.current.length);
+                wyde_statement(label, parser.current.length);
                 break;
             case TOKEN_TETRA:
-                tetraStatement(label, parser.current.length);
+                tetra_statement(label, parser.current.length);
                 break;
             case TOKEN_OCTA:
-                octaStatement(label, parser.current.length);
+                octa_statement(label, parser.current.length);
                 break;
             case TOKEN_PREFIX:
-                errorAtCurrent("Label field should be blank!");
+                error_at_current("Label field should be blank!");
                 break;
             case TOKEN_INSTRUCTION:
-                instructionStatement(label, parser.current.length);
+                instruction_statement(label, parser.current.length);
                 break;
             default:
-                errorAtCurrent("Invalid token type.");
+                error_at_current("Invalid token type.");
         }
 
         free(label);
@@ -1131,52 +1130,52 @@ static void labelStatement()
         switch (parser.current.type)
         {
             case TOKEN_IS:
-                isStatement(NULL, 0);
+                is_statement(NULL, 0);
                 break;
             case TOKEN_GREG:
-                gregStatement(NULL, 0);
+                greg_statement(NULL, 0);
                 break;
             case TOKEN_LOC:
-                locStatement(NULL, 0);
+                loc_statement(NULL, 0);
                 break;
             case TOKEN_BYTE:
-                byteStatement(NULL, 0);
+                byte_statement(NULL, 0);
                 break;
             case TOKEN_WYDE:
-                wydeStatement(NULL, 0);
+                wyde_statement(NULL, 0);
                 break;
             case TOKEN_TETRA:
-                tetraStatement(NULL, 0);
+                tetra_statement(NULL, 0);
                 break;
             case TOKEN_OCTA:
-                octaStatement(NULL, 0);
+                octa_statement(NULL, 0);
                 break;
             case TOKEN_PREFIX:
-                prefixStatement(NULL, 0);
+                prefix_statement(NULL, 0);
                 break;
             case TOKEN_INSTRUCTION:
-                instructionStatement(NULL, 0);
+                instruction_statement(NULL, 0);
                 break;
             default:
-                errorAtCurrent("Invalid token type.");
+                error_at_current("Invalid token type.");
                 break;
         }
     }
 }
 
-static void semicolonStatement() // if you write macros/instructions on the same line
+static void semicolon_statement() // if you write macros/instructions on the same line
 {
     parser.panic_mode = false;
 
-    labelStatement();
+    label_statement();
 
     while(check(TOKEN_SEMICOLON)) // there is another statement on the same line
     {
-        labelStatement();
+        label_statement();
     }
 }
 
-void initParser(char* output_file)
+void init_parser(char* output_file)
 {
     parser.fp = fopen(output_file, "wb");
     parser.panic_mode = false;
@@ -1186,14 +1185,14 @@ void initParser(char* output_file)
     parser.prefix_length = 1;
     parser.current_prefix[0] = ':';
 
-    initTable(&instr_indices);
-    initTable(parser.locations);
-    initTable(parser.aliases);
+    init_table(&instr_indices);
+    init_table(parser.locations);
+    init_table(parser.aliases);
 
     for (int i = 0; i < 10; i++)
     {
         parser.local_labels[i] = (Stack*)malloc(sizeof(Stack));
-        initStack(parser.local_labels[i]);
+        init_stack(parser.local_labels[i]);
     }
 
     for(int i = 0; i < 150; i++)
@@ -1218,24 +1217,24 @@ void initParser(char* output_file)
         value.as_int = instructions[i].description & 0xFF;
         value.type = TYPE_INT;
         
-        addToTable(&instr_indices, &key, &value);
+        add_to_table(&instr_indices, &key, &value);
 
         free(key.as_str.lexeme);
     }
 }
 
-void freeParser()
+void free_parser()
 {
-    freeTable(&instr_indices);
-    freeTable(parser.aliases);
-    freeTable(parser.locations);
+    free_table(&instr_indices);
+    free_table(parser.aliases);
+    free_table(parser.locations);
    
     free(parser.aliases);
     free(parser.locations);
 
     for (int i = 0; i < 10; i++)
     {
-        freeStack(parser.local_labels[i]);
+        free_stack(parser.local_labels[i]);
         free(parser.local_labels[i]);
     }
    
@@ -1248,6 +1247,6 @@ void parse() // main parse function
 
     while(!check(TOKEN_EOF)) // while not at the end of the program, continue
     {
-        semicolonStatement();
+        semicolon_statement();
     }
 }

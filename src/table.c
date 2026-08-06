@@ -9,14 +9,14 @@ Table t;
 
 #define GROW_LIST(x) ((x) == 0 ? 8 : ((x) * 2))
 
-void initTable(Table* table)
+void init_table(Table* table)
 {
     table->size = 0;
     table->count = 0;
     table->entries = NULL; 
 }
 
-void freeTable(Table* table)
+void free_table(Table* table)
 {
     for(int i = 0; i < table->size; i++)
     {
@@ -30,7 +30,7 @@ void freeTable(Table* table)
     free(table->entries);
 }
 
-static uint64_t hashHelper(void* value, size_t n)
+static uint64_t hash_helper(void* value, size_t n)
 {
     uint64_t hash = 2166136261u;
     uint8_t* bytes = (uint8_t*)value;
@@ -43,26 +43,26 @@ static uint64_t hashHelper(void* value, size_t n)
     return hash;
 }
 
-static uint64_t hashFunc(TableData* s)
+static uint64_t hash_func(TableData* s)
 {
     uint64_t hash;
 
     switch(s->type)
     {
         case TYPE_STR:
-            hash = hashHelper(s->as_str.lexeme, s->as_str.n);
+            hash = hash_helper(s->as_str.lexeme, s->as_str.n);
             break;
         case TYPE_INT:
-            hash = hashHelper(&s->as_int, 8);
+            hash = hash_helper(&s->as_int, 8);
             break;
         case TYPE_FLOAT:
-            hash = hashHelper(&s->as_float, 4);
+            hash = hash_helper(&s->as_float, 4);
             break;
         case TYPE_DOUBLE:
-            hash = hashHelper(&s->as_double, 8);
+            hash = hash_helper(&s->as_double, 8);
             break;
         case TYPE_BOOL:
-            hash = hashHelper(&s->as_bool, 1);
+            hash = hash_helper(&s->as_bool, 1);
             break;
         default:
             fprintf(stderr, "Unknown key type!");
@@ -71,7 +71,7 @@ static uint64_t hashFunc(TableData* s)
     return hash;
 }
 
-static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t hash)
+static Entry* find_entry(Entry* entries, uint64_t size, TableData* key, uint64_t hash)
 {
     uint64_t index = hash & (size - 1); // basically hash % size but faster
     for (;;)
@@ -119,15 +119,15 @@ static Entry* findEntry(Entry* entries, uint64_t size, TableData* key, uint64_t 
     }
 }
 
-bool findInTable(Table* table, TableData* s, TableData* val)
+bool find_in_table(Table* table, TableData* s, TableData* val)
 {
     if(table->size == 0 || table->count == 0)
         return false;
 
-    uint64_t hash = hashFunc(s);
+    uint64_t hash = hash_func(s);
     Entry* entry;
  
-    entry = findEntry(table->entries, table->size, s, hash);
+    entry = find_entry(table->entries, table->size, s, hash);
 
     if(entry->key.type == TYPE_UNASSIGNED)
         return false;
@@ -138,7 +138,7 @@ bool findInTable(Table* table, TableData* s, TableData* val)
     return true;
 }
 
-static void adjustSize(Table* table, uint64_t capacity)
+static void adjust_size(Table* table, uint64_t capacity)
 {
     Entry* entries = (Entry*)malloc(capacity * sizeof(Entry));
     for(uint64_t i = 0; i < capacity; i++)
@@ -153,7 +153,7 @@ static void adjustSize(Table* table, uint64_t capacity)
         Entry* entry = &table->entries[i];
         if (entry->key.type == TYPE_UNASSIGNED) continue;
 
-        Entry* dest = findEntry(entries, capacity, &entry->key, entry->hash);
+        Entry* dest = find_entry(entries, capacity, &entry->key, entry->hash);
         dest->key.type = entry->key.type;
         if (dest->key.type == TYPE_STR)
         {
@@ -182,23 +182,23 @@ static void adjustSize(Table* table, uint64_t capacity)
     table->entries = entries;
 }
 
-bool addToTable(Table* table, TableData* s, TableData* value)
+bool add_to_table(Table* table, TableData* s, TableData* value)
 {
     if (s->type == TYPE_UNASSIGNED || value->type == TYPE_UNASSIGNED) {
-        fprintf(stderr, "Error: Uninitialized TableData passed to addToTable\n");
+        fprintf(stderr, "Error: Uninitialized TableData passed to add_to_table\n");
         return false;
     }
 
     if(table->count + 1 > table->size * TABLE_LOAD_FACTOR)
     {
         uint64_t capacity = GROW_LIST(table->size);
-        adjustSize(table, capacity);
+        adjust_size(table, capacity);
     }
 
     uint64_t hash;
-    hash = hashFunc(s);
+    hash = hash_func(s);
 
-    Entry* entry = findEntry(table->entries, table->size, s, hash);
+    Entry* entry = find_entry(table->entries, table->size, s, hash);
 
     bool isNewEntry = (entry->key.type == TYPE_UNASSIGNED);
     if (isNewEntry) table->count++;

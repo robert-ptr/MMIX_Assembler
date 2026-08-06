@@ -1,39 +1,39 @@
 #include "debug.h"
 
-#ifdef ASM_DEBUG_SCANNER
+#ifdef ASM_TEST_SCANNER
 
-static void dumpTokens()
+static void dump_tokens()
 {
     Token token;
     while(token.type != TOKEN_EOF)
     {
-        token = scanToken();
+        token = scan_token();
 
-        printToken(&token); 
+        print_token(&token); 
     }
 }
 
-void debugScanner()
+void debug_scanner()
 {
-    dumpTokens();
+    dump_tokens();
 }
 #endif
 
-#ifdef ASM_DEBUG_PARSER
-void debugParser()
+#ifdef ASM_TEST_PARSER
+void debug_parser()
 {
     parse();
 }
 #endif
 
-#ifdef ASM_DEBUG_TABLE
-void debugTable()
+#ifdef ASM_TEST_TABLE
+void debug_table()
 {
     // the simplest way to debug the table is to create one and perform all the actions you would perform on a hashtable
     // and see if/where it breaks
 
     Table test_table;
-    initTable(&test_table);
+    init_table(&test_table);
 
     TableData bool_key;
     bool_key.as_bool = false;
@@ -67,7 +67,7 @@ void debugTable()
     int_value.as_int = 351;
     int_value.type = TYPE_INT;
 
-    if(addToTable(&test_table, &bool_key, &bool_value))
+    if(add_to_table(&test_table, &bool_key, &bool_value))
     {
         printf("Added bool value:%d to table, key: %d\n", bool_value.as_bool, bool_key.as_bool);
     }
@@ -98,7 +98,7 @@ void debugTable()
         }
     }
 
-    if(addToTable(&test_table, &float_key, &float_value))
+    if(add_to_table(&test_table, &float_key, &float_value))
     {
         printf("Added float value:%f to table, key:%f\n", float_value.as_float, float_key.as_float);
     }
@@ -129,7 +129,7 @@ void debugTable()
         }
     }
 
-    if(addToTable(&test_table, &double_key, &double_value))
+    if(add_to_table(&test_table, &double_key, &double_value))
     {
         printf("Added float value:%lf to table, key:%lf\n", double_value.as_double, double_key.as_double);
     }
@@ -160,7 +160,7 @@ void debugTable()
         }
     }
 
-    if(addToTable(&test_table, &int_key, &int_value))
+    if(add_to_table(&test_table, &int_key, &int_value))
     {
         printf("Added int value:%d to table, key: %d\n", int_value.as_int, int_key.as_int);
     }
@@ -195,46 +195,46 @@ void debugTable()
 
     TableData value;
 
-    if(findInTable(&test_table, &bool_key, &value))
+    if(find_in_table(&test_table, &bool_key, &value))
     {
         printf("bool: %d\n", value.as_bool);
     }
 
-    if(findInTable(&test_table, &float_key, &value))
+    if(find_in_table(&test_table, &float_key, &value))
     {
         printf("float: %f\n", value.as_float);
     }
 
-    if(findInTable(&test_table, &double_key, &value))
+    if(find_in_table(&test_table, &double_key, &value))
     {
         printf("double: %lf\n", value.as_double);
     }
 
-    if(findInTable(&test_table, &int_key, &value))
+    if(find_in_table(&test_table, &int_key, &value))
     {
         printf("%d\n", value.as_int);
     }
 
-    freeTable(&test_table);
+    free_table(&test_table);
 }
 #endif
 
-#ifdef ASM_DEBUG_TRIE
+#ifdef ASM_TEST_TRIE
 int number_of_words = 0;
 
-static void traverseTrie(TrieNode* trie)
+static void traverse_trie(TrieNode* trie)
 {
     bool leaf = true;
     for(int i = 0; i < ALPHABET_SIZE; i++)
     {
         if(trie->nodes[i] != NULL)
         {
-            traverseTrie(trie->nodes[i]);
+            traverse_trie(trie->nodes[i]);
             leaf = false;
         }
     }
 
-    if (leaf && !trie->isWord)
+    if (leaf && !trie->is_word)
     {
         uint8_t buffer[128]; // this trie isn't intended to be used with extremely long words
                           // but you could use a linked list or a dynamic buffer if there were long words in the trie
@@ -248,12 +248,12 @@ static void traverseTrie(TrieNode* trie)
         printf("Reached leaf but isn't word!\n");
         for(int j = 0; j < i; j++)
         {
-            printf("%c", indexToChar(buffer[j]));
+            printf("%c", index_to_char(buffer[j]));
         }
         printf("\n");
     }
 
-    if(trie->isWord)
+    if(trie->is_word)
     {
         printf("Found word number %d!\n", number_of_words + 1);
         number_of_words++;
@@ -268,130 +268,130 @@ static void traverseTrie(TrieNode* trie)
 
         for(int j = i - 1; j >= 0; j--)
         {
-            printf("%c", indexToChar(buffer[j]));
+            printf("%c", index_to_char(buffer[j]));
         }
         printf("\n");
     }
 }
 
-void debugTrie()
+void test_trie()
 {
-    TrieNode* trie = getNode();
+    TrieNode* trie = get_node();
     for (int i = 0; i < 256; i++)
     {
-        insertNode(trie, instructions[i].name, true);
+        insert_node(trie, instructions[i].name, true);
     }
 
     for (int i = 0; i < 256; i++)
     {
-        if(!findWord(trie, instructions[i].name))
+        if(!find_word(trie, instructions[i].name))
         {
             printf("Couldn't find word: '%s'!\n", instructions[i].name);
         }
     }
 
-    traverseTrie(trie); // traverse the entire trie just to be sure everything is in order
+    traverse_trie(trie); // traverse the entire trie just to be sure everything is in order
 
-    if(findWord(trie, "random"))
+    if(find_word(trie, "random"))
     {
         printf("Found word that isn't supposed to be there.\n");
     }
 
-    if(findWord(trie, "sflo"))
+    if(find_word(trie, "sflo"))
     {
         printf("Found word that isn't supposed to be there.\n");
     }
 
-    freeTrie(trie);
+    free_trie(trie);
 }
 #endif
 
 /* these are all for debugging code in the VM */
-static void dumpGeneralRegister(Debugger* debugger, uint8_t index)
+static void dump_general_register(Tester* tester, uint8_t index)
 {
 	printf("G. Reg. number: %d value: %s", index, "placeholder"); // support for showing register value in binary,hexa and decimal
 }
 
-static void dumpSpecialRegister(Debugger* debugger, uint8_t index)
+static void dump_special_register(Tester* tester, uint8_t index)
 {
 }
 
-static void dumpGeneralRegisters(Debugger* debugger)
+static void dump_general_registers(Tester* tester)
 {
     for(int i = 0; i < 256; i++)
     {
-        dumpGeneralRegister(debugger, i);
+        dump_general_register(tester, i);
     }
 }
 
-static void dumpSpecialRegisters(Debugger* debugger)
+static void dump_special_registers(Tester* tester)
 {
     for(int i = 0; i < 32; i++)
     {
-        dumpSpecialRegister(debugger, i);
+        dump_special_register(tester, i);
     }
 }
 
-static void dumpMemory(Debugger* debugger)
+static void dump_memory(Tester* tester)
 {
 }
 
-static void dumpRegisterStack(Debugger* debugger)
+static void dump_register_stack(Tester* tester)
 {
 }
 
-static void dumpStackTop(Debugger* debugger)
+static void dump_stack_top(Tester* tester)
 {
 }
 
-static void dumpStack(Debugger* debugger)
+static void dump_stack(Tester* tester)
 {
 }
 
-void debug(Debugger* debugger)
+void debug(Tester* tester)
 {
     // TO DO: think of features to add
     // step by step debugging
     // thinking of doing an interactive one and one that just dumps the state
-    if(debugger->flags & FLAG_GREGS)
+    if(tester->flags & FLAG_GREGS)
     {
-        dumpGeneralRegisters(debugger);
+        dump_general_registers(tester);
     }
 
-    if(debugger->flags & FLAG_SPREGS)
+    if(tester->flags & FLAG_SPREGS)
     {
-        dumpSpecialRegisters(debugger);
+        dump_special_registers(tester);
     }
 
-    if(debugger->flags & FLAG_REGSTACK)
+    if(tester->flags & FLAG_REGSTACK)
     {
-        dumpRegisterStack(debugger);
+        dump_register_stack(tester);
     }
 
-    if(debugger->flags & FLAG_INSTRSTACK)
+    if(tester->flags & FLAG_INSTRSTACK)
     {
-        dumpStack(debugger);
+        dump_stack(tester);
     }
 
-    if(debugger->flags & FLAG_STACKTOP)
+    if(tester->flags & FLAG_STACKTOP)
     {
-        dumpStackTop(debugger);
+        dump_stack_top(tester);
     }
 
-    if(debugger->flags & FLAG_MEM)
+    if(tester->flags & FLAG_MEM)
     {
-        dumpMemory(debugger);
+        dump_memory(tester);
     }
 
-    if(debugger->flags & FLAG_REG)
+    if(tester->flags & FLAG_REG)
     {
-        if(debugger->flags & FLAG_SPREG)
+        if(tester->flags & FLAG_SPREG)
         {
-            dumpSpecialRegister(debugger, debugger->flags & 0xFF00 >> 8);
+            dump_special_register(tester, tester->flags & 0xFF00 >> 8);
         }
         else
         {
-            dumpGeneralRegister(debugger, debugger->flags & 0xFF00 >> 8);
+            dump_general_register(tester, tester->flags & 0xFF00 >> 8);
         }
     }
 }
