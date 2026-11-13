@@ -108,7 +108,7 @@ static bool is_numeric()
 static bool is_hexadecimal()
 {
     char c = tolower(peek());
-    return (c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e';
+    return (c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f';
 }
 
 static bool is_alphanumeric()
