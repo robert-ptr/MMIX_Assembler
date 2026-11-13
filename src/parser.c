@@ -122,17 +122,6 @@ static void advance()
     }
 }
 
-static void consume(TokenType type, const char* message)
-{
-    if (check(type))
-    {
-        advance();
-        return;
-    }
-
-    error_at_current(message);
-}
-
 static bool is_strong_operator()
 {
     return check(TOKEN_STAR) || check(TOKEN_MOD) || check(TOKEN_AND) || check(TOKEN_SLASH) || check(TOKEN_LSHIFT) || check(TOKEN_RSHIFT);
@@ -153,22 +142,9 @@ static bool is_unary()
     return check(TOKEN_PLUS) || check(TOKEN_MINUS) || check(TOKEN_COMPLEMENT) || check(TOKEN_GENERAL_REGISTER);
 }
 
-static bool is_right_paren()
-{
-    return check(TOKEN_RPAREN);
-}
-
 static void emit_byte(uint8_t byte)
 {
     fwrite(&byte, sizeof(uint8_t), 1, parser.fp);
-}
-
-static bool match(char* instruction, int32_t start, char* pattern, int32_t length)
-{
-    if(memcmp(instruction + start, pattern, length) == 0)
-        return true;
-
-    return false;
 }
 
 static bool check_operand_sizes(uint32_t op1, uint32_t op2, uint32_t op3)
