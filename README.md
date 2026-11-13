@@ -8,30 +8,13 @@ MMIX is a 64-bit RISC architecture designed by Donald Knuth as a replacement for
 1. An **assembler** that translates MMIX assembly code into executable binary format
 2. A **simulator** that executes the assembled MMIX programs
 
-### What’s Left to Do
-- **Testing**: The project needs more rigorous testing.
-- **Documentation**: The codebase requires better documentation and comments.
-- **Simulator**: The current version of the simulator implements the minimum of features needed to execute the binary code. I'm planning to develop the simulator into a proper virtual machine in the future.
-
-### Roadmap (in no particular order)
-- [ ] Extensive testing on the assembler
-- [ ] Review the code and rewrite where necessary
-- [ ] Properly report VM state, add flags so the user can choose among options
-- [ ] Pipelining
-- [ ] Branch prediction
-- [ ] Create a cache
-- [ ] Add a scheduler
-- [ ] Multithreading
-- [ ] Implement all MMIX instructions in the VM
-
 ## Features
 
-- Full implementation of the MMIX instruction set (256 opcodes) (WIP)
+- Full implementation of the MMIX instruction set (256 opcodes)
 - Support for all MMIX registers (256 general registers and 32 special registers)
 - Assembler directives (`IS`, `LOC`, `BYTE`, `WYDE`, `TETRA`, `OCTA`, etc.)
 - Label resolution and symbol table management
 - Virtual memory implementation using hash tables to simulate the 2^64 byte address space
-- Command-line options for debugging and tracing program execution (WIP)
 
 ## Building the Project
 
@@ -74,14 +57,6 @@ If no output file is specified, the default output file is `./output`.
 ```bash
 ./build/mmix_sim [options] input_file
 ```
-
-### Command Line Options
-
-- `-s`: Display running time statistics when the program ends
-- `-P`: Show a profile of how often each instruction was executed
-- `-v`: Verbose mode, showing details about simulator operations
-- `-t<n>`: Trace each instruction the first n times it is performed
-- `-i`: Run simulator in interactive mode
 
 ## Example Programs
 
