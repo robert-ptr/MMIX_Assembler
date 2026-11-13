@@ -548,7 +548,8 @@ static void instruction_statement(char* label, uint64_t label_length) // fundame
 
     if(find_in_table(&instr_indices, &key, &emitValue))
     {
-        opcode = (uint8_t)emitValue.as_int;
+        uint64_t instruction_index = emitValue.as_int;
+        opcode = (uint8_t)(instructions[instruction_index].description & 0xFF);
     }
     else
     {
@@ -597,8 +598,8 @@ static void instruction_statement(char* label, uint64_t label_length) // fundame
 
     bool valid_arity =
         (arity == 1 && accepts_single_operand(opcode)) ||
-        (arity == 2 && ACCEPTS_2_ARGS(instructions[opcode].description)) ||
-        (arity == 3 && ACCEPTS_3_ARGS(instructions[opcode].description));
+        (arity == 2 && ACCEPTS_2_ARGS(instructions[emitValue.as_int].description)) ||
+        (arity == 3 && ACCEPTS_3_ARGS(instructions[emitValue.as_int].description));
 
     if (!valid_arity)
     {
@@ -765,6 +766,16 @@ static void loc_statement(char* label, uint64_t label_length) // MMIXAL statemen
             error_at_current("Symbol redefinition!");
         }
     }
+
+    parser.current_location = loc;
+
+    while(!check(TOKEN_ENDLINE) && !check(TOKEN_EOF))
+    {
+        advance();
+    }
+
+    if (check(TOKEN_ENDLINE))
+        advance();
 }
 
 static void byte_statement(char* label, uint64_t label_length) // MMIXAL statement for allocating memory 1 byte at a time
@@ -1191,7 +1202,7 @@ void init_parser(char* output_file)
         key.as_str.n = strlen(instructions[i].name);
         key.type = TYPE_STR;
        
-        value.as_int = instructions[i].description & 0xFF;
+        value.as_int = i;
         value.type = TYPE_INT;
         
         add_to_table(&instr_indices, &key, &value);
