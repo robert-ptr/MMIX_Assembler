@@ -18,7 +18,6 @@ set(ASSEMBLER_SRCS
 
 add_executable(mmix_assembler ${ASSEMBLER_SRCS})
 
-
 # === Simulator sources ===
 set(SIMULATOR_SRCS
     vm.c

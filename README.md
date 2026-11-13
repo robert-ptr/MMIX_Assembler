@@ -42,10 +42,10 @@ MMIX is a 64-bit RISC architecture designed by Donald Knuth as a replacement for
 
 ### Building with CMake
 
-To ensure a reliable, clean, and isolated build environment, use an out-of-source CMake build:
+To ensure a reliable, clean, and isolated build environment, configure and build the project from the root directory:
 
 ```bash
-cmake -S src -B build
+cmake -B build
 cmake --build build
 ```
 
@@ -57,14 +57,6 @@ To build only the simulator (VM), you can specify the target:
 
 ```bash
 cmake --build build --target mmix_sim
-```
-
-### Clean Up
-
-To remove build artifacts and recover disk space:
-
-```bash
-rm -rf build
 ```
 
 ## Usage
@@ -108,6 +100,7 @@ The `tests` directory contains several example MMIX programs, including:
   - `parser.c/h`: Parsing and code generation
   - `vm.c/h`: Virtual machine implementation
   - `common.c/h`: Common utilities and data structures
+  - `dynamic_list.c/h`: Generic dynamic array data structure
   - `table.c/h`: Symbol table implementation
   - `trie.c/h`: Trie data structure for instruction lookup
   - `debug.c/h`: Debugging utilities
