@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <string.h>
 #include "vm.h"
 
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -153,7 +152,8 @@ void init_vm(VM* vm)
 
 void free_vm(VM* vm)
 {
-    freeTable(vm->memory);
+    free_table(vm->memory);
+    free(vm->memory);
 }
 
 static void update_local(VM* vm, uint8_t X) // checks if the destination operand is marginal, if so, set rL to X + 1
@@ -190,34 +190,27 @@ static void add_byte_to_mem(VM* vm, uint64_t address, uint8_t byte)
     uint8_t offset = address % 8;
     address -= offset;
 
-    char* key = int_to_hex_string(address, 64);
-    
-    EntryValue value;
-    value.type = TYPE_INT;
+    TableData key = { .type = TYPE_INT, .as_int = address };
+    TableData value = { .type = TYPE_INT, .as_int = 0 };
 
-    size_t n = strlen(key);
+    find_in_table(vm->memory, &key, &value);
+    value.as_int = (value.as_int & ~((uint64_t)0xFF << (8 * offset))) | ((uint64_t)byte << (8 * offset));
 
-    findInTable(vm->memory, key, n, &value);
-    value.as_int = value.as_int | (0xFF << (8 * offset)) & byte << (8 * offset);
-
-    addToTable_uint64_t(vm->memory, key, n, value.as_int);
+    add_to_table(vm->memory, &key, &value);
 }
 
 static void add_wyde_to_mem(VM* vm, uint64_t address, uint16_t wyde)
 {
     uint8_t offset = address % 4;
     address -= offset;
-    char* key = int_to_hex_string(address, 64);
-    
-    EntryValue value;
-    value.type = TYPE_INT;
 
-    size_t n = strlen(key);
+    TableData key = { .type = TYPE_INT, .as_int = address };
+    TableData value = { .type = TYPE_INT, .as_int = 0 };
 
-    findInTable(vm->memory, key, n, &value);
-    value.as_int = value.as_int | (0xFFFF << (16 * offset)) & wyde << (16 * offset);
+    find_in_table(vm->memory, &key, &value);
+    value.as_int = (value.as_int & ~((uint64_t)0xFFFF << (16 * offset))) | ((uint64_t)wyde << (16 * offset));
 
-    addToTable_uint64_t(vm->memory, key, n, value.as_int);
+    add_to_table(vm->memory, &key, &value);
 }
 
 static void add_tetra_to_mem(VM* vm, uint64_t address, uint32_t tetra)
@@ -225,38 +218,34 @@ static void add_tetra_to_mem(VM* vm, uint64_t address, uint32_t tetra)
     uint8_t offset = address % 2;
     address -= offset;
     
-    char* key = int_to_hex_string(address, 64);
-    
-    EntryValue value;
-    value.type = TYPE_INT;
+    TableData key = { .type = TYPE_INT, .as_int = address };
+    TableData value = { .type = TYPE_INT, .as_int = 0 };
 
-    size_t n = strlen(key);
+    find_in_table(vm->memory, &key, &value);
+    value.as_int = (value.as_int & ~((uint64_t)0xFFFFFFFF << (32 * offset))) | ((uint64_t)tetra << (32 * offset));
 
-    findInTable(vm->memory, key, n, &value);
-    value.as_int = value.as_int | (0xFFFFFFFF << (32 * offset)) & tetra << (32 * offset);
-
-    addToTable_uint64_t(vm->memory, key, n, value.as_int);
+    add_to_table(vm->memory, &key, &value);
 }
 
 static void add_octa_to_mem(VM* vm, uint64_t address, uint64_t octa)
 {
-    char* key = int_to_hex_string(address, 64);
+    TableData key = { .type = TYPE_INT, .as_int = address };
+    TableData value = { .type = TYPE_INT, .as_int = octa };
 
-    addToTable_uint64_t(vm->memory, key, strlen(key), octa);
+    add_to_table(vm->memory, &key, &value);
 }
 
 static uint8_t get_byte_from_mem(VM* vm, uint64_t address)
 {
-    EntryValue value;
-    value.type = TYPE_INT;
+    TableData value = { .type = TYPE_INT, .as_int = 0 };
 
     uint8_t offset = address % 8;
     address -= offset;
-    char* key = int_to_hex_string(address, 64);
+    TableData key = { .type = TYPE_INT, .as_int = address };
 
-    if(findInTable(vm->memory, key, strlen(key), &value))
+    if(find_in_table(vm->memory, &key, &value))
     {
-        return value.as_int << (8 * (7 - offset)) >> 56;
+        return (value.as_int >> (8 * offset)) & 0xFF;
     }
     
     return 0;
@@ -264,16 +253,15 @@ static uint8_t get_byte_from_mem(VM* vm, uint64_t address)
 
 static uint16_t get_wyde_from_mem(VM* vm, uint64_t address)
 {
-    EntryValue value;
-    value.type = TYPE_INT;
+    TableData value = { .type = TYPE_INT, .as_int = 0 };
 
     uint8_t offset = address % 4;
     address -= offset;
-    char* key = int_to_hex_string(address, 64);
+    TableData key = { .type = TYPE_INT, .as_int = address };
 
-    if(findInTable(vm->memory, key, strlen(key), &value))
+    if(find_in_table(vm->memory, &key, &value))
     {
-        return value.as_int << (16 * (3 - offset)) >> 48;
+        return (value.as_int >> (16 * offset)) & 0xFFFF;
     }
     
     return 0;
@@ -281,16 +269,15 @@ static uint16_t get_wyde_from_mem(VM* vm, uint64_t address)
 
 static uint32_t get_tetra_from_mem(VM* vm, uint64_t address)
 {
-    EntryValue value;
-    value.type = TYPE_INT;
+    TableData value = { .type = TYPE_INT, .as_int = 0 };
 
     uint8_t offset = address % 2;
     address -= offset;
-    char* key = int_to_hex_string(address, 64);
+    TableData key = { .type = TYPE_INT, .as_int = address };
 
-    if(findInTable(vm->memory, key, strlen(key), &value))
+    if(find_in_table(vm->memory, &key, &value))
     {
-        return value.as_int << (32 * (1 - offset)) >> 32;
+        return (value.as_int >> (32 * offset)) & 0xFFFFFFFF;
     }
     
     return 0;
@@ -298,12 +285,11 @@ static uint32_t get_tetra_from_mem(VM* vm, uint64_t address)
 
 static uint64_t get_octa_from_mem(VM* vm, uint64_t address)
 {   
-    EntryValue value;
-    value.type = TYPE_INT;
+    TableData value = { .type = TYPE_INT, .as_int = 0 };
 
-    char* key = int_to_hex_string(address, 64);
+    TableData key = { .type = TYPE_INT, .as_int = address };
 
-    if(findInTable(vm->memory, key, strlen(key), &value))
+    if(find_in_table(vm->memory, &key, &value))
     {
         return value.as_int;
     }
