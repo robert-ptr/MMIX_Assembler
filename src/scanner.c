@@ -17,6 +17,8 @@ static TokenType check_keyword()
 {
     if (scanner.current - scanner.start == 2 && memcmp(scanner.start, "IS", 2) == 0)
         return TOKEN_IS;
+    if (scanner.current - scanner.start == 3 && memcmp(scanner.start, "LOC", 3) == 0)
+        return TOKEN_LOC;
     if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "GREG", 4) == 0)
         return TOKEN_GREG;
     if (scanner.current - scanner.start == 4 && memcmp(scanner.start, "BYTE", 4) == 0)
