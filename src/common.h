@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 typedef struct
 {
@@ -18,6 +17,9 @@ typedef struct
                          // and also makes the instruction table more easily readable
                          // + 1 byte for the opcode
 } Instruction;
+
+#define ACCEPTS_3_ARGS(desc) (((desc) >> 15) & 1)
+#define ACCEPTS_2_ARGS(desc) (((desc) >> 14) & 1)
 
 extern Instruction instructions[258]; 
 char* get_string(char* buffer, int32_t length, int32_t buf_index);

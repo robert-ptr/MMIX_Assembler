@@ -482,6 +482,22 @@ static int64_t expression(bool* is_immediate) // instruction arguments may be ex
     return a;
 }
 
+static bool accepts_single_operand(uint8_t opcode)
+{
+    switch (opcode)
+    {
+        case 0xF0: // jmp
+        case 0x00: // trap
+        case 0xFF: // trip
+        case 0xF9: // resume
+        case 0xFB: // unsave
+        case 0xFC: // sync
+            return true;
+        default:
+            return false;
+    }
+}
+
 static void instruction_statement(char* label, uint64_t label_length) // fundamental block of the assembler
                                                                      // each MMIX program is basically a list of instructions
                                                                      // and some of them have labels in front
@@ -579,32 +595,17 @@ static void instruction_statement(char* label, uint64_t label_length) // fundame
         arity++;
     }
 
-    if(arity == 3 && (instructions[opcode].description >> 15) & 0b1) // the instruction accepts 3 arguments
-        ;
-    else if (arity == 2 && (instructions[opcode].description >> 14) & 0b1) // instruction accepts 2 arguments
-        ;
-    else if (arity == 1)
-    {
-        if (strcmp(instructions[opcode].name, "jmp") &&
-            strcmp(instructions[opcode].name, "trap") &&
-            strcmp(instructions[opcode].name, "trip") &&
-            strcmp(instructions[opcode].name, "resume") &&
-            strcmp(instructions[opcode].name, "unsave") &&
-            strcmp(instructions[opcode].name, "sync"))  // strcmp returns 0 if there is a match
-        {
-            error_at(&instr_token, "Wrong number of arguments for instruction!");
-            free(instruction);
-            return;
-        }
-    }
-    else
+    bool valid_arity =
+        (arity == 1 && accepts_single_operand(opcode)) ||
+        (arity == 2 && ACCEPTS_2_ARGS(instructions[opcode].description)) ||
+        (arity == 3 && ACCEPTS_3_ARGS(instructions[opcode].description));
+
+    if (!valid_arity)
     {
         error_at(&instr_token, "Wrong number of arguments for instruction!");
         free(instruction);
         return;
     }
-
-
 
     if(check(TOKEN_COMMA)) // wrong number of arguments
     {
