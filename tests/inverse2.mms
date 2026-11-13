@@ -5,7 +5,7 @@
 		NEG		i,i
 		STB		i,x,k
 		SUB		k,k,1
-		PBP		k,OB
+		PBP		k,0B
 		SET		m,n
 2H		SET		i,m
 0H		SET		j,i

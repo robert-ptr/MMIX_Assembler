@@ -109,7 +109,7 @@ U2			SET 		c0,c
 			BNZ 		$0,2F
 			LDA			c,ELEV1
 			LDOU		$0,c,NEXTINST
-			GETA		$1,$6
+			GETA		$1,E6
 			CMPU		$0,$0,$1
 			BNZ			$0,3F
 			GETA 		$0,E3
@@ -122,7 +122,7 @@ U2			SET 		c0,c
 4H			PUSHJ		$0,Immed
 			JMP 		U3
 2H			SL			$1,on,fi
-			CMP			$0,fo,ri
+			CMP			$0,fo,fi
 			ZSP			$2,$0,$1
 			OR			callup,callup,$2
 			ZSN			$2,$0,$1

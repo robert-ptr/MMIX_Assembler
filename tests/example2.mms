@@ -13,7 +13,7 @@ mm          IS kk	                ;; Index for output lines
 PRIME1      WYDE 2					;; PRIME[1] = 2
 	        LOC PRIME1+2*L
 ptop        GREG @					;; Address of PRIME[501]
-j0	        GREG prime1+2-@		    ;; Initial value of jj
+j0	        GREG PRIME1+2-@		    ;; Initial value of jj
 BUF         OCTA 0					;; Place to form decimal string
 
             LOC #100

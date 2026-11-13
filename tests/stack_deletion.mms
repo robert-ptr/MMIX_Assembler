@@ -1,5 +1,5 @@
 		LDOU	p,:T						% p <- T
-		BZ		P,:Underflow		% is T = Delta?
+		BZ		p,:Underflow		% is T = Delta?
 		LDOU	t,p,LINK
 		STOU	t,:T						% T <- LINK(P)
 		LDO		y,p,INFO				% Y <- INFO(P)

@@ -2,9 +2,10 @@ j       IS $0	            % j
 m       IS $1	            % m
 kk      IS $2	            % 8k
 xk      IS $3	            % X[k]
+x0      IS $254	            % X base address
 t       IS $255	            % Temp storage
         LOC #100
-Maximum SL, kk, $0, 3	    %M1. Initialize. k=n, j=n
+Maximum SL kk,$0,3	    %M1. Initialize. k=n, j=n
 	    LDO m,x0,kk			% m=X[n]
 	    JMP DecrK			% To M2 with k=n-1
 Loop    LDO xk, x0, kk		%M3. Compare.

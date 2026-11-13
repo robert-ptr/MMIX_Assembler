@@ -19,7 +19,7 @@ Main	LDA		$255,InArg				;; prepare for input
 		TRAP	0,Fread,StdIn		    ;; read input
 		SET		size,$255
 		INCL 	size,MAXP			    ;; size <- $255 + MAXP
-		BNP		size,Fail				;; chekc if input was OK
+		BNP		size,Fail				;; check if input was OK
 		LDA		base,Buffer
 		ADDU	base,base,size			;; base <- Buffer + size
 		NEG		k,size							% A1. First pass

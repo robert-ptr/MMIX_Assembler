@@ -13,7 +13,7 @@
 		JMP		2B
 A3		BN		abcp,6F
 		LDO     coefq,q,COEF
-		ADD     coefq,coefq,coefq
+		ADD     coefq,coefq,coefp
 		STO     coefq,q,COEF
 		PBNZ    coefq,:Add
 		SET		q2,q

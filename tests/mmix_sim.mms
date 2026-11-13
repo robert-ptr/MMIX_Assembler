@@ -56,13 +56,13 @@ ss          GREG    0                   ;; the simulated stack pointer, rS
 oo          GREG    0                   ;; the simulated stack offset, rO
 ll          GREG    0                   ;; the simulated local threshold register, rL, times 8
 gg          GREG    0                   ;; the simulated global threshold register, rG, times 8
-aa          GREG    0                   ;; the simualted arithmetic status register, rA
+aa          GREG    0                   ;; the simulated arithmetic status register, rA
 ii          GREG    0                   ;; the simulated interval counter, rI
 uu          GREG    0                   ;; the simulated usage counter, rU
 cc          GREG    0                   ;; the simulated cycle counter, rC
 lring_mask  GREG    8*lring_size-1
 :GetReg     CMPU    t,$0,gg             ;; subroutine to get $k 
-            BN      t,1F                ;; branc if k < G 
+            BN      t,1F                ;; branch if k < G
             LDOU    $0,g,$0             ;; otherwise $k is global; load g[k]
             POP     1,0                 ;; return the result
 1H          CMPU    t,$0,ll             ;; t <- [$k is local]
@@ -78,7 +78,7 @@ lring_mask  GREG    8*lring_size-1
             PUSHJ   res,MemFind
             STOU    $1,res,0            ;; M_8[rS] <- $1
             ADDU    ss,ss,8             ;; increase rS by 8 
-            PUT     rJ,$0               ;; restore the retrun address 
+            PUT     rJ,$0               ;; restore the return address
             POP     0                   ;; return to caller
 :StackLoad  GET     $0,rJ               ;; save the return address 
             SUBU    ss,ss,8             ;; decrease rS by 8
