@@ -502,12 +502,9 @@ static void instruction_statement(char* label, uint64_t label_length) // fundame
             value.type = TYPE_INT;
 
             add_to_table(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
@@ -683,12 +680,9 @@ static void is_statement(char* label, uint64_t label_length) // MMIXAL statement
             value.type = TYPE_INT;
 
             add_to_table(parser.aliases, &key, &value);
-
-            free(label); // add to table performs hard copy
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
@@ -726,14 +720,11 @@ static void greg_statement(char* label, uint64_t label_length) // MMIXAL stateme
 
             add_to_table(parser.aliases, &key, &value);
 
-            free(label); // add to table performs hard copy
-
             parser.register_values[parser.general_reg] = expression(NULL);
             parser.general_reg++;
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
@@ -767,12 +758,9 @@ static void loc_statement(char* label, uint64_t label_length) // MMIXAL statemen
             value.type = TYPE_INT;
 
             add_to_table(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
@@ -795,12 +783,9 @@ static void byte_statement(char* label, uint64_t label_length) // MMIXAL stateme
             value.type = TYPE_INT;
 
             add_to_table(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
@@ -853,12 +838,9 @@ static void wyde_statement(char* label, uint64_t label_length) // MMIXAL stateme
             value.type = TYPE_INT;
 
             add_to_table(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
@@ -915,12 +897,9 @@ static void tetra_statement(char* label, uint64_t label_length) // MMIXAL statem
             value.type = TYPE_INT;
 
             add_to_table(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
@@ -985,12 +964,9 @@ static void octa_statement(char* label, uint64_t label_length) // MMIXAL stateme
             value.type = TYPE_INT;
 
             add_to_table(parser.locations, &key, &value);
-
-            free(label); // add to table performs hard copy
         }
         else
         {
-            free(label);
             error_at_current("Symbol redefinition!");
         }
     }
