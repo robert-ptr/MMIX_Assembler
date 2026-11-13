@@ -35,18 +35,36 @@ MMIX is a 64-bit RISC architecture designed by Donald Knuth as a replacement for
 
 ## Building the Project
 
-### Assembler
+### Prerequisites
+
+- CMake (3.10 or higher)
+- C compiler with C99 support (e.g., GCC or Clang)
+
+### Building with CMake
+
+To ensure a reliable, clean, and isolated build environment, use an out-of-source CMake build:
 
 ```bash
-cd src
-make -f Makefile_assembler
+cmake -S src -B build
+cmake --build build
 ```
 
-### Simulator
+This compiles both the assembler and simulator targets:
+- Assembler executable: `build/mmix_assembler`
+- Simulator / VM executable: `build/mmix_sim`
+
+To build only the simulator (VM), you can specify the target:
 
 ```bash
-cd src
-make -f Makefile_simulator
+cmake --build build --target mmix_sim
+```
+
+### Clean Up
+
+To remove build artifacts and recover disk space:
+
+```bash
+rm -rf build
 ```
 
 ## Usage
@@ -54,7 +72,7 @@ make -f Makefile_simulator
 ### Assembling a Program
 
 ```bash
-./mmix_assembler input_file [output_file]
+./build/mmix_assembler input_file [output_file]
 ```
 
 If no output file is specified, the default output file is `./output`.
@@ -62,7 +80,7 @@ If no output file is specified, the default output file is `./output`.
 ### Running a Program
 
 ```bash
-./mmix_sim [options] input_file
+./build/mmix_sim [options] input_file
 ```
 
 ### Command Line Options

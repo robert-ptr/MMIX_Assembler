@@ -20,11 +20,11 @@ add_executable(mmix_assembler ${ASSEMBLER_SRCS})
 
 
 # === Simulator sources ===
-#set(SIMULATOR_SRCS
-#    vm.c
-#    table.c
-#    common.c
-#)
-#
-#add_executable(mmix_sim ${SIMULATOR_SRCS})
+set(SIMULATOR_SRCS
+    vm.c
+    table.c
+    common.c
+)
+
+add_executable(mmix_sim ${SIMULATOR_SRCS})
 
