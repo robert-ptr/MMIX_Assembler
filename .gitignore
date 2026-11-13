@@ -1,0 +1,23 @@
+# Build directories
+build/
+cmake-build-*/
+bin/
+
+# Object and dependency files
+*.o
+*.d
+*.a
+*.so
+*.dylib
+
+# Compiled executables
+mmix_assembler
+mmix_sim
+output
+
+# IDE / Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
