@@ -8,12 +8,12 @@
 Scanner scanner;
 uint32_t scanned_chars = 0;
 
-static bool isAtEnd()
+static bool is_at_end()
 {
     return *scanner.current == '\0';
 }
 
-static TokenType checkKeyword()
+static TokenType check_keyword()
 {
     if (scanner.current - scanner.start == 2 && memcmp(scanner.start, "IS", 2) == 0)
         return TOKEN_IS;
@@ -35,7 +35,7 @@ static TokenType checkKeyword()
     return TOKEN_LABEL;
 }
 
-static Token makeToken(TokenType type)
+static Token make_token(TokenType type)
 {
     Token token;
     token.start = scanner.start;
@@ -49,7 +49,7 @@ static Token makeToken(TokenType type)
     return token;
 }
 
-static Token errorToken(char* message)
+static Token error_token(char* message)
 {
     Token token;
     token.start = message;
@@ -71,7 +71,7 @@ static char peek()
     return *scanner.current;
 }
 
-static void skipWhitespace()
+static void skip_whitespace()
 {
     for(;;)
     {
@@ -86,7 +86,7 @@ static void skipWhitespace()
                 break;
             case '%': 
             {
-                while(!isAtEnd() && peek() != '\n')
+                while(!is_at_end() && peek() != '\n')
                 {
                     advance();
                     scanned_chars++;
@@ -99,117 +99,117 @@ static void skipWhitespace()
     }
 }
 
-static bool isNumeric()
+static bool is_numeric()
 {
     char c = peek();
     return c >= '0' && c <= '9';
 }
 
-static bool isHexadecimal()
+static bool is_hexadecimal()
 {
     char c = tolower(peek());
     return (c >= '0'  && c <= '9') || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e';
 }
 
-static bool isAlphanumeric()
+static bool is_alphanumeric()
 {
     char c = peek();
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':';
 }
 
-static TokenType identifierType()
+static TokenType identifier_type()
 {
     int32_t length = scanner.current - scanner.start;
     char* word = (char*)malloc((length + 1) * sizeof(char));
     word[length] = '\0';
     strncpy(word, scanner.start, length);
-    stringToLowercase(word);
+    string_to_lowercase(word);
 
-    if(findWord(scanner.instruction_trie, word))
+    if(find_word(scanner.instruction_trie, word))
     {
         free(word);
         return TOKEN_INSTRUCTION;
     }
     
     free(word);
-    return checkKeyword();
+    return check_keyword();
 }
 
-void initScanner(const char* source)
+void init_scanner(const char* source)
 {
     scanner.source = source;
     scanner.start = source;
     scanner.current = source;
     scanner.line = 1;
 
-    scanner.instruction_trie = getNode();
+    scanner.instruction_trie = get_node();
     for(int i = 0; i < 150; i++)
     {
-        insertNode(scanner.instruction_trie, instructions[i].name, true);
+        insert_node(scanner.instruction_trie, instructions[i].name, true);
     }
 }
 
 static Token immediate()
 {
-    while(isNumeric())
+    while(is_numeric())
     {
         advance();
     }
 
-    return makeToken(TOKEN_IMMEDIATE);
+    return make_token(TOKEN_IMMEDIATE);
 }
 
 static Token identifier()
 {
-    while(isAlphanumeric())
+    while(is_alphanumeric())
     {
         advance();
     }
 
-    return makeToken(identifierType());
+    return make_token(identifier_type());
 }
 
-static Token generalRegister()
+static Token general_register()
 {
     advance();
-    while(isAlphanumeric())
+    while(is_alphanumeric())
     {
         advance();
     }
 
-    return makeToken(TOKEN_GENERAL_REGISTER);
+    return make_token(TOKEN_GENERAL_REGISTER);
 }
 
-static Token specialRegister()
+static Token special_register()
 {
     advance();
-    while(isAlphanumeric())
+    while(is_alphanumeric())
     {
         advance();
     }
 
-    return makeToken(TOKEN_SPECIAL_REGISTER);
+    return make_token(TOKEN_SPECIAL_REGISTER);
 }
 
 static Token constant()
 {
     advance();
     scanner.start++;
-    while(isHexadecimal())
+    while(is_hexadecimal())
     {
         advance();
     }
 
-    return makeToken(TOKEN_CONSTANT);
+    return make_token(TOKEN_CONSTANT);
 }
 
 static Token string()
 {
         advance();
-        while(peek() != '"' && !isAtEnd())
+        while(peek() != '"' && !is_at_end())
         {
-            if(isAtEnd() || peek() == '\n')
-                return errorToken("Unterminated string.");
+            if(is_at_end() || peek() == '\n')
+                return error_token("Unterminated string.");
             advance();
         }
 
@@ -224,31 +224,31 @@ static Token string()
         return token;
 }
 
-static Token skipToEndOfLine()
+static Token skip_to_end_of_line()
 {
     while(peek() != '\0' && peek() != '\n')
         advance();
     if (peek() == '\n')
         advance();
-    return scanToken();
+    return scan_token();
 }
 
-Token scanToken()
+Token scan_token()
 {
-    skipWhitespace();
+    skip_whitespace();
     scanner.start = scanner.current;
 
-    if(isNumeric()) // add support for special constructs dH, dF, dB
+    if(is_numeric()) // add support for special constructs dH, dF, dB
     {
         return immediate();
     }
-    else if(isAlphanumeric())
+    else if(is_alphanumeric())
     {
         return identifier();
     }
 
-    if (isAtEnd())
-        return makeToken(TOKEN_EOF);
+    if (is_at_end())
+        return make_token(TOKEN_EOF);
 
     char c = advance();
 
@@ -257,26 +257,26 @@ Token scanToken()
         case '\n':
             scanner.line++;
             scanned_chars = 0;
-            return makeToken(TOKEN_ENDLINE);    
-        case ',': return makeToken(TOKEN_COMMA);
-        case '$': return makeToken(TOKEN_GENERAL_REGISTER);
-        case 'r': return specialRegister();
+            return make_token(TOKEN_ENDLINE);
+        case ',': return make_token(TOKEN_COMMA);
+        case '$': return make_token(TOKEN_GENERAL_REGISTER);
+        case 'r': return special_register();
         case '#': return constant();
-        case '+': return makeToken(TOKEN_PLUS);
-        case '%': return makeToken(TOKEN_MOD); // this might also be a comment
-        case '-': return makeToken(TOKEN_MINUS);
-        case '*': return makeToken(TOKEN_STAR);
-        case '&': return makeToken(TOKEN_AND);
-        case '|': return makeToken(TOKEN_OR);
-        case '^': return makeToken(TOKEN_XOR);
-        case '~': return makeToken(TOKEN_COMPLEMENT);
-        case '(': return makeToken(TOKEN_LPAREN);
-        case ')': return makeToken(TOKEN_RPAREN);
+        case '+': return make_token(TOKEN_PLUS);
+        case '%': return make_token(TOKEN_MOD); // this might also be a comment
+        case '-': return make_token(TOKEN_MINUS);
+        case '*': return make_token(TOKEN_STAR);
+        case '&': return make_token(TOKEN_AND);
+        case '|': return make_token(TOKEN_OR);
+        case '^': return make_token(TOKEN_XOR);
+        case '~': return make_token(TOKEN_COMPLEMENT);
+        case '(': return make_token(TOKEN_LPAREN);
+        case ')': return make_token(TOKEN_RPAREN);
         case '/': 
             if(peek() == '/') // this could also mark the beginning of a comment, according to Knuth
             {
                 advance();
-                return makeToken(TOKEN_DSLASH);
+                return make_token(TOKEN_DSLASH);
             }
             else if(peek() == '*')
             {
@@ -288,61 +288,61 @@ Token scanToken()
                 if(peek() != '\0')
                     advance();
 
-                return scanToken();
+                return scan_token();
             }
             else
-                return makeToken(TOKEN_SLASH);
+                return make_token(TOKEN_SLASH);
         case ';':
             if(peek() == ';')
             {
-                return skipToEndOfLine();
+                return skip_to_end_of_line();
             }
             else
-                return makeToken(TOKEN_SEMICOLON);
+                return make_token(TOKEN_SEMICOLON);
         case '<':
             if(peek() == '<')
             {
                 advance();
-                return makeToken(TOKEN_LSHIFT);
+                return make_token(TOKEN_LSHIFT);
             }
             else
-                return errorToken("'<' operator is not defined, did you mean '<<'?");
+                return error_token("'<' operator is not defined, did you mean '<<'?");
             case '>':
             if(peek() == '>')
             {
                 advance();
-                return makeToken(TOKEN_RSHIFT);
+                return make_token(TOKEN_RSHIFT);
             }
             else
-                return errorToken("'>' operator is not defined, did you mean '>>'?");
-        case '@': return makeToken(TOKEN_AROUND);
+                return error_token("'>' operator is not defined, did you mean '>>'?");
+        case '@': return make_token(TOKEN_AROUND);
         case '"': 
             return string();
         case 'g':
-            return makeToken(TOKEN_GREG);
+            return make_token(TOKEN_GREG);
         case 'l':
-            return makeToken(TOKEN_LOC);
+            return make_token(TOKEN_LOC);
         case 'b':
-            return makeToken(TOKEN_BYTE);
+            return make_token(TOKEN_BYTE);
         case 'w':
-            return makeToken(TOKEN_WYDE);
+            return make_token(TOKEN_WYDE);
         case 't':
-            return makeToken(TOKEN_TETRA);
+            return make_token(TOKEN_TETRA);
         case 'o':
-            return makeToken(TOKEN_OCTA);
+            return make_token(TOKEN_OCTA);
         case 'i':
-            return makeToken(TOKEN_IS);
+            return make_token(TOKEN_IS);
     }
 
-    return errorToken("Unexpected character.");
+    return error_token("Unexpected character.");
 }
 
-void freeScanner()
+void free_scanner()
 {
-    freeTrie(scanner.instruction_trie);
+    free_trie(scanner.instruction_trie);
 }
 
-void printToken(Token* token)
+void print_token(Token* token)
 {
     switch(token->type)
     {

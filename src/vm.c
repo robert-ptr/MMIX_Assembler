@@ -134,7 +134,7 @@ static int64_t mul64s(int64_t u, int64_t v, int64_t* overflow) // adapted from '
     return (int64_t)(((uint64_t)w1 << 32) | (w0 & 0xFFFFFFFF));
 }
 
-void initVM(VM* vm)
+void init_vm(VM* vm)
 {
     vm->memory = (Table*)malloc(sizeof(Table));
 
@@ -148,15 +148,15 @@ void initVM(VM* vm)
         vm->special_registers[i].val = 0;
     }
 
-    initTable(vm->memory);
+    init_table(vm->memory);
 }
 
-void freeVM(VM* vm)
+void free_vm(VM* vm)
 {
     freeTable(vm->memory);
 }
 
-static void updateLocal(VM* vm, uint8_t X) // checks if the destination operand is marginal, if so, set rL to X + 1
+static void update_local(VM* vm, uint8_t X) // checks if the destination operand is marginal, if so, set rL to X + 1
 {
     if (X > vm->special_registers[20].val)
         vm->special_registers[20].val = X + 1;
@@ -165,17 +165,17 @@ static void updateLocal(VM* vm, uint8_t X) // checks if the destination operand 
         vm->special_registers[19].val = vm->special_registers[20].val + 1; // rG > rL always
 }
 
-static bool isAtEnd(VM* vm)
+static bool is_at_end(VM* vm)
 {
     return vm->ip == NULL;
 }
 
-static uint8_t currentByte(VM* vm)
+static uint8_t current_byte(VM* vm)
 {
     return *vm->ip; 
 }
 
-static uint8_t getByte(VM* vm)
+static uint8_t get_byte(VM* vm)
 {
     return *(vm->ip++);
 }
@@ -185,12 +185,12 @@ static int64_t s(uint64_t unsig)
     return unsig;
 }
 
-static void addByteToMem(VM* vm, uint64_t address, uint8_t byte)
+static void add_byte_to_mem(VM* vm, uint64_t address, uint8_t byte)
 {
     uint8_t offset = address % 8;
     address -= offset;
 
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
     
     EntryValue value;
     value.type = TYPE_INT;
@@ -203,11 +203,11 @@ static void addByteToMem(VM* vm, uint64_t address, uint8_t byte)
     addToTable_uint64_t(vm->memory, key, n, value.as_int);
 }
 
-static void addWydeToMem(VM* vm, uint64_t address, uint16_t wyde)
+static void add_wyde_to_mem(VM* vm, uint64_t address, uint16_t wyde)
 {
     uint8_t offset = address % 4;
     address -= offset;
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
     
     EntryValue value;
     value.type = TYPE_INT;
@@ -220,12 +220,12 @@ static void addWydeToMem(VM* vm, uint64_t address, uint16_t wyde)
     addToTable_uint64_t(vm->memory, key, n, value.as_int);
 }
 
-static void addTetraToMem(VM* vm, uint64_t address, uint32_t tetra)
+static void add_tetra_to_mem(VM* vm, uint64_t address, uint32_t tetra)
 {
     uint8_t offset = address % 2;
     address -= offset;
     
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
     
     EntryValue value;
     value.type = TYPE_INT;
@@ -238,21 +238,21 @@ static void addTetraToMem(VM* vm, uint64_t address, uint32_t tetra)
     addToTable_uint64_t(vm->memory, key, n, value.as_int);
 }
 
-static void addOctaToMem(VM* vm, uint64_t address, uint64_t octa)
+static void add_octa_to_mem(VM* vm, uint64_t address, uint64_t octa)
 {
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
 
     addToTable_uint64_t(vm->memory, key, strlen(key), octa);
 }
 
-static uint8_t getByteFromMem(VM* vm, uint64_t address)
+static uint8_t get_byte_from_mem(VM* vm, uint64_t address)
 {
     EntryValue value;
     value.type = TYPE_INT;
 
     uint8_t offset = address % 8;
     address -= offset;
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
@@ -262,14 +262,14 @@ static uint8_t getByteFromMem(VM* vm, uint64_t address)
     return 0;
 }
 
-static uint16_t getWydeFromMem(VM* vm, uint64_t address)
+static uint16_t get_wyde_from_mem(VM* vm, uint64_t address)
 {
     EntryValue value;
     value.type = TYPE_INT;
 
     uint8_t offset = address % 4;
     address -= offset;
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
@@ -279,14 +279,14 @@ static uint16_t getWydeFromMem(VM* vm, uint64_t address)
     return 0;
 }
 
-static uint32_t getTetraFromMem(VM* vm, uint64_t address)
+static uint32_t get_tetra_from_mem(VM* vm, uint64_t address)
 {
     EntryValue value;
     value.type = TYPE_INT;
 
     uint8_t offset = address % 2;
     address -= offset;
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
@@ -296,12 +296,12 @@ static uint32_t getTetraFromMem(VM* vm, uint64_t address)
     return 0;
 }
 
-static uint64_t getOctaFromMem(VM* vm, uint64_t address)
+static uint64_t get_octa_from_mem(VM* vm, uint64_t address)
 {   
     EntryValue value;
     value.type = TYPE_INT;
 
-    char* key = intToHexString(address, 64);
+    char* key = int_to_hex_string(address, 64);
 
     if(findInTable(vm->memory, key, strlen(key), &value))
     {
@@ -315,17 +315,17 @@ void execute(VM* vm)
 {
     for(;;)
     {
-        if(isAtEnd(vm))
+        if(is_at_end(vm))
             return;
 
         uint8_t X,Y,Z, opcode;
         uint64_t temp, temp2;
-        opcode = getByte(vm);
-        X = getByte(vm);
-        Y = getByte(vm);
-        Z = getByte(vm);
+        opcode = get_byte(vm);
+        X = get_byte(vm);
+        Y = get_byte(vm);
+        Z = get_byte(vm);
        
-        updateLocal(vm, X);
+        update_local(vm, X);
         switch(opcode)
         {
                     case OP_TRAP:   // this command is analogous to TRIP, but it forces a trap to the operating system.
@@ -877,55 +877,55 @@ void execute(VM* vm)
 
                     case OP_LDB:            // load byte s($X)<-s(M1[A])
                                                         // 1 mem + 1 oops
-                        vm->general_registers[X].val = s(getByteFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
+                        vm->general_registers[X].val = s(get_byte_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
                         break;
                     case OP_LDBI: 
-                        vm->general_registers[X].val = s(getByteFromMem(vm, add64(vm->general_registers[Y].val, Z)));
+                        vm->general_registers[X].val = s(get_byte_from_mem(vm, add64(vm->general_registers[Y].val, Z)));
                         break;
                     case OP_LDBU: 
-                        vm->general_registers[X].val = getByteFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
+                        vm->general_registers[X].val = get_byte_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
                         break;
                     case OP_LDBUI:
-                        vm->general_registers[X].val = getByteFromMem(vm, add64(vm->general_registers[Y].val, Z));
+                        vm->general_registers[X].val = get_byte_from_mem(vm, add64(vm->general_registers[Y].val, Z));
                         break;
                     case OP_LDW:            // load wyde s($X)<-s(M2[A])
                                                         // 1 mem + 1 oops
-                        vm->general_registers[X].val = s(getWydeFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
+                        vm->general_registers[X].val = s(get_wyde_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
                         break;
                     case OP_LDWI:
-                        vm->general_registers[X].val = s(getWydeFromMem(vm, add64(vm->general_registers[Y].val, Z)));
+                        vm->general_registers[X].val = s(get_wyde_from_mem(vm, add64(vm->general_registers[Y].val, Z)));
                         break;
                     case OP_LDWU:
-                        vm->general_registers[X].val = getWydeFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
+                        vm->general_registers[X].val = get_wyde_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
                         break;
                     case OP_LDWUI:
-                        vm->general_registers[X].val = getWydeFromMem(vm, add64(vm->general_registers[Y].val, Z));
+                        vm->general_registers[X].val = get_wyde_from_mem(vm, add64(vm->general_registers[Y].val, Z));
                         break;
                     case OP_LDT:            // load tetra s($X)<-s(M4[A])
                                                         // 1 mem + 1 oops
-                        vm->general_registers[X].val = s(getTetraFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
+                        vm->general_registers[X].val = s(get_tetra_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
                         break;
                     case OP_LDTI:
-                        vm->general_registers[X].val = s(getTetraFromMem(vm, add64(vm->general_registers[Y].val, Z)));
+                        vm->general_registers[X].val = s(get_tetra_from_mem(vm, add64(vm->general_registers[Y].val, Z)));
                         break;
                     case OP_LDTU:
-                        vm->general_registers[X].val = getTetraFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
+                        vm->general_registers[X].val = get_tetra_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
                         break;
                     case OP_LDTUI:
-                        vm->general_registers[X].val = getTetraFromMem(vm, add64(vm->general_registers[Y].val, Z));
+                        vm->general_registers[X].val = get_tetra_from_mem(vm, add64(vm->general_registers[Y].val, Z));
                         break;
                     case OP_LDO:            // load octa s($X)<-s(M8[A])
                                                         // 1 mem + 1 oops
-                        vm->general_registers[X].val = s(getOctaFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
+                        vm->general_registers[X].val = s(get_octa_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)));
                         break;
                     case OP_LDOI:
-                        vm->general_registers[X].val = s(getOctaFromMem(vm, add64(vm->general_registers[Y].val, Z)));
+                        vm->general_registers[X].val = s(get_octa_from_mem(vm, add64(vm->general_registers[Y].val, Z)));
                         break;
                     case OP_LDOU:
-                        vm->general_registers[X].val = getOctaFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
+                        vm->general_registers[X].val = get_octa_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val));
                         break;
                     case OP_LDOUI:
-                        vm->general_registers[X].val = getOctaFromMem(vm, add64(vm->general_registers[Y].val, Z));
+                        vm->general_registers[X].val = get_octa_from_mem(vm, add64(vm->general_registers[Y].val, Z));
                         break;
                     case OP_LDSF:       // load short float: f($X)<-f(M4[A]_
                                                         // 1 mem + 1 oops
@@ -934,10 +934,10 @@ void execute(VM* vm)
                         break;
                     case OP_LDHT:       // load high tetra
                                                         // 1 mem + 1 oops
-                        vm->general_registers[X].val = getTetraFromMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)) << 32;
+                        vm->general_registers[X].val = get_tetra_from_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val)) << 32;
                         break;
                     case OP_LDHTI:
-                        vm->general_registers[X].val = getTetraFromMem(vm, add64(vm->general_registers[Y].val, Z));
+                        vm->general_registers[X].val = get_tetra_from_mem(vm, add64(vm->general_registers[Y].val, Z));
                         break;
                     
 
@@ -982,59 +982,59 @@ void execute(VM* vm)
 
                     case OP_STB:            // store byte s(M1[A])<-s($X)
                                             // 1 mem + 1 oops
-                        addByteToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
+                        add_byte_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
                         break;
                     case OP_STBI:
-                        addByteToMem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
+                        add_byte_to_mem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
                         break;
                     case OP_STBU:       // u(M1[A])<-u($X) mod 2^8
                                                         // 1 mem + 1 oops
-                        addByteToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
+                        add_byte_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
                         break;
                     case OP_STBUI:
-                        addByteToMem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
+                        add_byte_to_mem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
                         break;
                     case OP_STW:            // store wyde s(M2[A])<-s($X)
                                                         // 1 mem + 1 oops
-                        addWydeToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
+                        add_wyde_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
                         break;
                     case OP_STWI:
-                        addWydeToMem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
+                        add_wyde_to_mem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
                         break;
                     case OP_STWU:       // u(M2[A])<-u($X) mod 2^16
                                                         // 1 mem + 1 oops
-                        addWydeToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
+                        add_wyde_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
                         break;
                     case OP_STWUI:
-                        addWydeToMem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
+                        add_wyde_to_mem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
                         break;
                     case OP_STT:            // store tetra s(M4[A])<-s($X)
                                                         // 1 mem + 1 oops
-                        addTetraToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
+                        add_tetra_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
                         break;
                     case OP_STTI:
-                        addTetraToMem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
+                        add_tetra_to_mem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
                         break;
                     case OP_STTU:           // u(M4[A])<-u($X) mod 2^32
                                                         // 1 mem + 1 oops
-                        addTetraToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
+                        add_tetra_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
                         break;
                     case OP_STTUI:
-                        addTetraToMem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
+                        add_tetra_to_mem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
                         break;
                     case OP_STO:            // store octo s(M8[A])<-s($X)
                                                         // 1 mem + 1 oops
-                        addOctaToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
+                        add_octa_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), s(vm->general_registers[X].val));
                         break;
                     case OP_STOI:
-                        addOctaToMem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
+                        add_octa_to_mem(vm, add64(vm->general_registers[Y].val, Z), s(vm->general_registers[X].val));
                         break;
                     case OP_STOU:       // u(M8[A])<-u($X) mod 2^64
                                                         // 1 mem + 1 oops
-                        addOctaToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
+                        add_octa_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val);
                         break;
                     case OP_STOUI:
-                        addOctaToMem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
+                        add_octa_to_mem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val);
                         break;
                     case OP_STSF:           // store short float: f(M4[A])<-f($X)
                                                             // 1 mem + 1 oops
@@ -1042,17 +1042,17 @@ void execute(VM* vm)
                     case OP_STSFI:
                         break;
                     case OP_STHT:
-                        addTetraToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val >> 32);
+                        add_tetra_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), vm->general_registers[X].val >> 32);
                         break;
                     case OP_STHTI:
-                        addTetraToMem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val >> 32);
+                        add_tetra_to_mem(vm, add64(vm->general_registers[Y].val, Z), vm->general_registers[X].val >> 32);
                         break;
                     case OP_STCO:       // store constant octabyte u(M8[A])<-X
                                                         // 1 mem + 1 oops
-                        addOctaToMem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), X);
+                        add_octa_to_mem(vm, add64(vm->general_registers[Y].val, vm->general_registers[Z].val), X);
                         break;
                     case OP_STCOI:
-                        addOctaToMem(vm, add64(vm->general_registers[Y].val, Z), X);
+                        add_octa_to_mem(vm, add64(vm->general_registers[Y].val, Z), X);
                         break;
                     case OP_STUNC:  // store octa uncached: s(M8[A)<-s($X)
                                                     // 1 mem + 1 oops

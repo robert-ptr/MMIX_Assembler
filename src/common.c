@@ -159,7 +159,7 @@ Instruction instructions[258] =
                                                     // so SET $X, $Y is equivalent to OR $X, $Y, 0
 };
 
-int32_t parseNumber(char* buffer)
+int32_t parse_number(char* buffer)
 {
     int32_t number = 0;
 
@@ -169,7 +169,7 @@ int32_t parseNumber(char* buffer)
     return -1;
 }
 
-char* getString(char* buffer, int32_t length, int32_t buf_index)
+char* get_string(char* buffer, int32_t length, int32_t buf_index)
 {
     if(length <= 1)
         return NULL;
@@ -185,7 +185,7 @@ char* getString(char* buffer, int32_t length, int32_t buf_index)
     return new_string;
 }
 
-char* readFile(const char* path)
+char* read_file(const char* path)
 {
     FILE* fd = fopen(path, "rb");
     if(fd == NULL)
@@ -218,7 +218,7 @@ char* readFile(const char* path)
     return buffer;
 }
 
-FILE* createFile(const char* path)
+FILE* create_file(const char* path)
 {
     FILE* fd = fopen(path, "w");
     if (fd == NULL)
@@ -230,7 +230,7 @@ FILE* createFile(const char* path)
     return fd;
 }
 
-void stringToLowercase(char* s)
+void string_to_lowercase(char* s)
 {
     for(int32_t i = 0; s[i] != '\0'; i++)
     {
@@ -238,7 +238,7 @@ void stringToLowercase(char* s)
     }
 }
 
-char* intToHexString(uint64_t n, uint8_t bytes) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
+char* int_to_hex_string(uint64_t n, uint8_t bytes) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
 {
     char* str = (char*)malloc(2 * bytes * sizeof(char));
 
@@ -248,7 +248,7 @@ char* intToHexString(uint64_t n, uint8_t bytes) // bits means the number of used
     return str;
 }
 
-char* intToBinaryString(uint64_t n, uint8_t bytes) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
+char* int_to_binary_string(uint64_t n, uint8_t bytes) // bits means the number of used bits in the number, so i dont create a new function for smaller integers
 {
     uint8_t len = 8 * bytes;
     char* str = (char*)malloc((len + 1) * sizeof(char));
@@ -272,7 +272,7 @@ char* intToBinaryString(uint64_t n, uint8_t bytes) // bits means the number of u
     return str;
 }
 
-int64_t parseHexNumber(const char* str)
+int64_t parse_hex_number(const char* str)
 {
     unsigned int number;
     if (sscanf(str, "%x", &number) == 1)

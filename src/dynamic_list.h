@@ -10,12 +10,12 @@ typedef struct
     void** values;
 } List;
 
-void initList(List* l);
-void freeList(List* l);
+void init_list(List* l);
+void free_list(List* l);
 
-int addToList(List* l, void* value);
-void* getFromList(List* l, uint64_t index);
+int add_to_list(List* l, void* value);
+void* get_from_list(List* l, uint64_t index);
 
-void expandList(List* l);
+void expand_list(List* l);
 
 #endif 

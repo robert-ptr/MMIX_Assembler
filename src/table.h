@@ -45,8 +45,8 @@ typedef struct
     Entry* entries;
 } Table;
 
-void initTable(Table* table);
-bool findInTable(Table* table, TableData* s, TableData* value);
-bool addToTable(Table* table, TableData* s, TableData* value);
-void freeTable(Table* table);
+void init_table(Table* table);
+bool find_in_table(Table* table, TableData* s, TableData* value);
+bool add_to_table(Table* table, TableData* s, TableData* value);
+void free_table(Table* table);
 #endif
