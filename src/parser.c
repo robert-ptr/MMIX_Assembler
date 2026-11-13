@@ -1048,7 +1048,12 @@ static void label_statement()
 {
     if(check(TOKEN_LABEL)) // there is a label on this line
     {
-        char* label = (char*)malloc((parser.current.length + parser.prefix_length) * sizeof(char));
+        uint64_t label_length = parser.current.length;
+        bool add_prefix = parser.current.start[0] != ':';
+        if (add_prefix)
+            label_length += parser.prefix_length;
+
+        char* label = (char*)malloc((label_length + 1) * sizeof(char));
         if (parser.current.length == 2) // check if it's a label of the form dH, dB, dF
                                         // I still don't know if the prefix affects resolution for these kinds of labels
                                         // I think so? After all, they are symbols. But I need to verify it.
@@ -1067,7 +1072,7 @@ static void label_statement()
                 }
             }
         }
-        if (parser.current.start[0] != ':') // add the prefix to the label
+        if (add_prefix) // add the prefix to the label
         {
             strncpy(label, parser.current_prefix, parser.prefix_length);
             strncpy(label + parser.prefix_length, parser.current.start, parser.current.length);
@@ -1076,36 +1081,38 @@ static void label_statement()
         {
             strncpy(label, parser.current.start, parser.current.length);
         }
+        label[label_length] = '\0';
+        string_to_lowercase(label);
         advance(); // consume label
 
         switch (parser.current.type)
         {
             case TOKEN_IS:
-                is_statement(label, parser.current.length);
+                is_statement(label, label_length);
                 break;
             case TOKEN_GREG:
-                greg_statement(label, parser.current.length);
+                greg_statement(label, label_length);
                 break;
             case TOKEN_LOC:
-                loc_statement(label, parser.current.length);
+                loc_statement(label, label_length);
                 break;
             case TOKEN_BYTE:
-                byte_statement(label, parser.current.length);
+                byte_statement(label, label_length);
                 break;
             case TOKEN_WYDE:
-                wyde_statement(label, parser.current.length);
+                wyde_statement(label, label_length);
                 break;
             case TOKEN_TETRA:
-                tetra_statement(label, parser.current.length);
+                tetra_statement(label, label_length);
                 break;
             case TOKEN_OCTA:
-                octa_statement(label, parser.current.length);
+                octa_statement(label, label_length);
                 break;
             case TOKEN_PREFIX:
                 error_at_current("Label field should be blank!");
                 break;
             case TOKEN_INSTRUCTION:
-                instruction_statement(label, parser.current.length);
+                instruction_statement(label, label_length);
                 break;
             default:
                 error_at_current("Invalid token type.");
