@@ -1,6 +1,8 @@
 # MMIX Assembler and Simulator
 An implementation of an assembler and virtual machine for the MMIX architecture, designed to assemble and execute programs written in the MMIX assembly language as described in Donald Knuth's "The Art of Computer Programming".
 
+Originally written for a university course on computer architecture.
+
 ## Overview
 
 MMIX is a 64-bit RISC architecture designed by Donald Knuth as a replacement for the MIX architecture used in earlier editions of "The Art of Computer Programming". This project provides:
@@ -10,11 +12,21 @@ MMIX is a 64-bit RISC architecture designed by Donald Knuth as a replacement for
 
 ## Features
 
-- Full implementation of the MMIX instruction set (256 opcodes)
-- Support for all MMIX registers (256 general registers and 32 special registers)
-- Assembler directives (`IS`, `LOC`, `BYTE`, `WYDE`, `TETRA`, `OCTA`, etc.)
-- Label resolution and symbol table management
-- Virtual memory implementation using hash tables to simulate the 2^64 byte address space
+### Assembler
+
+- Assembles all 256 MMIX opcodes and common pseudo-instructions
+- Directives: `IS`, `GREG`, `LOC`, `BYTE`, `WYDE`, `TETRA`, `OCTA`, `PREFIX`
+- Label resolution, symbol table, prefixes and local labels
+
+### Simulator
+
+- 256 general and 32 special registers
+- Sparse hash-table memory covering the 2^64-byte address space
+- Integer, logical, shift, compare, branch, load/store and bit-matrix (`MOR`/`MXOR`) instructions
+
+### Not implemented
+
+- Floating-point instructions, `TRAP`/`TRIP` handling, the register stack (`PUSHJ`/`POP`/`SAVE`/`UNSAVE`), and interrupt handling
 
 ## Building the Project
 
