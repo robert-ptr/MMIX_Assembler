@@ -135,6 +135,9 @@ static int64_t mul64s(int64_t u, int64_t v, int64_t* overflow) // adapted from '
 
 void init_vm(VM* vm)
 {
+    vm->start = NULL;
+    vm->ip = NULL;
+    vm->end = NULL;
     vm->memory = (Table*)malloc(sizeof(Table));
 
     for (int i = 0; i < 256; i++)
@@ -167,7 +170,15 @@ static void update_local(VM* vm, uint8_t X) // checks if the destination operand
 
 static bool is_at_end(VM* vm)
 {
-    return vm->ip == NULL;
+    if (vm->ip == NULL)
+        return true;
+
+    if (vm->end == NULL)
+        return false;
+
+    uintptr_t ip = (uintptr_t)vm->ip;
+    uintptr_t end = (uintptr_t)vm->end;
+    return ip > end || end - ip < 4;
 }
 
 static uint8_t current_byte(VM* vm)
@@ -1365,6 +1376,60 @@ void execute(VM* vm)
     }
 }
 
+static uint8_t* read_binary(const char* path, size_t* file_size)
+{
+    FILE* fd = fopen(path, "rb");
+    if(fd == NULL)
+    {
+        fprintf(stderr, "Could not open file \"%s\" for reading.\n", path);
+        exit(74);
+    }
+
+    fseek(fd, 0L, SEEK_END);
+    size_t size = ftell(fd);
+    rewind(fd);
+
+    uint8_t* buffer = (uint8_t*)malloc(size + 1);
+    if(buffer == NULL)
+    {
+        fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+        exit(74);
+    }
+
+    size_t bytes_read = fread(buffer, sizeof(uint8_t), size, fd);
+    if (bytes_read < size)
+    {
+        fprintf(stderr, "Could not read file \"%s\".\n", path);
+        exit(74);
+    }
+
+    fclose(fd);
+    *file_size = bytes_read;
+    return buffer;
+}
+
 int main(int argc, char* argv[])
 {
+    if(argc != 2)
+    {
+        fprintf(stderr, "Usage: %s <binary>\n", argv[0]);
+        exit(64);
+    }
+
+    size_t file_size;
+    uint8_t* program = read_binary(argv[1], &file_size);
+
+    VM vm;
+    init_vm(&vm);
+
+    vm.start = program;
+    vm.ip = program;
+    vm.end = program + file_size;
+
+    execute(&vm);
+
+    free_vm(&vm);
+    free(program);
+
+    return 0;
 }
